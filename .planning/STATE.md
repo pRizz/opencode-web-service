@@ -60,6 +60,7 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 1. **Make README sync more robust** (tooling) - Add CI check to verify package READMEs match root; consider husky/lefthook for cross-platform hook management.
+2. **Handle pnpm v10 blocked install scripts** (tooling) - Add runtime guard with actionable error for pnpm users; document workaround in README.
 
 ### Blockers/Concerns
 
