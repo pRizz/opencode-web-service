@@ -73,13 +73,13 @@ publish-crates: lint test
 # Publish to npm (core first, then cli)
 publish-npm: lint test build-node
     @echo "Publishing @opencode-cloud/core to npm..."
-    pnpm --filter @opencode-cloud/core publish --access public --no-git-checks
+    pnpm --filter @opencode-cloud/core publish --access public
     @echo ""
     @echo "Waiting 30s for npm to index..."
     @sleep 30
     @echo ""
     @echo "Publishing opencode-cloud to npm..."
-    pnpm --filter opencode-cloud publish --access public --no-git-checks
+    pnpm --filter opencode-cloud publish --access public
     @echo ""
     @echo "✓ npm publish complete!"
 
