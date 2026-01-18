@@ -54,17 +54,20 @@ Developers can access a persistent, secure opencode instance from anywhere witho
 
 - **Monorepo**: npm and cargo packages in the same repository, sharing Docker configuration
 - **Cross-platform**: Must support Linux, macOS, and Windows (within reason)
-- **Upstream dependency**: Relies on opencode Docker images and behavior; must handle upstream changes gracefully
+- **Custom Docker image**: We supply our own Ubuntu-based Dockerfile for complete control; user-configurable base image deferred to future
 - **Config format**: JSON for persistent configuration
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Use opencode's built-in basic auth | Avoid reinventing authentication, leverage upstream | — Pending |
+| Custom Ubuntu-based Dockerfile | Complete control over sandbox environment; can respond to upstream issues | — Pending |
+| Use opencode's built-in basic auth | Avoid reinventing authentication, leverage upstream config options | — Pending |
+| Auth credentials stored on host | Credentials in host config file (platform-appropriate path), passed to opencode process | — Pending |
 | Monorepo for npm + cargo | Shared Docker config, simpler maintenance | — Pending |
 | JSON for config | Universal parsing, easy inspection | — Pending |
 | Google Drive sync deferred to v2 | Reduces MVP scope significantly | — Pending |
+| Separate auth for remote admin (v2/v3) | Remote terminal/desktop may need different credentials than opencode web UI | — Pending |
 
 ---
-*Last updated: 2026-01-18 after initialization*
+*Last updated: 2026-01-18 after roadmap creation*

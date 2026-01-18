@@ -97,6 +97,7 @@ Deferred to future release. Tracked but not in current roadmap.
 ### Remote Admin (v2)
 
 - **ADMN-01**: Remote terminal access to sandboxed environment via web interface
+- **ADMN-02**: Separate auth layer for remote terminal (may differ from opencode web UI auth)
 
 ## v3 Requirements
 
@@ -104,7 +105,8 @@ Future vision. Tracked for planning purposes.
 
 ### Remote Admin (v3)
 
-- **ADMN-02**: Basic remote desktop environment for sandboxed environment
+- **ADMN-03**: Basic remote desktop environment for sandboxed environment
+- **ADMN-04**: Auth layer for remote desktop (may share or differ from terminal auth)
 
 ## Out of Scope
 
@@ -125,47 +127,47 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INST-01 | TBD | Pending |
-| INST-02 | TBD | Pending |
-| INST-03 | TBD | Pending |
-| INST-04 | TBD | Pending |
-| INST-05 | TBD | Pending |
-| INST-06 | TBD | Pending |
-| INST-07 | TBD | Pending |
-| INST-08 | TBD | Pending |
-| LIFE-01 | TBD | Pending |
-| LIFE-02 | TBD | Pending |
-| LIFE-03 | TBD | Pending |
-| LIFE-04 | TBD | Pending |
-| LIFE-05 | TBD | Pending |
-| LIFE-06 | TBD | Pending |
-| LIFE-07 | TBD | Pending |
-| CONF-01 | TBD | Pending |
-| CONF-02 | TBD | Pending |
-| CONF-03 | TBD | Pending |
-| CONF-04 | TBD | Pending |
-| CONF-05 | TBD | Pending |
-| CONF-06 | TBD | Pending |
-| CONF-07 | TBD | Pending |
-| PERS-01 | TBD | Pending |
-| PERS-02 | TBD | Pending |
-| PERS-03 | TBD | Pending |
-| PERS-04 | TBD | Pending |
-| PERS-05 | TBD | Pending |
-| PERS-06 | TBD | Pending |
-| SECU-01 | TBD | Pending |
-| SECU-02 | TBD | Pending |
-| SECU-03 | TBD | Pending |
-| SECU-04 | TBD | Pending |
-| PLAT-01 | TBD | Pending |
-| PLAT-02 | TBD | Pending |
-| CONS-01 | TBD | Pending |
+| INST-01 | Phase 1 | Pending |
+| INST-02 | Phase 5 | Pending |
+| INST-03 | Phase 5 | Pending |
+| INST-04 | Phase 5 | Pending |
+| INST-05 | Phase 5 | Pending |
+| INST-06 | Phase 8 | Pending |
+| INST-07 | Phase 8 | Pending |
+| INST-08 | Phase 8 | Pending |
+| LIFE-01 | Phase 3 | Pending |
+| LIFE-02 | Phase 3 | Pending |
+| LIFE-03 | Phase 3 | Pending |
+| LIFE-04 | Phase 3 | Pending |
+| LIFE-05 | Phase 3 | Pending |
+| LIFE-06 | Phase 7 | Pending |
+| LIFE-07 | Phase 7 | Pending |
+| CONF-01 | Phase 5 | Pending |
+| CONF-02 | Phase 5 | Pending |
+| CONF-03 | Phase 5 | Pending |
+| CONF-04 | Phase 1 | Pending |
+| CONF-05 | Phase 5 | Pending |
+| CONF-06 | Phase 7 | Pending |
+| CONF-07 | Phase 1 | Pending |
+| PERS-01 | Phase 4 | Pending |
+| PERS-02 | Phase 2 | Pending |
+| PERS-03 | Phase 2 | Pending |
+| PERS-04 | Phase 2 | Pending |
+| PERS-05 | Phase 4 | Pending |
+| PERS-06 | Phase 4 | Pending |
+| SECU-01 | Phase 6 | Pending |
+| SECU-02 | Phase 6 | Pending |
+| SECU-03 | Phase 6 | Pending |
+| SECU-04 | Phase 6 | Pending |
+| PLAT-01 | Phase 4 | Pending |
+| PLAT-02 | Phase 4 | Pending |
+| CONS-01 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 33 total
-- Mapped to phases: 0
-- Unmapped: 33 (pending roadmap creation)
+- Mapped to phases: 33
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-18 after initial definition*
+*Last updated: 2026-01-18 after roadmap creation*
