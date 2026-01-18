@@ -7,6 +7,12 @@ default: list
 list:
     @just --list
 
+# Setup development environment (run once after cloning)
+setup:
+    git config core.hooksPath .githooks
+    pnpm install
+    @echo "✓ Development environment ready!"
+
 # Build everything
 build: build-rust build-node
 

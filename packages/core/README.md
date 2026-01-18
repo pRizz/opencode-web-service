@@ -87,6 +87,9 @@ Data (PID files, etc.) is stored at:
 # Install dependencies
 pnpm install
 
+# Configure git hooks (once after cloning)
+git config core.hooksPath .githooks
+
 # Build everything
 just build
 
@@ -97,6 +100,8 @@ just test
 just fmt
 just lint
 ```
+
+> **Note:** The git hooks automatically sync `README.md` to npm package directories on commit.
 
 ## Architecture
 
