@@ -1,4 +1,4 @@
-# Roadmap: opencode-cloud-service
+# Roadmap: opencode-cloud
 
 ## Overview
 
@@ -28,16 +28,16 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Depends on**: Nothing (first phase)
 **Requirements**: INST-01, CONF-04, CONF-07, CONS-01
 **Success Criteria** (what must be TRUE):
-  1. User can install via `npx opencode-cloud-service --version` and see version output
-  2. User can install via `cargo install` (from local path) and run `opencode-cloud-service --version`
+  1. User can install via `npx opencode-cloud --version` and see version output
+  2. User can install via `cargo install` (from local path) and run `opencode-cloud --version`
   3. Configuration file is created at platform-appropriate XDG-compliant path
   4. Configuration file format matches documented JSON schema
   5. Only one instance can run per host (singleton enforcement)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD (monorepo and CLI scaffolding)
-- [ ] 01-02: TBD (configuration management)
+- [ ] 01-01-PLAN.md — Monorepo structure, Rust/Node workspaces, CLI skeletons with version output
+- [ ] 01-02-PLAN.md — Config management (XDG paths, JSONC, schema), singleton enforcement
 
 ### Phase 2: Docker Integration
 **Goal**: CLI can build/pull our custom opencode image and manage container lifecycle programmatically
@@ -60,11 +60,11 @@ Plans:
 **Depends on**: Phase 2
 **Requirements**: LIFE-01, LIFE-02, LIFE-03, LIFE-04, LIFE-05
 **Success Criteria** (what must be TRUE):
-  1. User can start the service via `opencode-cloud-service start`
-  2. User can stop the service via `opencode-cloud-service stop`
-  3. User can restart the service via `opencode-cloud-service restart`
-  4. User can check status via `opencode-cloud-service status` and see running/stopped state
-  5. User can view logs via `opencode-cloud-service logs` with follow mode (`-f`)
+  1. User can start the service via `opencode-cloud start`
+  2. User can stop the service via `opencode-cloud stop`
+  3. User can restart the service via `opencode-cloud restart`
+  4. User can check status via `opencode-cloud status` and see running/stopped state
+  5. User can view logs via `opencode-cloud logs` with follow mode (`-f`)
 **Plans**: TBD
 
 Plans:
@@ -97,8 +97,8 @@ Plans:
   2. Wizard prompts for username and password for basic auth
   3. Wizard prompts for port and hostname with sensible defaults shown
   4. User can skip API key configuration to set it later in opencode
-  5. User can view current config via `opencode-cloud-service config`
-  6. User can modify config values via `opencode-cloud-service config set <key> <value>`
+  5. User can view current config via `opencode-cloud config`
+  6. User can modify config values via `opencode-cloud config set <key> <value>`
   7. User can pass environment variables to opencode container
 **Plans**: TBD
 
@@ -129,7 +129,7 @@ Plans:
 **Depends on**: Phase 6
 **Requirements**: LIFE-06, LIFE-07, CONF-06
 **Success Criteria** (what must be TRUE):
-  1. User can update to latest opencode via `opencode-cloud-service update`
+  1. User can update to latest opencode via `opencode-cloud update`
   2. Update preserves existing configuration and data volumes
   3. Health check endpoint available at `/health` for monitoring tools
   4. Configuration is validated on service startup with clear error messages for invalid config
@@ -146,7 +146,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. All commands display helpful usage via `--help`
   2. Error messages are clear and include actionable guidance
-  3. User can cleanly uninstall via `opencode-cloud-service uninstall`
+  3. User can cleanly uninstall via `opencode-cloud uninstall`
   4. Uninstall removes service registration, config files, and optionally Docker volumes
 **Plans**: TBD
 
@@ -161,7 +161,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Project Foundation | 0/2 | Not started | - |
+| 1. Project Foundation | 0/2 | Planned | - |
 | 2. Docker Integration | 0/2 | Not started | - |
 | 3. Service Lifecycle Commands | 0/2 | Not started | - |
 | 4. Platform Service Installation | 0/3 | Not started | - |
