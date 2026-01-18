@@ -1,7 +1,20 @@
 {
   "name": "opencode-cloud",
   "version": "0.1.0",
+  "description": "CLI for managing opencode as a persistent cloud service",
   "type": "module",
+  "license": "MIT",
+  "author": "pRizz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pRizz/opencode-cloud.git",
+    "directory": "packages/cli-node"
+  },
+  "homepage": "https://github.com/pRizz/opencode-cloud",
+  "bugs": {
+    "url": "https://github.com/pRizz/opencode-cloud/issues"
+  },
+  "keywords": ["opencode", "ai", "cloud", "docker", "cli", "service"],
   "bin": {
     "opencode-cloud": "./dist/index.js",
     "occ": "./dist/index.js"

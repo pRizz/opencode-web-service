@@ -11,6 +11,10 @@ edition = "2024"
 rust-version = "1.85"
 license = "MIT"
 repository = "https://github.com/pRizz/opencode-cloud"
+homepage = "https://github.com/pRizz/opencode-cloud"
+documentation = "https://docs.rs/opencode-cloud"
+keywords = ["opencode", "ai", "cloud", "docker", "cli"]
+categories = ["command-line-utilities", "development-tools"]
 
 [workspace.dependencies]
 opencode-cloud-core = { version = "0.1.0", path = "packages/core" }

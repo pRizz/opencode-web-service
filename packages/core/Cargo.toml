@@ -5,7 +5,13 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Core library for opencode-cloud"
+homepage.workspace = true
+documentation.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Core library for opencode-cloud - config management, singleton enforcement, and shared utilities"
+readme = "../../README.md"
+exclude = ["*.node", "index.js", "index.d.ts"]
 
 [lib]
 # Both crate types: cdylib for NAPI Node bindings, rlib for Rust CLI
