@@ -25,9 +25,8 @@
   "os": ["darwin", "linux"],
   "cpu": ["x64", "arm64"],
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "postinstall": "npm run build"
+    "build": "tsc || (echo \"Error: TypeScript compiler (tsc) not found. Install dev dependencies or run npm i -D typescript before building.\" && exit 1)",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@opencode-cloud/core": "workspace:*"
