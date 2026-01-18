@@ -73,13 +73,13 @@ publish-crates: lint test
 # Publish to npm (core first, then cli)
 publish-npm: lint test build-node
     @echo "Publishing @opencode-cloud/core to npm..."
-    pnpm -C packages/core publish --access public --no-git-checks
+    pnpm --filter @opencode-cloud/core publish --access public --no-git-checks
     @echo ""
     @echo "Waiting 30s for npm to index..."
     @sleep 30
     @echo ""
     @echo "Publishing opencode-cloud to npm..."
-    pnpm -C packages/cli-node publish --access public --no-git-checks
+    pnpm --filter opencode-cloud publish --access public --no-git-checks
     @echo ""
     @echo "✓ npm publish complete!"
 
@@ -102,9 +102,9 @@ publish-crates-dry-run:
 # Dry-run for npm
 publish-npm-dry-run: build-node
     @echo "Dry-run: @opencode-cloud/core (npm)..."
-    pnpm -C packages/core publish --access public --dry-run
+    pnpm --filter @opencode-cloud/core publish --access public --dry-run
     @echo "✓ @opencode-cloud/core ready"
     @echo ""
     @echo "Dry-run: opencode-cloud (npm)..."
-    pnpm -C packages/cli-node publish --access public --dry-run
+    pnpm --filter opencode-cloud publish --access public --dry-run
     @echo "✓ opencode-cloud ready"
