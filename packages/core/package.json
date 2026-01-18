@@ -4,12 +4,12 @@
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "core",
+    "binaryName": "core",
     "triples": {}
   },
   "scripts": {
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform"
+    "build": "napi build --platform --release --features napi --no-js && cp src/bindings.js index.js && cp src/bindings.d.ts index.d.ts",
+    "build:debug": "napi build --platform --features napi --no-js && cp src/bindings.js index.js && cp src/bindings.d.ts index.d.ts"
   },
   "devDependencies": {
     "@napi-rs/cli": "^3.0.0-alpha.69"

@@ -7,9 +7,8 @@ license.workspace = true
 description = "Core library for opencode-cloud"
 
 [lib]
-# cdylib for NAPI (only when napi feature is enabled)
-# rlib for Rust consumers
-crate-type = ["rlib"]
+# Both crate types: cdylib for NAPI Node bindings, rlib for Rust CLI
+crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
