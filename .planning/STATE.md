@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 1 - Project Foundation
+**Current focus:** Phase 1 - Project Foundation (Complete)
 
 ## Current Position
 
 Phase: 1 of 8 (Project Foundation)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-18 - Completed 01-01-PLAN.md (Monorepo Structure)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-01-18 - Completed 01-02-PLAN.md (Configuration Management)
 
-Progress: [#.........] 6%
+Progress: [##........] 12%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 9 min
-- Total execution time: 0.15 hours
+- Total plans completed: 2
+- Average duration: 7 min
+- Total execution time: 0.23 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 1 | 9 min | 9 min |
+| 01 | 2 | 14 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 9 min
-- Trend: N/A (first plan)
+- Last 5 plans: 9 min, 5 min
+- Trend: Improving
 
 *Updated after each plan completion*
 
@@ -52,6 +52,9 @@ Recent decisions affecting current work:
 - [01-01]: Feature flag for NAPI: Use cargo feature 'napi' to conditionally compile NAPI bindings
 - [01-01]: Manual JS bindings: Generate index.js/index.d.ts manually due to napi-cli type generation issues
 - [01-01]: Dual crate-type: Core library uses both cdylib (for NAPI) and rlib (for Rust CLI)
+- [01-02]: XDG paths for macOS: Use ~/.config/ instead of ~/Library for consistency
+- [01-02]: Singleton via kill -0: Use subprocess call for process existence check
+- [01-02]: Strict config validation: deny_unknown_fields rejects unknown keys
 
 ### Pending Todos
 
@@ -63,6 +66,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-18 19:50:33 UTC
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-01-18 19:57:17 UTC
+Stopped at: Completed 01-02-PLAN.md (Phase 1 complete)
 Resume file: None
