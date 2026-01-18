@@ -70,27 +70,17 @@ publish-crates: lint test
     @echo ""
     @echo "✓ crates.io publish complete!"
 
-# Copy README to npm packages (for npm publish)
-_copy-readme-npm:
-    cp README.md packages/core/README.md
-    cp README.md packages/cli-node/README.md
-
-# Remove copied READMEs from npm packages
-_clean-readme-npm:
-    rm -f packages/core/README.md packages/cli-node/README.md
-
 # Publish to npm (core first, then cli)
-publish-npm: lint test build-node _copy-readme-npm
+publish-npm: lint test build-node
     @echo "Publishing @opencode-cloud/core to npm..."
-    pnpm --filter @opencode-cloud/core publish --access public --no-git-checks
+    pnpm --filter @opencode-cloud/core publish --access public
     @echo ""
     @echo "Waiting 5s for npm to index..."
     @sleep 5
     @echo ""
     @echo "Publishing opencode-cloud to npm..."
-    pnpm --filter opencode-cloud publish --access public --no-git-checks
+    pnpm --filter opencode-cloud publish --access public
     @echo ""
-    just _clean-readme-npm
     @echo "✓ npm publish complete!"
 
 # Publish to both crates.io and npm
@@ -117,12 +107,11 @@ publish-crates-dry-run:
     @echo "✓ opencode-cloud ready"
 
 # Dry-run for npm
-publish-npm-dry-run: build-node _copy-readme-npm
+publish-npm-dry-run: build-node
     @echo "Dry-run: @opencode-cloud/core (npm)..."
-    pnpm --filter @opencode-cloud/core publish --access public --dry-run --no-git-checks
+    pnpm --filter @opencode-cloud/core publish --access public --dry-run
     @echo "✓ @opencode-cloud/core ready"
     @echo ""
     @echo "Dry-run: opencode-cloud (npm)..."
-    pnpm --filter opencode-cloud publish --access public --dry-run --no-git-checks
-    just _clean-readme-npm
+    pnpm --filter opencode-cloud publish --access public --dry-run
     @echo "✓ opencode-cloud ready"
