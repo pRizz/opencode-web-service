@@ -396,6 +396,7 @@ dependencies = [
  "clap",
  "console",
  "opencode-cloud-core",
+ "serde_json",
  "tracing",
  "tracing-subscriber",
 ]
