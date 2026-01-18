@@ -77,6 +77,11 @@ publish: lint test
 
 # Publish dry-run (verify without uploading)
 publish-dry-run:
+    @echo "Dry-run: opencode-cloud-core..."
     cargo publish -p opencode-cloud-core --dry-run
     @echo "✓ opencode-cloud-core ready"
-    @echo "(opencode-cloud dry-run skipped - requires core on crates.io)"
+    @echo ""
+    @echo "Dry-run: opencode-cloud..."
+    @echo "(Note: this will fail if core is not yet on crates.io)"
+    cargo publish -p opencode-cloud --dry-run
+    @echo "✓ opencode-cloud ready"
