@@ -11,7 +11,7 @@ This research covers the technical foundations for Phase 1: establishing a polyg
 The standard approach for 2025/2026 is:
 - **pnpm workspaces** for Node.js package management
 - **Cargo workspaces** for Rust package management
-- **NAPI-RS** for Rust-to-Node bindings with prebuilt binary distribution
+- **NAPI-RS** for Rust-to-Node bindings (compile-on-install, no prebuilt binaries)
 - **just** for cross-language task orchestration
 - **clap** for Rust CLI, thin Node wrapper calling into Rust bindings
 - **jsonc-parser** (Rust) and Microsoft's **jsonc-parser** (Node) for JSONC config
@@ -30,7 +30,7 @@ The established libraries/tools for this domain:
 | pnpm | 9.x | Node package manager | Fast, efficient for monorepos, workspace protocol |
 | Cargo | 1.82+ | Rust package manager | Required for Rust 2024 edition |
 | just | 1.31+ | Task runner | Modules support, cross-platform, simple syntax |
-| NAPI-RS | 3.x | Rust-to-Node bindings | Industry standard, prebuilt binary support |
+| NAPI-RS | 3.x | Rust-to-Node bindings | Industry standard, compile-on-install mode |
 
 ### Rust Dependencies
 | Library | Version | Purpose | Why Standard |

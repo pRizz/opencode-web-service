@@ -64,7 +64,8 @@ Developers can access a persistent, secure opencode instance from anywhere witho
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Project name: opencode-cloud | Cleaner than opencode-cloud-service, CLI command `occ` is memorable | — Pending |
-| Rust core + NAPI-RS bindings | Single codebase serves both npm and cargo users; npm gets prebuilt binaries | — Pending |
+| Rust core + NAPI-RS bindings | Single codebase serves both npm and cargo users | — Pending |
+| Compile-on-install for npm | No prebuilt binaries; users need Rust 1.82+ installed; simpler CI/CD | — Pending |
 | Custom Ubuntu-based Dockerfile | Complete control over sandbox environment; can respond to upstream issues | — Pending |
 | Use opencode's built-in basic auth | Avoid reinventing authentication, leverage upstream config options | — Pending |
 | Auth credentials stored on host | Credentials in host config file (platform-appropriate path), passed to opencode process | — Pending |
@@ -76,4 +77,4 @@ Developers can access a persistent, secure opencode instance from anywhere witho
 | Separate auth for remote admin (v2/v3) | Remote terminal/desktop may need different credentials than opencode web UI | — Pending |
 
 ---
-*Last updated: 2026-01-18 after Phase 1 context gathering*
+*Last updated: 2026-01-18 after Phase 1 execution*

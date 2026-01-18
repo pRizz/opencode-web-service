@@ -6,9 +6,15 @@
     "opencode-cloud": "./dist/index.js",
     "occ": "./dist/index.js"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "os": ["darwin", "linux"],
+  "cpu": ["x64", "arm64"],
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "@opencode-cloud/core": "workspace:*"

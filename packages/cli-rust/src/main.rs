@@ -5,7 +5,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use console::style;
-use opencode_cloud_core::{Config, config, get_version, load_config};
+use opencode_cloud_core::{Config, InstanceLock, SingletonError, config, get_version, load_config};
 
 /// Manage your opencode cloud service
 #[derive(Parser)]
@@ -140,6 +140,58 @@ fn main() -> Result<()> {
                 println!("Run {} for available commands.", style("--help").green());
             }
             Ok(())
+        }
+    }
+}
+
+/// Acquire the singleton lock for service management commands
+///
+/// This should be called before any command that manages the service
+/// (start, stop, restart, status, etc.) to ensure only one instance runs.
+/// Config commands don't need the lock as they're read-only or file-based.
+#[allow(dead_code)]
+fn acquire_singleton_lock() -> Result<InstanceLock, SingletonError> {
+    let pid_path = config::paths::get_data_dir()
+        .ok_or(SingletonError::InvalidPath)?
+        .join("opencode-cloud.pid");
+
+    InstanceLock::acquire(pid_path)
+}
+
+/// Display a rich error message when another instance is already running
+#[allow(dead_code)]
+fn display_singleton_error(err: &SingletonError) {
+    match err {
+        SingletonError::AlreadyRunning(pid) => {
+            eprintln!("{} Another instance is already running", style("Error:").red().bold());
+            eprintln!();
+            eprintln!("  Process ID: {}", style(pid).yellow());
+            eprintln!();
+            eprintln!("  {} Stop the existing instance first:", style("Tip:").cyan());
+            eprintln!("       {} stop", style("opencode-cloud").green());
+            eprintln!();
+            eprintln!("  {} If the process is stuck, kill it manually:", style("Tip:").cyan());
+            eprintln!("       {} {}", style("kill").green(), pid);
+        }
+        SingletonError::CreateDirFailed(msg) => {
+            eprintln!("{} Failed to create data directory", style("Error:").red().bold());
+            eprintln!();
+            eprintln!("  {}", msg);
+            eprintln!();
+            if let Some(data_dir) = config::paths::get_data_dir() {
+                eprintln!("  {} Check permissions for:", style("Tip:").cyan());
+                eprintln!("       {}", style(data_dir.display()).yellow());
+            }
+        }
+        SingletonError::LockFailed(msg) => {
+            eprintln!("{} Failed to acquire lock", style("Error:").red().bold());
+            eprintln!();
+            eprintln!("  {}", msg);
+        }
+        SingletonError::InvalidPath => {
+            eprintln!("{} Could not determine lock file path", style("Error:").red().bold());
+            eprintln!();
+            eprintln!("  {} Ensure XDG_DATA_HOME or HOME is set.", style("Tip:").cyan());
         }
     }
 }
