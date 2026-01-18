@@ -26,3 +26,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 console = "0.16"
 napi = { version = "2", features = ["tokio_rt", "napi9"] }
 napi-derive = "2"
+tempfile = "3"

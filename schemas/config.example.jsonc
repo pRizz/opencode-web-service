@@ -1,0 +1,19 @@
+{
+  // Config file version - do not modify
+  // Used for automatic migrations when schema changes
+  "version": 1,
+
+  // Port for the opencode web UI
+  // Default: 8080
+  "port": 8080,
+
+  // Bind address for the web server
+  // "localhost" = local-only access (secure default)
+  // "0.0.0.0" = network accessible (requires explicit opt-in)
+  "bind": "localhost",
+
+  // Auto-restart service on crash
+  // When true, opencode-cloud will automatically restart the service
+  // if it crashes unexpectedly
+  "auto_restart": true
+}

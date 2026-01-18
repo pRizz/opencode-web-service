@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pRizz/opencode-cloud/schemas/config.schema.json",
+  "title": "opencode-cloud configuration",
+  "description": "Configuration schema for opencode-cloud CLI",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Config file version for migrations. Do not modify."
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "default": 8080,
+      "description": "Port for the opencode web UI"
+    },
+    "bind": {
+      "type": "string",
+      "default": "localhost",
+      "description": "Bind address. Use 'localhost' for local-only (secure default) or '0.0.0.0' for network access"
+    },
+    "auto_restart": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically restart the service if it crashes"
+    }
+  },
+  "required": ["version"],
+  "additionalProperties": false
+}

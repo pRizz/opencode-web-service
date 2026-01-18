@@ -3,10 +3,14 @@
 //! This library provides the shared functionality for both the Rust CLI
 //! and Node.js bindings via NAPI-RS.
 
+pub mod config;
 pub mod version;
 
 // Re-export version functions for Rust consumers
 pub use version::{get_version, get_version_long};
+
+// Re-export config types and functions
+pub use config::{Config, load_config, save_config};
 
 // NAPI bindings for Node.js consumers (only when napi feature is enabled)
 #[cfg(feature = "napi")]

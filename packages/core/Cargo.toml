@@ -32,3 +32,6 @@ napi-derive = { workspace = true, optional = true }
 
 [build-dependencies]
 napi-build = "2"
+
+[dev-dependencies]
+tempfile.workspace = true
