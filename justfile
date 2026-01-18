@@ -58,25 +58,53 @@ release:
     pnpm -C packages/core build
 
 # Publish to crates.io (core first, then cli)
-publish: lint test
-    @echo "Publishing opencode-cloud-core..."
+publish-crates: lint test
+    @echo "Publishing opencode-cloud-core to crates.io..."
     cargo publish -p opencode-cloud-core
     @echo ""
     @echo "Waiting 30s for crates.io to index..."
     @sleep 30
     @echo ""
-    @echo "Publishing opencode-cloud..."
+    @echo "Publishing opencode-cloud to crates.io..."
     cargo publish -p opencode-cloud
     @echo ""
-    @echo "✓ Published successfully!"
+    @echo "✓ crates.io publish complete!"
 
-# Publish dry-run (verify without uploading)
-publish-dry-run:
-    @echo "Dry-run: opencode-cloud-core..."
+# Publish to npm (core first, then cli)
+publish-npm: lint test build-node
+    @echo "Publishing @opencode-cloud/core to npm..."
+    pnpm -C packages/core publish --access public --no-git-checks
+    @echo ""
+    @echo "Waiting 30s for npm to index..."
+    @sleep 30
+    @echo ""
+    @echo "Publishing opencode-cloud to npm..."
+    pnpm -C packages/cli-node publish --access public --no-git-checks
+    @echo ""
+    @echo "✓ npm publish complete!"
+
+# Publish to both crates.io and npm
+publish-all: publish-crates publish-npm
+    @echo ""
+    @echo "✓ All packages published!"
+
+# Dry-run for crates.io
+publish-crates-dry-run:
+    @echo "Dry-run: opencode-cloud-core (crates.io)..."
     cargo publish -p opencode-cloud-core --dry-run
     @echo "✓ opencode-cloud-core ready"
     @echo ""
-    @echo "Dry-run: opencode-cloud..."
+    @echo "Dry-run: opencode-cloud (crates.io)..."
     @echo "(Note: this will fail if core is not yet on crates.io)"
     cargo publish -p opencode-cloud --dry-run
+    @echo "✓ opencode-cloud ready"
+
+# Dry-run for npm
+publish-npm-dry-run: build-node
+    @echo "Dry-run: @opencode-cloud/core (npm)..."
+    pnpm -C packages/core publish --access public --dry-run
+    @echo "✓ @opencode-cloud/core ready"
+    @echo ""
+    @echo "Dry-run: opencode-cloud (npm)..."
+    pnpm -C packages/cli-node publish --access public --dry-run
     @echo "✓ opencode-cloud ready"
