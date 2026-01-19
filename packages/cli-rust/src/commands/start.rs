@@ -11,7 +11,7 @@ use futures_util::stream::StreamExt;
 use opencode_cloud_core::docker::{
     CONTAINER_NAME, DockerClient, DockerError, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT,
     OPENCODE_WEB_PORT, ProgressReporter, build_image, container_is_running, image_exists,
-    setup_and_start,
+    setup_and_start, stop_service,
 };
 use std::net::TcpListener;
 
@@ -30,6 +30,10 @@ pub struct StartArgs {
     /// Note: This is the default behavior; flag exists for compatibility
     #[arg(long)]
     pub no_daemon: bool,
+
+    /// Force rebuild the Docker image from scratch (no cache)
+    #[arg(long)]
+    pub rebuild: bool,
 }
 
 /// Start the opencode service
@@ -53,15 +57,29 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
 
     let port = args.port.unwrap_or(OPENCODE_WEB_PORT);
 
-    // Check if already running (idempotent behavior)
-    if container_is_running(&client, CONTAINER_NAME).await? {
-        if !quiet {
-            let url = format!("http://127.0.0.1:{}", port);
-            println!("{}", style("Service is already running").dim());
-            println!();
-            println!("URL:        {}", style(&url).cyan());
+    // If rebuilding, stop and remove existing container first
+    if args.rebuild {
+        if container_is_running(&client, CONTAINER_NAME).await? {
+            if verbose > 0 {
+                eprintln!(
+                    "{} Stopping existing container for rebuild...",
+                    style("[info]").cyan()
+                );
+            }
+            // Stop and remove container so we can create a fresh one with the new image
+            stop_service(&client, true).await.ok(); // Ignore errors if container doesn't exist
         }
-        return Ok(());
+    } else {
+        // Check if already running (idempotent behavior) - only when not rebuilding
+        if container_is_running(&client, CONTAINER_NAME).await? {
+            if !quiet {
+                let url = format!("http://127.0.0.1:{}", port);
+                println!("{}", style("Service is already running").dim());
+                println!();
+                println!("URL:        {}", style(&url).cyan());
+            }
+            return Ok(());
+        }
     }
 
     // Pre-check port availability
@@ -74,18 +92,39 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
         return Err(anyhow!(msg));
     }
 
-    // Check if image exists - build if not (separate spinner for build phase)
-    if !image_exists(&client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await? {
+    // Check if image exists - build if not, or rebuild if requested
+    let needs_build =
+        args.rebuild || !image_exists(&client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await?;
+
+    if needs_build {
         if verbose > 0 {
+            let action = if args.rebuild {
+                "Rebuilding"
+            } else {
+                "Building"
+            };
             eprintln!(
-                "{} Building from embedded Dockerfile",
-                style("[info]").cyan()
+                "{} {} from embedded Dockerfile{}",
+                style("[info]").cyan(),
+                action,
+                if args.rebuild { " (no cache)" } else { "" }
             );
         }
 
         // Use ProgressReporter for the build with context prefix
-        let mut progress = ProgressReporter::with_context("Building image");
-        build_image(&client, Some(IMAGE_TAG_DEFAULT), &mut progress).await?;
+        let context = if args.rebuild {
+            "Rebuilding image (no cache)"
+        } else {
+            "Building image"
+        };
+        let mut progress = ProgressReporter::with_context(context);
+        build_image(
+            &client,
+            Some(IMAGE_TAG_DEFAULT),
+            &mut progress,
+            args.rebuild,
+        )
+        .await?;
     }
 
     // Create spinner for container start phase (after build completes)

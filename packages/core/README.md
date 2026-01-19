@@ -63,15 +63,59 @@ cargo run -p opencode-cloud -- --version
 # Show version
 occ --version
 
+# Start the service (builds image on first run)
+occ start
+
+# Start on a custom port
+occ start --port 8080
+
+# Start and open browser
+occ start --open
+
+# Check service status
+occ status
+
+# View logs
+occ logs
+
+# Follow logs in real-time
+occ logs -f
+
+# Stop the service
+occ stop
+
+# Restart the service
+occ restart
+
+# Install as a system service (starts on login/boot)
+occ install
+
+# Uninstall the system service
+occ uninstall
+
 # View configuration
 occ config show
-
-# More commands coming in future releases:
-# occ start    - Start the service
-# occ stop     - Stop the service
-# occ status   - Check service status
-# occ logs     - View service logs
 ```
+
+### Rebuilding the Docker Image
+
+When developing locally or after updating opencode-cloud, you may need to rebuild the Docker image to pick up changes in the embedded Dockerfile:
+
+```bash
+# Force rebuild the image from scratch (no Docker cache)
+occ start --rebuild
+```
+
+The `--rebuild` flag is essential for local development because:
+- Docker caches layers from previous builds, so changes to the Dockerfile may not take effect
+- It stops and removes any existing container before rebuilding
+- It ensures you're running the latest version of the image with all changes applied
+
+**When to use `--rebuild`:**
+- After pulling updates to opencode-cloud
+- When modifying the Dockerfile during development
+- When the container fails to start due to image issues
+- When you want a completely fresh environment
 
 ## Configuration
 

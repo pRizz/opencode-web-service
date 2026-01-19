@@ -56,14 +56,21 @@ pub async fn image_exists(
 ///
 /// Shows real-time build progress with streaming output.
 /// Returns the full image:tag string on success.
+///
+/// # Arguments
+/// * `client` - Docker client
+/// * `tag` - Image tag (defaults to IMAGE_TAG_DEFAULT)
+/// * `progress` - Progress reporter for build feedback
+/// * `no_cache` - If true, build without using Docker layer cache
 pub async fn build_image(
     client: &DockerClient,
     tag: Option<&str>,
     progress: &mut ProgressReporter,
+    no_cache: bool,
 ) -> Result<String, DockerError> {
     let tag = tag.unwrap_or(IMAGE_TAG_DEFAULT);
     let full_name = format!("{IMAGE_NAME_GHCR}:{tag}");
-    debug!("Building image: {}", full_name);
+    debug!("Building image: {} (no_cache: {})", full_name, no_cache);
 
     // Create tar archive containing Dockerfile
     let context = create_build_context()
@@ -74,6 +81,7 @@ pub async fn build_image(
         t: full_name.clone(),
         dockerfile: "Dockerfile".to_string(),
         rm: true,
+        nocache: no_cache,
         ..Default::default()
     };
 
