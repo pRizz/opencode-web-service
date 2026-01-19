@@ -422,6 +422,7 @@ RUN echo 'export PATH="/home/opencode/.local/bin:$PATH"' >> /home/opencode/.zshr
 # -----------------------------------------------------------------------------
 # Health Check
 # -----------------------------------------------------------------------------
+# Port 3000 must match OPENCODE_WEB_PORT in container.rs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
@@ -436,7 +437,8 @@ EXPOSE 3000
 # Use tini as init system for proper signal handling
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Default command: start opencode web interface on port 3000
-# Using full path to ensure binary is found (opencode installs to ~/.opencode/bin/)
-# --hostname 0.0.0.0 is required for Docker port mapping (default 127.0.0.1 only listens on loopback)
+# Default command: start opencode web interface
+# - Port 3000 must match OPENCODE_WEB_PORT in container.rs
+# - Using full path to ensure binary is found (opencode installs to ~/.opencode/bin/)
+# - --hostname 0.0.0.0 is required for Docker port mapping (default 127.0.0.1 only listens on loopback)
 CMD ["/home/opencode/.opencode/bin/opencode", "web", "--port", "3000", "--hostname", "0.0.0.0"]
