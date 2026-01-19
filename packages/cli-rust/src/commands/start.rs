@@ -99,9 +99,9 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     if needs_build {
         if verbose > 0 {
             let action = if args.rebuild {
-                "Rebuilding"
+                "Rebuilding Docker image"
             } else {
-                "Building"
+                "Building Docker image"
             };
             eprintln!(
                 "{} {} from embedded Dockerfile{}",
@@ -113,9 +113,9 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
 
         // Use ProgressReporter for the build with context prefix
         let context = if args.rebuild {
-            "Rebuilding image (no cache)"
+            "Rebuilding Docker image (no cache)"
         } else {
-            "Building image"
+            "Building Docker image"
         };
         let mut progress = ProgressReporter::with_context(context);
         build_image(

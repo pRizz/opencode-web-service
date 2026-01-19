@@ -64,7 +64,7 @@ pub struct ProgressReporter {
     last_update: HashMap<String, Instant>,
     last_message: HashMap<String, String>,
     start_time: Instant,
-    /// Optional context prefix shown before step messages (e.g., "Building image")
+    /// Optional context prefix shown before step messages (e.g., "Building Docker image")
     context: Option<String>,
 }
 
@@ -89,7 +89,7 @@ impl ProgressReporter {
 
     /// Create a new progress reporter with a context prefix
     ///
-    /// The context is shown before step messages, e.g., "Building image · Step 1/10"
+    /// The context is shown before step messages, e.g., "Building Docker image · Step 1/10"
     pub fn with_context(context: &str) -> Self {
         Self {
             multi: MultiProgress::new(),
@@ -326,26 +326,26 @@ mod tests {
 
     #[test]
     fn with_context_sets_context() {
-        let reporter = ProgressReporter::with_context("Building image");
+        let reporter = ProgressReporter::with_context("Building Docker image");
         assert!(reporter.context.is_some());
-        assert_eq!(reporter.context.unwrap(), "Building image");
+        assert_eq!(reporter.context.unwrap(), "Building Docker image");
     }
 
     #[test]
     fn format_message_includes_context_for_steps() {
-        let reporter = ProgressReporter::with_context("Building image");
+        let reporter = ProgressReporter::with_context("Building Docker image");
         let msg = reporter.format_message("Step 1/10 : FROM ubuntu");
         // Format: [elapsed] Context · message
-        assert!(msg.contains("Building image · Step 1/10"));
+        assert!(msg.contains("Building Docker image · Step 1/10"));
         assert!(msg.starts_with("[00:00]"));
     }
 
     #[test]
     fn format_message_includes_context_for_all_messages() {
-        let reporter = ProgressReporter::with_context("Building image");
+        let reporter = ProgressReporter::with_context("Building Docker image");
         let msg = reporter.format_message("Compiling foo v1.0");
         // Format: [elapsed] Context · message
-        assert!(msg.contains("Building image · Compiling foo"));
+        assert!(msg.contains("Building Docker image · Compiling foo"));
         assert!(msg.starts_with("[00:00]"));
     }
 
