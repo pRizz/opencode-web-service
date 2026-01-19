@@ -16,5 +16,5 @@ pub mod progress;
 pub use client::DockerClient;
 pub use dockerfile::{DOCKERFILE, IMAGE_NAME_DOCKERHUB, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT};
 pub use error::DockerError;
-pub use image::{build_image, image_exists};
+pub use image::{build_image, image_exists, pull_image};
 pub use progress::ProgressReporter;

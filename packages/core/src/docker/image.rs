@@ -4,15 +4,17 @@
 //! Dockerfile and pull images from registries with progress feedback.
 
 use super::progress::ProgressReporter;
-use super::{DOCKERFILE, DockerClient, DockerError, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT};
-use bollard::image::BuildImageOptions;
+use super::{
+    DOCKERFILE, DockerClient, DockerError, IMAGE_NAME_DOCKERHUB, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT,
+};
+use bollard::image::{BuildImageOptions, CreateImageOptions};
 use bollard::models::BuildInfoAux;
 use bytes::Bytes;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use futures_util::StreamExt;
 use tar::Builder as TarBuilder;
-use tracing::debug;
+use tracing::{debug, warn};
 
 /// Check if an image exists locally
 pub async fn image_exists(
@@ -116,6 +118,163 @@ pub async fn build_image(
     progress.finish("build", &finish_msg);
 
     Ok(full_name)
+}
+
+/// Pull the opencode image from registry with automatic fallback
+///
+/// Tries GHCR first, falls back to Docker Hub on failure.
+/// Returns the full image:tag string on success.
+pub async fn pull_image(
+    client: &DockerClient,
+    tag: Option<&str>,
+    progress: &mut ProgressReporter,
+) -> Result<String, DockerError> {
+    let tag = tag.unwrap_or(IMAGE_TAG_DEFAULT);
+
+    // Try GHCR first
+    debug!("Attempting to pull from GHCR: {}:{}", IMAGE_NAME_GHCR, tag);
+    let ghcr_err = match pull_from_registry(client, IMAGE_NAME_GHCR, tag, progress).await {
+        Ok(()) => {
+            let full_name = format!("{IMAGE_NAME_GHCR}:{tag}");
+            return Ok(full_name);
+        }
+        Err(e) => e,
+    };
+
+    warn!(
+        "GHCR pull failed: {}. Trying Docker Hub fallback...",
+        ghcr_err
+    );
+
+    // Try Docker Hub as fallback
+    debug!(
+        "Attempting to pull from Docker Hub: {}:{}",
+        IMAGE_NAME_DOCKERHUB, tag
+    );
+    match pull_from_registry(client, IMAGE_NAME_DOCKERHUB, tag, progress).await {
+        Ok(()) => {
+            let full_name = format!("{IMAGE_NAME_DOCKERHUB}:{tag}");
+            Ok(full_name)
+        }
+        Err(dockerhub_err) => Err(DockerError::Pull(format!(
+            "Failed to pull from both registries. GHCR: {}. Docker Hub: {}",
+            ghcr_err, dockerhub_err
+        ))),
+    }
+}
+
+/// Maximum number of retry attempts for pull operations
+const MAX_PULL_RETRIES: usize = 3;
+
+/// Pull from a specific registry with retry logic
+async fn pull_from_registry(
+    client: &DockerClient,
+    image: &str,
+    tag: &str,
+    progress: &mut ProgressReporter,
+) -> Result<(), DockerError> {
+    let full_name = format!("{image}:{tag}");
+
+    // Manual retry loop since async closures can't capture mutable references
+    let mut last_error = None;
+    for attempt in 1..=MAX_PULL_RETRIES {
+        debug!(
+            "Pull attempt {}/{} for {}",
+            attempt, MAX_PULL_RETRIES, full_name
+        );
+
+        match do_pull(client, image, tag, progress).await {
+            Ok(()) => return Ok(()),
+            Err(e) => {
+                warn!("Pull attempt {} failed: {}", attempt, e);
+                last_error = Some(e);
+
+                if attempt < MAX_PULL_RETRIES {
+                    // Exponential backoff: 1s, 2s, 4s
+                    let delay_ms = 1000 * (1 << (attempt - 1));
+                    tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
+                }
+            }
+        }
+    }
+
+    Err(last_error.unwrap_or_else(|| {
+        DockerError::Pull(format!(
+            "Pull failed for {} after {} attempts",
+            full_name, MAX_PULL_RETRIES
+        ))
+    }))
+}
+
+/// Perform the actual pull operation
+async fn do_pull(
+    client: &DockerClient,
+    image: &str,
+    tag: &str,
+    progress: &mut ProgressReporter,
+) -> Result<(), DockerError> {
+    let full_name = format!("{image}:{tag}");
+
+    let options = CreateImageOptions {
+        from_image: image,
+        tag,
+        ..Default::default()
+    };
+
+    let mut stream = client.inner().create_image(Some(options), None, None);
+
+    // Add main spinner for overall progress
+    progress.add_spinner("pull", &format!("Pulling {full_name}..."));
+
+    while let Some(result) = stream.next().await {
+        match result {
+            Ok(info) => {
+                // Handle errors from the stream
+                if let Some(error_msg) = info.error {
+                    progress.abandon_all(&error_msg);
+                    return Err(DockerError::Pull(error_msg));
+                }
+
+                // Handle layer progress
+                if let Some(layer_id) = &info.id {
+                    let status = info.status.as_deref().unwrap_or("");
+
+                    match status {
+                        "Already exists" => {
+                            progress.finish(layer_id, "Already exists");
+                        }
+                        "Pull complete" => {
+                            progress.finish(layer_id, "Pull complete");
+                        }
+                        "Downloading" | "Extracting" => {
+                            if let Some(progress_detail) = &info.progress_detail {
+                                let current = progress_detail.current.unwrap_or(0) as u64;
+                                let total = progress_detail.total.unwrap_or(0) as u64;
+
+                                if total > 0 {
+                                    progress.update_layer(layer_id, current, total, status);
+                                }
+                            }
+                        }
+                        _ => {
+                            // Other statuses (Waiting, Verifying, etc.)
+                            progress.update_spinner(layer_id, status);
+                        }
+                    }
+                } else if let Some(status) = &info.status {
+                    // Overall status messages (no layer id)
+                    progress.update_spinner("pull", status);
+                }
+            }
+            Err(e) => {
+                progress.abandon_all("Pull failed");
+                return Err(DockerError::Pull(format!("Pull failed: {e}")));
+            }
+        }
+    }
+
+    progress.finish("pull", &format!("Pull complete: {full_name}"));
+    Ok(())
 }
 
 /// Create a gzipped tar archive containing the Dockerfile
