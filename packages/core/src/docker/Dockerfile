@@ -338,7 +338,10 @@ RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
 # opencode Installation
 # -----------------------------------------------------------------------------
 # Install opencode using official install script
-RUN curl -fsSL https://opencode.ai/install | bash
+# The script installs to ~/.local/bin which is already in PATH
+RUN curl -fsSL https://opencode.ai/install | bash \
+    && ls -la /home/opencode/.local/bin/opencode || echo "opencode not in .local/bin" \
+    && which opencode || echo "opencode not in PATH"
 
 # -----------------------------------------------------------------------------
 # GSD Plugin Installation
@@ -417,18 +420,19 @@ RUN echo 'export PATH="/home/opencode/.local/bin:$PATH"' >> /home/opencode/.zshr
 # Health Check
 # -----------------------------------------------------------------------------
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # -----------------------------------------------------------------------------
 # Final Configuration
 # -----------------------------------------------------------------------------
 WORKDIR /home/opencode/workspace
 
-# Expose default opencode web port
-EXPOSE 8080
+# Expose opencode web port (matches DEFAULT_PORT in container.rs)
+EXPOSE 3000
 
 # Use tini as init system for proper signal handling
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Default command: start opencode web interface
-CMD ["opencode", "web"]
+# Default command: start opencode web interface on port 3000
+# Using full path to ensure binary is found
+CMD ["/home/opencode/.local/bin/opencode", "web", "--port", "3000"]
