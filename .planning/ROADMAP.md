@@ -20,6 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6: Security and Authentication** - Basic auth, localhost binding, network exposure opt-in
 - [ ] **Phase 7: Update and Maintenance** - Update command, health check endpoint
 - [ ] **Phase 8: Polish and Documentation** - Help docs, error messages, uninstall cleanup
+- [ ] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
 
 ## Phase Details
 
@@ -155,10 +156,25 @@ Plans:
 - [ ] 08-01: TBD (help documentation)
 - [ ] 08-02: TBD (error handling and uninstall)
 
+### Phase 9: Dockerfile Version Pinning
+**Goal**: Pin explicit versions for tools installed from GitHub in the Dockerfile to improve security and reproducibility
+**Depends on**: Phase 8
+**Requirements**: None (enhancement)
+**Note**: The custom Dockerfile installs many tools from GitHub releases without version pinning. This phase will review each tool and set explicit versions for security and repeatability.
+**Success Criteria** (what must be TRUE):
+  1. All GitHub-installed tools have explicit version tags (not :latest)
+  2. Version pinning documented in Dockerfile comments
+  3. Image builds are reproducible given same Dockerfile
+  4. Security: Supply chain risk reduced by pinning to known-good versions
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: TBD (audit and pin versions)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -170,6 +186,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 6. Security and Authentication | 0/2 | Not started | - |
 | 7. Update and Maintenance | 0/2 | Not started | - |
 | 8. Polish and Documentation | 0/2 | Not started | - |
+| 9. Dockerfile Version Pinning | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*

@@ -9,7 +9,7 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 2 of 8 (Docker Integration)
+Phase: 2 of 9 (Docker Integration)
 Plan: 3 of 3 in current phase
 Status: Phase complete
 Last activity: 2026-01-19 - Completed 02-03-PLAN.md (Volume and Container Lifecycle)
@@ -72,6 +72,10 @@ Recent decisions affecting current work:
 
 1. **Make README sync more robust** (tooling) - Add CI check to verify package READMEs match root; consider husky/lefthook for cross-platform hook management.
 2. **Handle pnpm v10 blocked install scripts** (tooling) - Add runtime guard with actionable error for pnpm users; document workaround in README.
+
+### Roadmap Evolution
+
+- Phase 9 added: Dockerfile Version Pinning (pin explicit versions for GitHub-installed tools)
 
 ### Blockers/Concerns
 
