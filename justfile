@@ -16,6 +16,11 @@ setup:
 # Build everything
 build: build-rust build-node
 
+# Compile and run the occ binary (arguments automatically get passed to the binary)
+# Example: just run --version
+run *args:
+    cargo run -p opencode-cloud --bin occ -- {{args}}
+
 # Build Rust packages
 build-rust:
     cargo build --workspace
