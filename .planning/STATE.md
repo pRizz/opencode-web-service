@@ -9,7 +9,7 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 3 of 11 (Service Lifecycle Commands)
+Phase: 3 of 12 (Service Lifecycle Commands)
 Plan: 2 of 2 in current phase
 Status: Phase complete
 Last activity: 2026-01-19 - Completed 03-02-PLAN.md (Status and Logs Commands)
@@ -85,6 +85,7 @@ Recent decisions affecting current work:
 - Phase 9 added: Dockerfile Version Pinning (pin explicit versions for GitHub-installed tools)
 - Phase 10 added: Remote Administration via Cockpit (integrate and expose remote admin of Docker container)
 - Phase 11 added: Remote Host Management (occ manages containers on different hosts)
+- Phase 12 added: Web Desktop UI Investigation (Friend OS, WDE, etc.)
 
 ### Blockers/Concerns
 

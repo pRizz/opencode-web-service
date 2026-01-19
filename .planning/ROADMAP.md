@@ -23,6 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
 - [ ] **Phase 10: Remote Administration via Cockpit** - Integrate and expose remote admin of Docker container via Cockpit
 - [ ] **Phase 11: Remote Host Management** - Allow occ to remotely install and interact with Docker containers on different hosts
+- [ ] **Phase 12: Web Desktop UI Investigation** - Investigate integrating secure web-exposed desktop UI (Friend OS, WDE, etc.)
 
 ## Phase Details
 
@@ -203,10 +204,25 @@ Plans:
 Plans:
 - [ ] 11-01: TBD (remote host management)
 
+### Phase 12: Web Desktop UI Investigation
+**Goal**: Investigate integrating a secure web-exposed full custom browser desktop UI such as Friend OS, WDE, or similar
+**Depends on**: Phase 11
+**Requirements**: None (research/enhancement)
+**Note**: Research phase to evaluate web desktop environments that could provide a full graphical interface to the containerized environment, accessible securely via browser.
+**Success Criteria** (what must be TRUE):
+  1. Candidate web desktop solutions evaluated (Friend OS, WDE, others)
+  2. Security implications documented (auth, isolation, network exposure)
+  3. Integration feasibility assessed with current Docker architecture
+  4. Recommendation made: proceed with implementation or defer
+**Plans**: TBD
+
+Plans:
+- [ ] 12-01: TBD (research and evaluation)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -221,7 +237,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 9. Dockerfile Version Pinning | 0/1 | Not started | - |
 | 10. Remote Administration via Cockpit | 0/1 | Not started | - |
 | 11. Remote Host Management | 0/1 | Not started | - |
+| 12. Web Desktop UI Investigation | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 3 complete)*
+*Last updated: 2026-01-19 (Phase 12 added)*
