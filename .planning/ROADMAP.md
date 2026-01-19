@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Project Foundation** - Monorepo structure, CLI skeletons, config management
 - [x] **Phase 2: Docker Integration** - Container lifecycle via Bollard
 - [x] **Phase 3: Service Lifecycle Commands** - Start/stop/restart/status/logs
-- [ ] **Phase 4: Platform Service Installation** - systemd/launchd registration, boot persistence
+- [x] **Phase 4: Platform Service Installation** - systemd/launchd registration, boot persistence
 - [ ] **Phase 5: Interactive Setup Wizard** - Guided first-run experience
 - [ ] **Phase 6: Security and Authentication** - Basic auth, localhost binding, network exposure opt-in
 - [ ] **Phase 7: Update and Maintenance** - Update command, health check endpoint
@@ -89,10 +89,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Config schema extension (boot_mode, restart policy) and ServiceManager trait
-- [ ] 04-02-PLAN.md — systemd implementation for Linux service registration
-- [ ] 04-03-PLAN.md — launchd implementation for macOS service registration
-- [ ] 04-04-PLAN.md — Install/uninstall CLI commands and status integration
+- [x] 04-01-PLAN.md — Config schema extension (boot_mode, restart policy) and ServiceManager trait
+- [x] 04-02-PLAN.md — systemd implementation for Linux service registration
+- [x] 04-03-PLAN.md — launchd implementation for macOS service registration
+- [x] 04-04-PLAN.md — Install/uninstall CLI commands and status integration
 
 ### Phase 5: Interactive Setup Wizard
 **Goal**: First-time users are guided through configuration with sensible defaults
@@ -231,7 +231,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 1. Project Foundation | 2/2 | ✓ Complete | 2026-01-18 |
 | 2. Docker Integration | 3/3 | ✓ Complete | 2026-01-19 |
 | 3. Service Lifecycle Commands | 2/2 | ✓ Complete | 2026-01-19 |
-| 4. Platform Service Installation | 0/4 | Not started | - |
+| 4. Platform Service Installation | 4/4 | ✓ Complete | 2026-01-19 |
 | 5. Interactive Setup Wizard | 0/2 | Not started | - |
 | 6. Security and Authentication | 0/2 | Not started | - |
 | 7. Update and Maintenance | 0/2 | Not started | - |
@@ -243,4 +243,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 4 planned)*
+*Last updated: 2026-01-19 (Phase 4 complete)*
