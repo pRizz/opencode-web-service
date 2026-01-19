@@ -22,6 +22,7 @@ build-rust:
 
 # Build Node packages (including NAPI bindings)
 build-node:
+    pnpm install
     pnpm -C packages/core build
     pnpm -r --filter="!@opencode-cloud/core" build
 
@@ -61,6 +62,7 @@ clean:
 # Release build
 release:
     cargo build --workspace --release
+    pnpm install
     pnpm -C packages/core build
 
 # Publish to crates.io (core first, then cli)
