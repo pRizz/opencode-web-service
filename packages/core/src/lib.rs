@@ -4,6 +4,7 @@
 //! and Node.js bindings via NAPI-RS.
 
 pub mod config;
+pub mod docker;
 pub mod singleton;
 pub mod version;
 
@@ -15,6 +16,9 @@ pub use config::{Config, load_config, save_config};
 
 // Re-export singleton types
 pub use singleton::{InstanceLock, SingletonError};
+
+// Re-export docker types
+pub use docker::{DockerClient, DockerError};
 
 // NAPI bindings for Node.js consumers (only when napi feature is enabled)
 #[cfg(feature = "napi")]

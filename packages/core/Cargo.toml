@@ -37,6 +37,15 @@ console.workspace = true
 napi = { workspace = true, optional = true }
 napi-derive = { workspace = true, optional = true }
 
+# Docker integration
+bollard.workspace = true
+futures-util.workspace = true
+tar.workspace = true
+flate2.workspace = true
+tokio-retry.workspace = true
+indicatif.workspace = true
+http-body-util.workspace = true
+
 [build-dependencies]
 napi-build = "2"
 
