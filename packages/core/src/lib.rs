@@ -5,6 +5,7 @@
 
 pub mod config;
 pub mod docker;
+pub mod platform;
 pub mod singleton;
 pub mod version;
 
@@ -19,6 +20,12 @@ pub use singleton::{InstanceLock, SingletonError};
 
 // Re-export docker types
 pub use docker::{CONTAINER_NAME, DEFAULT_PORT, DockerClient, DockerError};
+
+// Re-export platform types
+pub use platform::{
+    InstallResult, ServiceConfig, ServiceManager, get_service_manager,
+    is_service_registration_supported,
+};
 
 // NAPI bindings for Node.js consumers (only when napi feature is enabled)
 #[cfg(feature = "napi")]
