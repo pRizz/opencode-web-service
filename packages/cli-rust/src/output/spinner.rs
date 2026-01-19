@@ -26,11 +26,11 @@ impl CommandSpinner {
     /// Create a new spinner with the given message
     ///
     /// The spinner starts ticking immediately at 100ms intervals.
-    /// Shows: `spinner message (elapsed)`
+    /// Shows: `spinner message (MM:SS)` with both minutes and seconds
     pub fn new(message: &str) -> Self {
         let bar = ProgressBar::new_spinner();
         bar.set_style(
-            ProgressStyle::with_template("{spinner:.green} {msg} ({elapsed})")
+            ProgressStyle::with_template("{spinner:.green} {msg} ({elapsed_precise:.dim})")
                 .expect("invalid spinner template")
                 .tick_chars("\u{28CB}\u{2819}\u{2839}\u{2838}\u{283C}\u{2834}\u{2826}\u{2827}\u{2807}\u{280F}"),
         );

@@ -5,6 +5,10 @@
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
+
+/// Minimum time between spinner message updates to prevent flickering
+const SPINNER_UPDATE_THROTTLE: Duration = Duration::from_millis(150);
 
 /// Progress reporter for Docker operations
 ///
@@ -13,6 +17,8 @@ use std::collections::HashMap;
 pub struct ProgressReporter {
     multi: MultiProgress,
     bars: HashMap<String, ProgressBar>,
+    last_update: HashMap<String, Instant>,
+    last_message: HashMap<String, String>,
 }
 
 impl Default for ProgressReporter {
@@ -27,6 +33,8 @@ impl ProgressReporter {
         Self {
             multi: MultiProgress::new(),
             bars: HashMap::new(),
+            last_update: HashMap::new(),
+            last_message: HashMap::new(),
         }
     }
 
@@ -83,13 +91,41 @@ impl ProgressReporter {
     }
 
     /// Update spinner message (used during build)
+    ///
+    /// Updates are throttled to prevent flickering from rapid message changes.
+    /// "Step X/Y" messages always update immediately as they indicate significant progress.
     pub fn update_spinner(&mut self, id: &str, message: &str) {
+        let now = Instant::now();
+        let is_step_message = message.starts_with("Step ");
+
+        // Check if we should throttle this update
+        if !is_step_message {
+            if let Some(last) = self.last_update.get(id) {
+                if now.duration_since(*last) < SPINNER_UPDATE_THROTTLE {
+                    return; // Throttle: too soon since last update
+                }
+            }
+
+            // Skip if message is identical to last one
+            if let Some(last_msg) = self.last_message.get(id) {
+                if last_msg == message {
+                    return;
+                }
+            }
+        }
+
+        // Perform the update
         if let Some(spinner) = self.bars.get(id) {
             spinner.set_message(message.to_string());
         } else {
             // Create new spinner if doesn't exist
             self.add_spinner(id, message);
         }
+
+        // Track update time and message
+        self.last_update.insert(id.to_string(), now);
+        self.last_message
+            .insert(id.to_string(), message.to_string());
     }
 
     /// Mark a layer/step as complete
