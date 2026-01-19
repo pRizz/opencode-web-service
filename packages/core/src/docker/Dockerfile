@@ -438,4 +438,5 @@ ENTRYPOINT ["/usr/bin/tini", "--"]
 
 # Default command: start opencode web interface on port 3000
 # Using full path to ensure binary is found (opencode installs to ~/.opencode/bin/)
-CMD ["/home/opencode/.opencode/bin/opencode", "web", "--port", "3000"]
+# --hostname 0.0.0.0 is required for Docker port mapping (default 127.0.0.1 only listens on loopback)
+CMD ["/home/opencode/.opencode/bin/opencode", "web", "--port", "3000", "--hostname", "0.0.0.0"]
