@@ -75,17 +75,20 @@ impl ProgressReporter {
     fn format_message(&self, message: &str) -> String {
         let elapsed = format_elapsed(self.start_time.elapsed());
 
+        // Trim trailing whitespace (including newlines) to prevent timer on new line
+        let clean_msg = message.trim_end();
+
         match &self.context {
             Some(ctx) => {
                 // For "Step X/Y" messages, show: "Context · Step X/Y (elapsed)"
-                if message.starts_with("Step ") {
-                    format!("{} · {} ({})", ctx, message, elapsed)
+                if clean_msg.starts_with("Step ") {
+                    format!("{} · {} ({})", ctx, clean_msg, elapsed)
                 } else {
                     // For other messages, just show with elapsed time
-                    format!("{} ({})", message, elapsed)
+                    format!("{} ({})", clean_msg, elapsed)
                 }
             }
-            None => format!("{} ({})", message, elapsed),
+            None => format!("{} ({})", clean_msg, elapsed),
         }
     }
 
@@ -312,5 +315,14 @@ mod tests {
         let msg = reporter.format_message("Step 1/10 : FROM ubuntu");
         assert!(msg.starts_with("Step 1/10"));
         assert!(!msg.contains("·"));
+    }
+
+    #[test]
+    fn format_message_trims_trailing_newlines() {
+        let reporter = ProgressReporter::new();
+        // Trailing newline should be stripped so timer doesn't appear on new line
+        let msg = reporter.format_message("Step 1/10 : RUN echo hello\n");
+        assert!(!msg.ends_with('\n'));
+        assert!(msg.contains("RUN echo hello ("));
     }
 }
