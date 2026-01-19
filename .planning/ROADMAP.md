@@ -27,6 +27,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 13: Container Security Tools** - Add trivy, gitleaks, hadolint, age, sops, mkcert to container
 - [ ] **Phase 14: Auto-rebuild Detection** - Detect CLI/image version mismatch and prompt for rebuild
 - [ ] **Phase 15: Prebuilt Image Option** - Option to pull prebuilt images vs building from scratch
+- [ ] **Phase 16: Code Quality Audit** - Reduce nesting, eliminate duplication, improve readability
 
 ## Phase Details
 
@@ -275,10 +276,28 @@ Plans:
 - [ ] 15-01: TBD (CI/CD for prebuilt images)
 - [ ] 15-02: TBD (first-run prompt and config option)
 
+### Phase 16: Code Quality Audit
+**Goal**: Improve code maintainability by reducing nesting, eliminating duplication, and applying consistent patterns
+**Depends on**: Phase 8 (Polish and Documentation)
+**Requirements**: None (maintenance/refactoring)
+**Note**: Audit the entire codebase for deeply nested logic, duplicated code, and inconsistent patterns. Apply early returns, guard clauses, and extract helper functions where appropriate. This is a refactoring-only phase with no functional changes.
+**Success Criteria** (what must be TRUE):
+  1. No function exceeds 3 levels of nesting (excluding match arms)
+  2. Duplicated logic extracted into shared helpers or traits
+  3. Early returns and guard clauses used consistently
+  4. All files pass `cargo clippy` with no warnings
+  5. No regression in test coverage or functionality
+**Plans**: TBD
+
+Plans:
+- [ ] 16-01: TBD (audit and identify problem areas)
+- [ ] 16-02: TBD (refactor CLI commands)
+- [ ] 16-03: TBD (refactor core library)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -297,7 +316,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 13. Container Security Tools | 0/1 | Not started | - |
 | 14. Auto-rebuild Detection | 0/1 | Not started | - |
 | 15. Prebuilt Image Option | 0/2 | Not started | - |
+| 16. Code Quality Audit | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 15 added - prebuilt image option)*
+*Last updated: 2026-01-19 (Phase 16 added - code quality audit)*
