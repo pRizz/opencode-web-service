@@ -43,7 +43,7 @@ impl ProgressReporter {
         let spinner = self.multi.add(ProgressBar::new_spinner());
         spinner.set_style(
             ProgressStyle::default_spinner()
-                .template("{spinner:.green} {msg}")
+                .template("{spinner:.green} {msg} ({elapsed_precise:.dim})")
                 .expect("valid template")
                 .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"),
         );

@@ -73,13 +73,8 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
         return Err(anyhow!(msg));
     }
 
-    // Create spinner
-    let spinner = CommandSpinner::new_maybe("Starting service...", quiet);
-
-    // Check if image exists - build if not
+    // Check if image exists - build if not (separate spinner for build phase)
     if !image_exists(&client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await? {
-        spinner.update("Building image (first run)...");
-
         if verbose > 0 {
             eprintln!(
                 "{} Building from embedded Dockerfile",
@@ -87,13 +82,13 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
             );
         }
 
-        // Create a progress reporter for the build
+        // Use ProgressReporter for the build (has its own spinner)
         let mut progress = ProgressReporter::new();
         build_image(&client, Some(IMAGE_TAG_DEFAULT), &mut progress).await?;
     }
 
-    // Start container
-    spinner.update("Starting container...");
+    // Create spinner for container start phase (after build completes)
+    let spinner = CommandSpinner::new_maybe("Starting container...", quiet);
 
     let container_id = match setup_and_start(&client, Some(port), None).await {
         Ok(id) => id,

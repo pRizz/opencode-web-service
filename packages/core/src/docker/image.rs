@@ -70,7 +70,7 @@ pub async fn build_image(
     let mut stream = client.inner().build_image(options, None, Some(body));
 
     // Add main build spinner
-    progress.add_spinner("build", "Building image...");
+    progress.add_spinner("build", "Building image (first run)...");
 
     let mut maybe_image_id = None;
     let mut recent_logs: VecDeque<String> = VecDeque::with_capacity(BUILD_LOG_BUFFER_SIZE);
