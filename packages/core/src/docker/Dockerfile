@@ -195,6 +195,9 @@ ENV PATH="/home/opencode/.cargo/bin:${PATH}"
 # -----------------------------------------------------------------------------
 # Package Managers
 # -----------------------------------------------------------------------------
+# Switch to bash for mise activation (mise outputs bash-specific syntax)
+SHELL ["/bin/bash", "-c"]
+
 # Install pnpm (corepack is included with Node.js)
 RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && corepack enable \
