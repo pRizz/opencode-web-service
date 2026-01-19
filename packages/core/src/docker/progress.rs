@@ -113,11 +113,11 @@ impl ProgressReporter {
         // - Trim leading/trailing whitespace
         let clean_msg = stripped.split_whitespace().collect::<Vec<_>>().join(" ");
 
+        // Format: "[elapsed] Context · message" or "[elapsed] message"
+        // Timer at the beginning for easy scanning
         match &self.context {
-            // Always show context prefix: "Building image · Step 1/10 (elapsed)"
-            // or "Building image · Compiling foo (elapsed)"
-            Some(ctx) => format!("{} · {} ({})", ctx, clean_msg, elapsed),
-            None => format!("{} ({})", clean_msg, elapsed),
+            Some(ctx) => format!("[{}] {} · {}", elapsed, ctx, clean_msg),
+            None => format!("[{}] {}", elapsed, clean_msg),
         }
     }
 
@@ -335,21 +335,27 @@ mod tests {
     fn format_message_includes_context_for_steps() {
         let reporter = ProgressReporter::with_context("Building image");
         let msg = reporter.format_message("Step 1/10 : FROM ubuntu");
-        assert!(msg.starts_with("Building image · Step 1/10"));
+        // Format: [elapsed] Context · message
+        assert!(msg.contains("Building image · Step 1/10"));
+        assert!(msg.starts_with("[00:00]"));
     }
 
     #[test]
     fn format_message_includes_context_for_all_messages() {
         let reporter = ProgressReporter::with_context("Building image");
         let msg = reporter.format_message("Compiling foo v1.0");
-        assert!(msg.starts_with("Building image · Compiling foo"));
+        // Format: [elapsed] Context · message
+        assert!(msg.contains("Building image · Compiling foo"));
+        assert!(msg.starts_with("[00:00]"));
     }
 
     #[test]
     fn format_message_without_context() {
         let reporter = ProgressReporter::new();
         let msg = reporter.format_message("Step 1/10 : FROM ubuntu");
-        assert!(msg.starts_with("Step 1/10"));
+        // Format: [elapsed] message (no context, no dot)
+        assert!(msg.contains("Step 1/10"));
+        assert!(msg.starts_with("[00:00]"));
         assert!(!msg.contains("·"));
     }
 
@@ -359,7 +365,7 @@ mod tests {
         // All whitespace (including newlines) collapsed to single spaces for spinner display
         let msg = reporter.format_message("Compiling foo\n     Compiling bar\n");
         assert!(!msg.contains('\n'));
-        assert!(msg.contains("Compiling foo Compiling bar ("));
+        assert!(msg.contains("Compiling foo Compiling bar"));
     }
 
     #[test]
