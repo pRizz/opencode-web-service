@@ -18,7 +18,21 @@ use tar::Builder as TarBuilder;
 use tracing::{debug, warn};
 
 /// Maximum number of recent build log lines to capture for error context
-const BUILD_LOG_BUFFER_SIZE: usize = 15;
+const BUILD_LOG_BUFFER_SIZE: usize = 20;
+
+/// Maximum number of error lines to capture separately
+const ERROR_LOG_BUFFER_SIZE: usize = 10;
+
+/// Check if a line looks like an error message
+fn is_error_line(line: &str) -> bool {
+    let lower = line.to_lowercase();
+    lower.contains("error")
+        || lower.contains("failed")
+        || lower.contains("cannot")
+        || lower.contains("unable to")
+        || lower.contains("not found")
+        || lower.contains("permission denied")
+}
 
 /// Check if an image exists locally
 pub async fn image_exists(
@@ -74,6 +88,7 @@ pub async fn build_image(
 
     let mut maybe_image_id = None;
     let mut recent_logs: VecDeque<String> = VecDeque::with_capacity(BUILD_LOG_BUFFER_SIZE);
+    let mut error_logs: VecDeque<String> = VecDeque::with_capacity(ERROR_LOG_BUFFER_SIZE);
 
     while let Some(result) = stream.next().await {
         match result {
@@ -90,6 +105,14 @@ pub async fn build_image(
                         }
                         recent_logs.push_back(msg.to_string());
 
+                        // Also capture error-like lines separately (they might scroll off)
+                        if is_error_line(msg) {
+                            if error_logs.len() >= ERROR_LOG_BUFFER_SIZE {
+                                error_logs.pop_front();
+                            }
+                            error_logs.push_back(msg.to_string());
+                        }
+
                         // Capture step information for better progress
                         if msg.starts_with("Step ") {
                             debug!("Build step: {}", msg);
@@ -100,7 +123,8 @@ pub async fn build_image(
                 // Handle error messages
                 if let Some(error_msg) = info.error {
                     progress.abandon_all(&error_msg);
-                    let context = format_build_error_with_context(&error_msg, &recent_logs);
+                    let context =
+                        format_build_error_with_context(&error_msg, &recent_logs, &error_logs);
                     return Err(DockerError::Build(context));
                 }
 
@@ -120,7 +144,8 @@ pub async fn build_image(
             }
             Err(e) => {
                 progress.abandon_all("Build failed");
-                let context = format_build_error_with_context(&e.to_string(), &recent_logs);
+                let context =
+                    format_build_error_with_context(&e.to_string(), &recent_logs, &error_logs);
                 return Err(DockerError::Build(context));
             }
         }
@@ -291,11 +316,34 @@ async fn do_pull(
 }
 
 /// Format a build error with recent log context for actionable debugging
-fn format_build_error_with_context(error: &str, recent_logs: &VecDeque<String>) -> String {
+fn format_build_error_with_context(
+    error: &str,
+    recent_logs: &VecDeque<String>,
+    error_logs: &VecDeque<String>,
+) -> String {
     let mut message = String::new();
 
     // Add main error message
     message.push_str(error);
+
+    // Add captured error lines if they differ from recent logs
+    // (these are error-like lines that may have scrolled off)
+    if !error_logs.is_empty() {
+        // Check if error_logs contains lines not in recent_logs
+        let recent_set: std::collections::HashSet<_> = recent_logs.iter().collect();
+        let unique_errors: Vec<_> = error_logs
+            .iter()
+            .filter(|line| !recent_set.contains(line))
+            .collect();
+
+        if !unique_errors.is_empty() {
+            message.push_str("\n\nErrors detected during build:");
+            for line in unique_errors {
+                message.push_str("\n  ");
+                message.push_str(line);
+            }
+        }
+    }
 
     // Add recent log context if available
     if !recent_logs.is_empty() {
@@ -377,8 +425,10 @@ mod tests {
         logs.push_back("Step 1/5 : FROM ubuntu:22.04".to_string());
         logs.push_back("Step 2/5 : RUN apt-get update".to_string());
         logs.push_back("E: Unable to fetch some archives".to_string());
+        let error_logs = VecDeque::new();
 
-        let result = format_build_error_with_context("Build failed: exit code 1", &logs);
+        let result =
+            format_build_error_with_context("Build failed: exit code 1", &logs, &error_logs);
 
         assert!(result.contains("Build failed: exit code 1"));
         assert!(result.contains("Recent build output:"));
@@ -389,7 +439,8 @@ mod tests {
     #[test]
     fn format_build_error_handles_empty_logs() {
         let logs = VecDeque::new();
-        let result = format_build_error_with_context("Stream error", &logs);
+        let error_logs = VecDeque::new();
+        let result = format_build_error_with_context("Stream error", &logs, &error_logs);
 
         assert!(result.contains("Stream error"));
         assert!(!result.contains("Recent build output:"));
@@ -398,7 +449,8 @@ mod tests {
     #[test]
     fn format_build_error_adds_network_suggestion() {
         let logs = VecDeque::new();
-        let result = format_build_error_with_context("connection timeout", &logs);
+        let error_logs = VecDeque::new();
+        let result = format_build_error_with_context("connection timeout", &logs, &error_logs);
 
         assert!(result.contains("Check your network connection"));
     }
@@ -406,8 +458,37 @@ mod tests {
     #[test]
     fn format_build_error_adds_disk_suggestion() {
         let logs = VecDeque::new();
-        let result = format_build_error_with_context("no space left on device", &logs);
+        let error_logs = VecDeque::new();
+        let result = format_build_error_with_context("no space left on device", &logs, &error_logs);
 
         assert!(result.contains("Free up disk space"));
+    }
+
+    #[test]
+    fn format_build_error_shows_error_lines_separately() {
+        let mut recent_logs = VecDeque::new();
+        recent_logs.push_back("Compiling foo v1.0".to_string());
+        recent_logs.push_back("Successfully installed bar".to_string());
+
+        let mut error_logs = VecDeque::new();
+        error_logs.push_back("error: failed to compile dust".to_string());
+        error_logs.push_back("error: failed to compile glow".to_string());
+
+        let result = format_build_error_with_context("Build failed", &recent_logs, &error_logs);
+
+        assert!(result.contains("Errors detected during build:"));
+        assert!(result.contains("failed to compile dust"));
+        assert!(result.contains("failed to compile glow"));
+    }
+
+    #[test]
+    fn is_error_line_detects_errors() {
+        assert!(is_error_line("error: something failed"));
+        assert!(is_error_line("Error: build failed"));
+        assert!(is_error_line("Failed to install package"));
+        assert!(is_error_line("cannot find module"));
+        assert!(is_error_line("Unable to locate package"));
+        assert!(!is_error_line("Compiling foo v1.0"));
+        assert!(!is_error_line("Successfully installed"));
     }
 }
