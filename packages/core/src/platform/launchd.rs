@@ -5,7 +5,7 @@
 //! service lifecycle management.
 
 use std::fs::{self, File};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Result, anyhow};
@@ -194,7 +194,7 @@ impl ServiceManager for LaunchdManager {
 
 impl LaunchdManager {
     /// Bootstrap the service using modern launchctl syntax
-    fn bootstrap(&self, plist_path: &PathBuf) -> Result<()> {
+    fn bootstrap(&self, plist_path: &Path) -> Result<()> {
         let output = if self.user_mode {
             let uid = get_user_id()?;
             let domain = format!("gui/{uid}");
@@ -268,9 +268,11 @@ mod tests {
     fn test_service_dir_user_mode() {
         let manager = LaunchdManager::new("user");
         let service_dir = manager.service_dir();
-        assert!(service_dir
-            .to_string_lossy()
-            .contains("Library/LaunchAgents"));
+        assert!(
+            service_dir
+                .to_string_lossy()
+                .contains("Library/LaunchAgents")
+        );
     }
 
     #[test]
@@ -285,9 +287,10 @@ mod tests {
         let manager = LaunchdManager::new("user");
         let path = manager.service_file_path();
         assert!(path.to_string_lossy().ends_with(".plist"));
-        assert!(path
-            .to_string_lossy()
-            .contains("com.opencode-cloud.service"));
+        assert!(
+            path.to_string_lossy()
+                .contains("com.opencode-cloud.service")
+        );
     }
 
     #[test]
@@ -297,12 +300,16 @@ mod tests {
         let stderr_path = manager.log_path("stderr");
 
         assert!(stdout_path.to_string_lossy().contains("Library/Logs"));
-        assert!(stdout_path
-            .to_string_lossy()
-            .contains("opencode-cloud.stdout.log"));
-        assert!(stderr_path
-            .to_string_lossy()
-            .contains("opencode-cloud.stderr.log"));
+        assert!(
+            stdout_path
+                .to_string_lossy()
+                .contains("opencode-cloud.stdout.log")
+        );
+        assert!(
+            stderr_path
+                .to_string_lossy()
+                .contains("opencode-cloud.stderr.log")
+        );
     }
 
     #[test]

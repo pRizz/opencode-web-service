@@ -5,7 +5,25 @@
 
 use std::path::PathBuf;
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
+
+#[cfg(any(
+    target_os = "linux",
+    not(any(target_os = "linux", target_os = "macos"))
+))]
+use anyhow::anyhow;
+
+#[cfg(target_os = "linux")]
+mod systemd;
+
+#[cfg(target_os = "macos")]
+mod launchd;
+
+#[cfg(target_os = "linux")]
+pub use systemd::{SystemdManager, systemd_available};
+
+#[cfg(target_os = "macos")]
+pub use launchd::LaunchdManager;
 
 /// Configuration for service installation
 #[derive(Debug, Clone)]
@@ -72,13 +90,17 @@ pub trait ServiceManager: Send + Sync {
 pub fn get_service_manager() -> Result<Box<dyn ServiceManager>> {
     #[cfg(target_os = "linux")]
     {
-        // Return stub that will be implemented in 04-02
-        Err(anyhow!("systemd manager not yet implemented"))
+        if !systemd::systemd_available() {
+            return Err(anyhow!(
+                "systemd not available on this system. \
+                 Service registration requires systemd as the init system."
+            ));
+        }
+        Ok(Box::new(systemd::SystemdManager::new("user")))
     }
     #[cfg(target_os = "macos")]
     {
-        // Return stub that will be implemented in 04-03
-        Err(anyhow!("launchd manager not yet implemented"))
+        Ok(Box::new(launchd::LaunchdManager::new("user")))
     }
     #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     {
@@ -141,9 +163,29 @@ mod tests {
     }
 
     #[test]
-    fn test_get_service_manager_returns_error() {
-        // Currently returns error since implementations aren't available
+    fn test_get_service_manager_behavior() {
         let result = get_service_manager();
-        assert!(result.is_err());
+
+        // On Linux with systemd: returns Ok(SystemdManager)
+        // On Linux without systemd: returns Err (systemd not available)
+        // On macOS: returns Ok(LaunchdManager)
+        // On other platforms: returns Err (unsupported)
+        #[cfg(target_os = "linux")]
+        {
+            // Result depends on whether systemd is available
+            // This test just verifies the function doesn't panic
+            let _ = result;
+        }
+        #[cfg(target_os = "macos")]
+        {
+            // LaunchdManager should be returned on macOS
+            assert!(result.is_ok());
+            let manager = result.unwrap();
+            assert_eq!(manager.service_name(), "com.opencode-cloud.service");
+        }
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+        {
+            assert!(result.is_err());
+        }
     }
 }
