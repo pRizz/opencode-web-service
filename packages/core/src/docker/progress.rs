@@ -34,6 +34,8 @@ pub struct ProgressReporter {
     last_update: HashMap<String, Instant>,
     last_message: HashMap<String, String>,
     start_time: Instant,
+    /// Optional context prefix shown before step messages (e.g., "Building image")
+    context: Option<String>,
 }
 
 impl Default for ProgressReporter {
@@ -51,6 +53,39 @@ impl ProgressReporter {
             last_update: HashMap::new(),
             last_message: HashMap::new(),
             start_time: Instant::now(),
+            context: None,
+        }
+    }
+
+    /// Create a new progress reporter with a context prefix
+    ///
+    /// The context is shown before step messages, e.g., "Building image · Step 1/10"
+    pub fn with_context(context: &str) -> Self {
+        Self {
+            multi: MultiProgress::new(),
+            bars: HashMap::new(),
+            last_update: HashMap::new(),
+            last_message: HashMap::new(),
+            start_time: Instant::now(),
+            context: Some(context.to_string()),
+        }
+    }
+
+    /// Format a message with context prefix if set
+    fn format_message(&self, message: &str) -> String {
+        let elapsed = format_elapsed(self.start_time.elapsed());
+
+        match &self.context {
+            Some(ctx) => {
+                // For "Step X/Y" messages, show: "Context · Step X/Y (elapsed)"
+                if message.starts_with("Step ") {
+                    format!("{} · {} ({})", ctx, message, elapsed)
+                } else {
+                    // For other messages, just show with elapsed time
+                    format!("{} ({})", message, elapsed)
+                }
+            }
+            None => format!("{} ({})", message, elapsed),
         }
     }
 
@@ -63,9 +98,7 @@ impl ProgressReporter {
                 .expect("valid template")
                 .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"),
         );
-        // Include elapsed time in message (formatted as MM:SS or HH:MM:SS)
-        let elapsed = format_elapsed(self.start_time.elapsed());
-        spinner.set_message(format!("{} ({})", message, elapsed));
+        spinner.set_message(self.format_message(message));
         spinner.enable_steady_tick(std::time::Duration::from_millis(100));
         self.bars.insert(id.to_string(), spinner);
         self.bars.get(id).expect("just inserted")
@@ -132,12 +165,11 @@ impl ProgressReporter {
             }
         }
 
-        // Perform the update with elapsed time
-        let elapsed = format_elapsed(self.start_time.elapsed());
-        let message_with_time = format!("{} ({})", message, elapsed);
+        // Perform the update with context and elapsed time
+        let formatted = self.format_message(message);
 
         if let Some(spinner) = self.bars.get(id) {
-            spinner.set_message(message_with_time);
+            spinner.set_message(formatted);
         } else {
             // Create new spinner if doesn't exist
             self.add_spinner(id, message);
@@ -258,5 +290,27 @@ mod tests {
     fn format_elapsed_zero() {
         let duration = Duration::from_secs(0);
         assert_eq!(format_elapsed(duration), "00:00");
+    }
+
+    #[test]
+    fn with_context_sets_context() {
+        let reporter = ProgressReporter::with_context("Building image");
+        assert!(reporter.context.is_some());
+        assert_eq!(reporter.context.unwrap(), "Building image");
+    }
+
+    #[test]
+    fn format_message_includes_context_for_steps() {
+        let reporter = ProgressReporter::with_context("Building image");
+        let msg = reporter.format_message("Step 1/10 : FROM ubuntu");
+        assert!(msg.starts_with("Building image · Step 1/10"));
+    }
+
+    #[test]
+    fn format_message_without_context() {
+        let reporter = ProgressReporter::new();
+        let msg = reporter.format_message("Step 1/10 : FROM ubuntu");
+        assert!(msg.starts_with("Step 1/10"));
+        assert!(!msg.contains("·"));
     }
 }

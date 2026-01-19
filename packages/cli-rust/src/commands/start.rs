@@ -82,8 +82,8 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
             );
         }
 
-        // Use ProgressReporter for the build (has its own spinner)
-        let mut progress = ProgressReporter::new();
+        // Use ProgressReporter for the build with context prefix
+        let mut progress = ProgressReporter::with_context("Building image");
         build_image(&client, Some(IMAGE_TAG_DEFAULT), &mut progress).await?;
     }
 
