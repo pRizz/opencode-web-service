@@ -59,11 +59,13 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     let port = args.port.unwrap_or(OPENCODE_WEB_PORT);
 
     // If rebuilding, stop and remove existing container first
+    // Must remove the container (not just stop) so a new one is created from the new image
     if args.rebuild {
-        if container_is_running(&client, CONTAINER_NAME).await? {
+        if opencode_cloud_core::docker::container::container_exists(&client, CONTAINER_NAME).await?
+        {
             if verbose > 0 {
                 eprintln!(
-                    "{} Stopping existing container for rebuild...",
+                    "{} Removing existing container for rebuild...",
                     style("[info]").cyan()
                 );
             }
