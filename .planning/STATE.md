@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 4 of 12 (Platform Service Installation)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-19 - Completed 04-01-PLAN.md (Config Schema and Platform Trait)
+Last activity: 2026-01-19 - Completed 04-02-PLAN.md (SystemdManager Implementation)
 
-Progress: [########..] 44%
+Progress: [########..] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 7 min
-- Total execution time: 0.9 hours
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [########..] 44%
 | 01 | 2 | 14 min | 7 min |
 | 02 | 3 | 18 min | 6 min |
 | 03 | 2 | 16 min | 8 min |
-| 04 | 1 | 6 min | 6 min |
+| 04 | 2 | 10 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 7 min, 12 min, 4 min, 6 min
-- Trend: Stable (~7 min average)
+- Last 5 plans: 12 min, 4 min, 6 min, 4 min
+- Trend: Stable (~6 min average)
 
 *Updated after each plan completion*
 
@@ -77,6 +77,9 @@ Recent decisions affecting current work:
 - [03-02]: chrono used for timestamp parsing (minimal features: std, clock)
 - [04-01]: ServiceManager trait uses Result<T> return types for all operations
 - [04-01]: Platform detection via cfg!(target_os) compile-time macros
+- [04-02]: User mode directory ~/.config/systemd/user/ for no-root services
+- [04-02]: Quote executable paths with spaces in ExecStart/ExecStop
+- [04-02]: Rate limiting formula: StartLimitIntervalSec = delay * retries * 2
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-19 18:33:00 UTC
-Stopped at: Completed 04-01-PLAN.md (Config Schema and Platform Trait)
+Last session: 2026-01-19 19:51:00 UTC
+Stopped at: Completed 04-02-PLAN.md (SystemdManager Implementation)
 Resume file: None
