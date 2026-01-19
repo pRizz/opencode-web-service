@@ -52,7 +52,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Docker client wrapper (Bollard), error types, embedded Dockerfile
+- [x] 02-01-PLAN.md — Docker client wrapper (Bollard), error types, embedded Dockerfile
 - [ ] 02-02-PLAN.md — Image build/pull operations with progress feedback
 - [ ] 02-03-PLAN.md — Volume persistence and container lifecycle (create/start/stop/remove)
 
@@ -163,7 +163,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Project Foundation | 2/2 | ✓ Complete | 2026-01-18 |
-| 2. Docker Integration | 0/3 | Not started | - |
+| 2. Docker Integration | 1/3 | In progress | - |
 | 3. Service Lifecycle Commands | 0/2 | Not started | - |
 | 4. Platform Service Installation | 0/3 | Not started | - |
 | 5. Interactive Setup Wizard | 0/2 | Not started | - |
@@ -173,4 +173,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 2 planned)*
+*Last updated: 2026-01-19 (02-01 completed)*
