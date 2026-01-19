@@ -81,15 +81,9 @@ impl ProgressReporter {
         let clean_msg = message.split_whitespace().collect::<Vec<_>>().join(" ");
 
         match &self.context {
-            Some(ctx) => {
-                // For "Step X/Y" messages, show: "Context · Step X/Y (elapsed)"
-                if clean_msg.starts_with("Step ") {
-                    format!("{} · {} ({})", ctx, clean_msg, elapsed)
-                } else {
-                    // For other messages, just show with elapsed time
-                    format!("{} ({})", clean_msg, elapsed)
-                }
-            }
+            // Always show context prefix: "Building image · Step 1/10 (elapsed)"
+            // or "Building image · Compiling foo (elapsed)"
+            Some(ctx) => format!("{} · {} ({})", ctx, clean_msg, elapsed),
             None => format!("{} ({})", clean_msg, elapsed),
         }
     }
@@ -309,6 +303,13 @@ mod tests {
         let reporter = ProgressReporter::with_context("Building image");
         let msg = reporter.format_message("Step 1/10 : FROM ubuntu");
         assert!(msg.starts_with("Building image · Step 1/10"));
+    }
+
+    #[test]
+    fn format_message_includes_context_for_all_messages() {
+        let reporter = ProgressReporter::with_context("Building image");
+        let msg = reporter.format_message("Compiling foo v1.0");
+        assert!(msg.starts_with("Building image · Compiling foo"));
     }
 
     #[test]
