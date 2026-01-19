@@ -8,7 +8,6 @@
 # - Non-root user with passwordless sudo
 # - Multiple languages via mise (Node.js, Python, Rust, Go)
 # - Modern CLI tools (ripgrep, eza, fzf, lazygit, etc.)
-# - Container/K8s tools (kubectl, helm, k9s, dive)
 # - Security tools (trivy, gitleaks, hadolint, age, sops)
 # - GSD opencode plugin for task management
 #
@@ -281,26 +280,6 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 USER opencode
 
 # -----------------------------------------------------------------------------
-# Container/Kubernetes Tools
-# -----------------------------------------------------------------------------
-# Install kubectl
-USER root
-RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
-    && echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' > /etc/apt/sources.list.d/kubernetes.list \
-    && apt-get update && apt-get install -y --no-install-recommends kubectl \
-    && rm -rf /var/lib/apt/lists/*
-USER opencode
-
-# Install Helm
-RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash -s -- --no-sudo --install-dir /home/opencode/.local/bin
-
-# Install k9s
-RUN curl -sL https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_$(dpkg --print-architecture).tar.gz | tar xz -C /home/opencode/.local/bin k9s
-
-# Install dive (Docker image explorer)
-RUN curl -sL https://github.com/wagoodman/dive/releases/latest/download/dive_$(curl -s https://api.github.com/repos/wagoodman/dive/releases/latest | grep tag_name | cut -d '"' -f 4 | sed 's/v//')_linux_$(dpkg --print-architecture).tar.gz | tar xz -C /home/opencode/.local/bin dive
-
-# -----------------------------------------------------------------------------
 # Security Tools
 # -----------------------------------------------------------------------------
 # Install trivy (security scanner)
@@ -462,10 +441,6 @@ alias lg="lazygit"
 alias d="docker"
 alias dc="docker compose"
 
-# Kubernetes aliases
-alias k="kubectl"
-alias kgp="kubectl get pods"
-alias kgs="kubectl get services"
 ALIASES
 
 # Set up pipx path
