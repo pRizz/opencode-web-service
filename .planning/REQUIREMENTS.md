@@ -150,18 +150,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-05 | Phase 5 | Pending |
 | CONF-06 | Phase 7 | Pending |
 | CONF-07 | Phase 1 | Complete |
-| PERS-01 | Phase 4 | Pending |
+| PERS-01 | Phase 4 | Complete |
 | PERS-02 | Phase 2 | Complete |
 | PERS-03 | Phase 2 | Complete |
 | PERS-04 | Phase 2 | Complete |
-| PERS-05 | Phase 4 | Pending |
-| PERS-06 | Phase 4 | Pending |
+| PERS-05 | Phase 4 | Complete |
+| PERS-06 | Phase 4 | Complete |
 | SECU-01 | Phase 6 | Pending |
 | SECU-02 | Phase 6 | Pending |
 | SECU-03 | Phase 6 | Pending |
 | SECU-04 | Phase 6 | Pending |
-| PLAT-01 | Phase 4 | Pending |
-| PLAT-02 | Phase 4 | Pending |
+| PLAT-01 | Phase 4 | Complete |
+| PLAT-02 | Phase 4 | Complete |
 | CONS-01 | Phase 1 | Complete |
 
 **Coverage:**
@@ -171,4 +171,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 3 complete: LIFE-01 through LIFE-05)*
+*Last updated: 2026-01-19 (Phase 4 complete: PLAT-01, PLAT-02, PERS-01, PERS-05, PERS-06)*
