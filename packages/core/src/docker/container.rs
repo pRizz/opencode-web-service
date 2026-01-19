@@ -41,7 +41,8 @@ pub async fn create_container(
     env_vars: Option<Vec<String>>,
 ) -> Result<String, DockerError> {
     let container_name = name.unwrap_or(CONTAINER_NAME);
-    let image_name = image.unwrap_or(&format!("{IMAGE_NAME_GHCR}:{IMAGE_TAG_DEFAULT}"));
+    let default_image = format!("{IMAGE_NAME_GHCR}:{IMAGE_TAG_DEFAULT}");
+    let image_name = image.unwrap_or(&default_image);
     let port = host_port.unwrap_or(DEFAULT_PORT);
 
     debug!(
@@ -164,7 +165,9 @@ pub async fn start_container(client: &DockerClient, name: &str) -> Result<(), Do
         .inner()
         .start_container(name, None::<StartContainerOptions<String>>)
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to start container {}: {}", name, e)))?;
+        .map_err(|e| {
+            DockerError::Container(format!("Failed to start container {}: {}", name, e))
+        })?;
 
     debug!("Container {} started", name);
     Ok(())
@@ -257,10 +260,7 @@ pub async fn container_is_running(client: &DockerClient, name: &str) -> Result<b
 
     match client.inner().inspect_container(name, None).await {
         Ok(info) => {
-            let running = info
-                .state
-                .and_then(|s| s.running)
-                .unwrap_or(false);
+            let running = info.state.and_then(|s| s.running).unwrap_or(false);
             Ok(running)
         }
         Err(bollard::errors::Error::DockerResponseServerError {

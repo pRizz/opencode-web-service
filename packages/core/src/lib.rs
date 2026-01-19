@@ -18,7 +18,7 @@ pub use config::{Config, load_config, save_config};
 pub use singleton::{InstanceLock, SingletonError};
 
 // Re-export docker types
-pub use docker::{DockerClient, DockerError};
+pub use docker::{CONTAINER_NAME, DEFAULT_PORT, DockerClient, DockerError};
 
 // NAPI bindings for Node.js consumers (only when napi feature is enabled)
 #[cfg(feature = "napi")]
