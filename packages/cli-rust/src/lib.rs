@@ -41,6 +41,10 @@ enum Commands {
     Stop(commands::StopArgs),
     /// Restart the opencode service
     Restart(commands::RestartArgs),
+    /// Show service status
+    Status(commands::StatusArgs),
+    /// View service logs
+    Logs(commands::LogsArgs),
     /// Manage configuration
     #[command(subcommand)]
     Config(ConfigCommands),
@@ -142,6 +146,14 @@ pub fn run() -> Result<()> {
         Some(Commands::Restart(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(commands::cmd_restart(&args, cli.quiet, cli.verbose))
+        }
+        Some(Commands::Status(args)) => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(commands::cmd_status(&args, cli.quiet, cli.verbose))
+        }
+        Some(Commands::Logs(args)) => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(commands::cmd_logs(&args, cli.quiet))
         }
         Some(Commands::Config(cmd)) => handle_config(cmd, &config),
         None => {

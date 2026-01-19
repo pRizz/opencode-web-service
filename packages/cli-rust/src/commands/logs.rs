@@ -8,7 +8,9 @@ use bollard::container::{LogOutput, LogsOptions};
 use clap::Args;
 use console::style;
 use futures_util::StreamExt;
-use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, DockerError, container_is_running};
+use opencode_cloud_core::docker::{
+    CONTAINER_NAME, DockerClient, DockerError, container_is_running,
+};
 
 /// Arguments for the logs command
 #[derive(Args)]
@@ -42,13 +44,18 @@ pub async fn cmd_logs(args: &LogsArgs, quiet: bool) -> Result<()> {
     let client = DockerClient::new().map_err(|e| format_docker_error(&e))?;
 
     // Verify connection
-    client.verify_connection().await.map_err(|e| format_docker_error(&e))?;
+    client
+        .verify_connection()
+        .await
+        .map_err(|e| format_docker_error(&e))?;
 
     // Check if container exists
     let inspect_result = client.inner().inspect_container(CONTAINER_NAME, None).await;
 
     match inspect_result {
-        Err(bollard::errors::Error::DockerResponseServerError { status_code: 404, .. }) => {
+        Err(bollard::errors::Error::DockerResponseServerError {
+            status_code: 404, ..
+        }) => {
             return Err(anyhow!(
                 "No container found. Run '{}' first.",
                 style("occ start").cyan()
@@ -114,16 +121,14 @@ pub async fn cmd_logs(args: &LogsArgs, quiet: bool) -> Result<()> {
             }
             Err(_) => {
                 // Stream error - check if container stopped
-                if follow {
-                    if !container_is_running(&client, CONTAINER_NAME)
+                if follow
+                    && !container_is_running(&client, CONTAINER_NAME)
                         .await
                         .unwrap_or(false)
-                    {
-                        if !quiet {
-                            eprintln!();
-                            eprintln!("{}", style("Container stopped").dim());
-                        }
-                    }
+                    && !quiet
+                {
+                    eprintln!();
+                    eprintln!("{}", style("Container stopped").dim());
                 }
                 break;
             }
