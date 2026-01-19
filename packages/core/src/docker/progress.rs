@@ -75,8 +75,10 @@ impl ProgressReporter {
     fn format_message(&self, message: &str) -> String {
         let elapsed = format_elapsed(self.start_time.elapsed());
 
-        // Trim trailing whitespace (including newlines) to prevent timer on new line
-        let clean_msg = message.trim_end();
+        // Collapse message to single line for spinner display:
+        // - Replace all whitespace sequences (including newlines) with single space
+        // - Trim leading/trailing whitespace
+        let clean_msg = message.split_whitespace().collect::<Vec<_>>().join(" ");
 
         match &self.context {
             Some(ctx) => {
@@ -318,11 +320,11 @@ mod tests {
     }
 
     #[test]
-    fn format_message_trims_trailing_newlines() {
+    fn format_message_collapses_whitespace() {
         let reporter = ProgressReporter::new();
-        // Trailing newline should be stripped so timer doesn't appear on new line
-        let msg = reporter.format_message("Step 1/10 : RUN echo hello\n");
-        assert!(!msg.ends_with('\n'));
-        assert!(msg.contains("RUN echo hello ("));
+        // All whitespace (including newlines) collapsed to single spaces for spinner display
+        let msg = reporter.format_message("Compiling foo\n     Compiling bar\n");
+        assert!(!msg.contains('\n'));
+        assert!(msg.contains("Compiling foo Compiling bar ("));
     }
 }
