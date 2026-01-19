@@ -25,6 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 11: Remote Host Management** - Allow occ to remotely install and interact with Docker containers on different hosts
 - [ ] **Phase 12: Web Desktop UI Investigation** - Investigate integrating secure web-exposed desktop UI (Friend OS, WDE, etc.)
 - [ ] **Phase 13: Container Security Tools** - Add trivy, gitleaks, hadolint, age, sops, mkcert to container
+- [ ] **Phase 14: Auto-rebuild Detection** - Detect CLI/image version mismatch and prompt for rebuild
 
 ## Phase Details
 
@@ -238,10 +239,26 @@ Plans:
 Plans:
 - [ ] 13-01: TBD (security tools installation)
 
+### Phase 14: Auto-rebuild Detection
+**Goal**: Automatically detect when CLI version doesn't match the built Docker image and prompt user to rebuild
+**Depends on**: Phase 7 (Update and Maintenance)
+**Requirements**: None (enhancement)
+**Note**: The Dockerfile is embedded in the CLI binary. When users update opencode-cloud, the embedded Dockerfile may have changed, but Docker won't know to rebuild. This phase adds version tracking to detect mismatches and prompt users to rebuild.
+**Success Criteria** (what must be TRUE):
+  1. Docker images are tagged with opencode-cloud version (e.g., `ghcr.io/prizz/opencode-cloud:0.1.4`)
+  2. On `occ start`, CLI detects if existing image version differs from current CLI version
+  3. User is prompted to rebuild when version mismatch detected
+  4. Option to auto-rebuild on version mismatch via config setting
+  5. `occ status` shows image version alongside CLI version
+**Plans**: TBD
+
+Plans:
+- [ ] 14-01: TBD (version tagging and mismatch detection)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -258,7 +275,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 11. Remote Host Management | 0/1 | Not started | - |
 | 12. Web Desktop UI Investigation | 0/1 | Not started | - |
 | 13. Container Security Tools | 0/1 | Not started | - |
+| 14. Auto-rebuild Detection | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 13 added - security tools deferred)*
+*Last updated: 2026-01-19 (Phase 14 added - auto-rebuild detection)*
