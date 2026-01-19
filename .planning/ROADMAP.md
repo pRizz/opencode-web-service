@@ -26,6 +26,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 12: Web Desktop UI Investigation** - Investigate integrating secure web-exposed desktop UI (Friend OS, WDE, etc.)
 - [ ] **Phase 13: Container Security Tools** - Add trivy, gitleaks, hadolint, age, sops, mkcert to container
 - [ ] **Phase 14: Auto-rebuild Detection** - Detect CLI/image version mismatch and prompt for rebuild
+- [ ] **Phase 15: Prebuilt Image Option** - Option to pull prebuilt images vs building from scratch
 
 ## Phase Details
 
@@ -255,10 +256,29 @@ Plans:
 Plans:
 - [ ] 14-01: TBD (version tagging and mismatch detection)
 
+### Phase 15: Prebuilt Image Option
+**Goal**: Give users the choice between pulling a prebuilt Docker image (fast) or building from source (customizable)
+**Depends on**: Phase 5 (Interactive Setup Wizard)
+**Requirements**: None (enhancement)
+**Note**: Building the Docker image from the embedded Dockerfile takes 10-15 minutes due to compiling Rust tools, installing language runtimes, etc. Users who don't need customization can pull a prebuilt image in ~1-2 minutes. This phase adds CI/CD to publish images and prompts users during first run.
+**Success Criteria** (what must be TRUE):
+  1. CI/CD pipeline publishes prebuilt images to GHCR on release
+  2. On first run, user is prompted: "Pull prebuilt image (~2 min) or build from source (~15 min)?"
+  3. Clear explanation of trade-offs shown (prebuilt = faster, build = customizable/latest)
+  4. New config option `image_source` with values: `prebuilt`, `build`, `ask` (default)
+  5. `occ start --pull` forces pull of prebuilt image
+  6. `occ start --build` forces build from source (like current `--rebuild` but for first run)
+  7. Prebuilt images are multi-arch (amd64, arm64) for cross-platform support
+**Plans**: TBD
+
+Plans:
+- [ ] 15-01: TBD (CI/CD for prebuilt images)
+- [ ] 15-02: TBD (first-run prompt and config option)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -276,7 +296,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 12. Web Desktop UI Investigation | 0/1 | Not started | - |
 | 13. Container Security Tools | 0/1 | Not started | - |
 | 14. Auto-rebuild Detection | 0/1 | Not started | - |
+| 15. Prebuilt Image Option | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 14 added - auto-rebuild detection)*
+*Last updated: 2026-01-19 (Phase 15 added - prebuilt image option)*
