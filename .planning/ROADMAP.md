@@ -86,12 +86,13 @@ Plans:
   3. Service automatically restarts after crash (within configured retry limits)
   4. User can configure restart policies (retry count, delay between retries)
   5. Service unit files are placed in user-level directories (no root required)
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01: TBD (systemd integration)
-- [ ] 04-02: TBD (launchd integration)
-- [ ] 04-03: TBD (restart policy configuration)
+- [ ] 04-01-PLAN.md — Config schema extension (boot_mode, restart policy) and ServiceManager trait
+- [ ] 04-02-PLAN.md — systemd implementation for Linux service registration
+- [ ] 04-03-PLAN.md — launchd implementation for macOS service registration
+- [ ] 04-04-PLAN.md — Install/uninstall CLI commands and status integration
 
 ### Phase 5: Interactive Setup Wizard
 **Goal**: First-time users are guided through configuration with sensible defaults
@@ -214,6 +215,7 @@ Plans:
   2. Security implications documented (auth, isolation, network exposure)
   3. Integration feasibility assessed with current Docker architecture
   4. Recommendation made: proceed with implementation or defer
+
 **Plans**: TBD
 
 Plans:
@@ -229,7 +231,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 1. Project Foundation | 2/2 | ✓ Complete | 2026-01-18 |
 | 2. Docker Integration | 3/3 | ✓ Complete | 2026-01-19 |
 | 3. Service Lifecycle Commands | 2/2 | ✓ Complete | 2026-01-19 |
-| 4. Platform Service Installation | 0/3 | Not started | - |
+| 4. Platform Service Installation | 0/4 | Not started | - |
 | 5. Interactive Setup Wizard | 0/2 | Not started | - |
 | 6. Security and Authentication | 0/2 | Not started | - |
 | 7. Update and Maintenance | 0/2 | Not started | - |
@@ -241,4 +243,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 12 added)*
+*Last updated: 2026-01-19 (Phase 4 planned)*
