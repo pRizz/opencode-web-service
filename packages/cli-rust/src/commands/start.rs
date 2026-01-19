@@ -149,8 +149,8 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
         }
     };
 
-    // Wait for service to be ready (health check)
-    if let Err(e) = wait_for_service_ready(port, &spinner) {
+    // Wait for service to be ready (health check with fatal error detection)
+    if let Err(e) = wait_for_service_ready(&client, port, &spinner).await {
         spinner.fail("Service failed to become ready");
         eprintln!();
         eprintln!("{}", style("Recent container logs:").yellow());
@@ -267,19 +267,73 @@ fn find_next_available_port(start: u16) -> Option<u16> {
 }
 
 /// Configuration for health check waiting
-const HEALTH_CHECK_TIMEOUT_SECS: u64 = 60;
+const HEALTH_CHECK_TIMEOUT_SECS: u64 = 10;
 const HEALTH_CHECK_INTERVAL_MS: u64 = 500;
 const HEALTH_CHECK_CONSECUTIVE_REQUIRED: u32 = 3;
 
+/// Known fatal error patterns in container logs that indicate immediate failure
+const FATAL_ERROR_PATTERNS: &[&str] = &[
+    "exec opencode failed",      // tini: binary not found
+    "exec failed",               // general exec failure
+    "[FATAL tini",               // tini fatal errors
+    "No such file or directory", // missing binary
+    "permission denied",         // permission issues
+    "cannot execute binary",     // exec format error
+];
+
+/// Check container logs for fatal errors that indicate the service cannot start
+async fn check_for_fatal_errors(client: &DockerClient) -> Option<String> {
+    let options = LogsOptions::<String> {
+        stdout: true,
+        stderr: true,
+        tail: "20".to_string(),
+        ..Default::default()
+    };
+
+    let mut stream = client.inner().logs(CONTAINER_NAME, Some(options));
+    let mut logs = Vec::new();
+
+    while let Some(result) = stream.next().await {
+        if let Ok(output) = result {
+            let line = match output {
+                LogOutput::StdOut { message } | LogOutput::StdErr { message } => {
+                    String::from_utf8_lossy(&message).to_string()
+                }
+                _ => continue,
+            };
+            logs.push(line);
+        }
+    }
+
+    // Check for fatal error patterns
+    for log_line in &logs {
+        let lower = log_line.to_lowercase();
+        for pattern in FATAL_ERROR_PATTERNS {
+            if lower.contains(&pattern.to_lowercase()) {
+                return Some(log_line.trim().to_string());
+            }
+        }
+    }
+
+    None
+}
+
 /// Wait for the service to be ready by checking TCP connectivity
 ///
-/// Returns Ok(()) when the service is ready, or Err if timeout is reached.
+/// Returns Ok(()) when the service is ready, or Err if timeout is reached or fatal error detected.
 /// Requires multiple consecutive successful connections to avoid false positives.
-fn wait_for_service_ready(port: u16, spinner: &CommandSpinner) -> Result<()> {
+/// Also monitors container logs for fatal errors to fail fast.
+async fn wait_for_service_ready(
+    client: &DockerClient,
+    port: u16,
+    spinner: &CommandSpinner,
+) -> Result<()> {
     let start = Instant::now();
     let timeout = Duration::from_secs(HEALTH_CHECK_TIMEOUT_SECS);
     let interval = Duration::from_millis(HEALTH_CHECK_INTERVAL_MS);
     let mut consecutive_success = 0;
+    let mut last_log_check = Instant::now();
+    let log_check_interval = Duration::from_secs(1);
 
     spinner.update("Waiting for service to be ready...");
 
@@ -292,10 +346,21 @@ fn wait_for_service_ready(port: u16, spinner: &CommandSpinner) -> Result<()> {
             ));
         }
 
+        // Periodically check logs for fatal errors (every 1 second)
+        if last_log_check.elapsed() > log_check_interval {
+            if let Some(error) = check_for_fatal_errors(client).await {
+                return Err(anyhow!(
+                    "Fatal error detected in container:\n  {}\n\nThe service cannot start. Check the Docker image with: occ start --rebuild",
+                    error
+                ));
+            }
+            last_log_check = Instant::now();
+        }
+
         // Try to connect to the service
         match TcpStream::connect_timeout(
             &format!("127.0.0.1:{}", port).parse().unwrap(),
-            Duration::from_secs(2),
+            Duration::from_secs(1),
         ) {
             Ok(_) => {
                 consecutive_success += 1;
@@ -319,7 +384,7 @@ fn wait_for_service_ready(port: u16, spinner: &CommandSpinner) -> Result<()> {
             }
         }
 
-        std::thread::sleep(interval);
+        tokio::time::sleep(interval).await;
     }
 }
 
