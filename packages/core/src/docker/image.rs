@@ -337,7 +337,7 @@ fn format_build_error_with_context(
             .collect();
 
         if !unique_errors.is_empty() {
-            message.push_str("\n\nErrors detected during build:");
+            message.push_str("\n\nPotential errors detected during build:");
             for line in unique_errors {
                 message.push_str("\n  ");
                 message.push_str(line);
@@ -476,7 +476,7 @@ mod tests {
 
         let result = format_build_error_with_context("Build failed", &recent_logs, &error_logs);
 
-        assert!(result.contains("Errors detected during build:"));
+        assert!(result.contains("Potential errors detected during build:"));
         assert!(result.contains("failed to compile dust"));
         assert!(result.contains("failed to compile glow"));
     }
