@@ -1302,6 +1302,7 @@ version = "0.1.3"
 dependencies = [
  "anyhow",
  "bollard",
+ "bytes",
  "clap",
  "console 0.16.2",
  "directories",
