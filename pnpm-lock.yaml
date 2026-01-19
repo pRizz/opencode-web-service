@@ -29,7 +29,7 @@ importers:
         version: 5.9.3
 
   packages/core:
-    devDependencies:
+    dependencies:
       '@napi-rs/cli':
         specifier: ^3.0.0-alpha.69
         version: 3.5.1(@emnapi/runtime@1.8.1)(@types/node@22.19.7)
