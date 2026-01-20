@@ -36,7 +36,8 @@ impl SystemdManager {
     fn service_dir(&self) -> PathBuf {
         if self.user_mode {
             // User-level: ~/.config/systemd/user/
-            dirs::config_dir()
+            directories::BaseDirs::new()
+                .map(|dirs| dirs.home_dir().join(".config"))
                 .unwrap_or_else(|| PathBuf::from("~/.config"))
                 .join("systemd")
                 .join("user")
