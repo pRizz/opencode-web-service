@@ -49,10 +49,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Security
 
-- [ ] **SECU-01**: Basic authentication required to access web UI
-- [ ] **SECU-02**: Service binds to localhost by default
-- [ ] **SECU-03**: Explicit opt-in required for network exposure (0.0.0.0 binding)
-- [ ] **SECU-04**: Designed to work behind load balancer with SSL termination
+- [x] **SECU-01**: Basic authentication required to access web UI
+- [x] **SECU-02**: Service binds to localhost by default
+- [x] **SECU-03**: Explicit opt-in required for network exposure (0.0.0.0 binding)
+- [x] **SECU-04**: Designed to work behind load balancer with SSL termination
 
 ### Platform Support
 
@@ -156,10 +156,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERS-04 | Phase 2 | Complete |
 | PERS-05 | Phase 4 | Complete |
 | PERS-06 | Phase 4 | Complete |
-| SECU-01 | Phase 6 | Pending |
-| SECU-02 | Phase 6 | Pending |
-| SECU-03 | Phase 6 | Pending |
-| SECU-04 | Phase 6 | Pending |
+| SECU-01 | Phase 6 | Complete |
+| SECU-02 | Phase 6 | Complete |
+| SECU-03 | Phase 6 | Complete |
+| SECU-04 | Phase 6 | Complete |
 | PLAT-01 | Phase 4 | Complete |
 | PLAT-02 | Phase 4 | Complete |
 | CONS-01 | Phase 1 | Complete |
@@ -171,4 +171,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-20 (Phase 5 complete: INST-02, INST-03, INST-04, INST-05, CONF-01, CONF-02, CONF-03, CONF-05)*
+*Last updated: 2026-01-20 (Phase 6 complete: SECU-01, SECU-02, SECU-03, SECU-04)*

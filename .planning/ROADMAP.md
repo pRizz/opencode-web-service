@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Service Lifecycle Commands** - Start/stop/restart/status/logs
 - [x] **Phase 4: Platform Service Installation** - systemd/launchd registration, boot persistence
 - [x] **Phase 5: Interactive Setup Wizard** - Guided first-run experience
-- [ ] **Phase 6: Security and Authentication** - PAM-based auth, localhost binding, network exposure opt-in
+- [x] **Phase 6: Security and Authentication** - PAM-based auth, localhost binding, network exposure opt-in
 - [ ] **Phase 7: Update and Maintenance** - Update command, health check endpoint
 - [ ] **Phase 8: Polish and Documentation** - Help docs, error messages, uninstall cleanup
 - [ ] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
@@ -135,10 +135,10 @@ Plans:
 
 Plans:
 - [x] 06-01-PLAN.md — Config schema extension (bind_address, trust_proxy, rate_limit, users) and Docker exec/users modules
-- [ ] 06-02-PLAN.md — occ user commands (add, remove, list, passwd, enable, disable)
-- [ ] 06-03-PLAN.md — Network binding controls (bind_address config, container port binding, security warnings)
-- [ ] 06-04-PLAN.md — Status Security section and wizard PAM user creation integration
-- [ ] 06-05-PLAN.md — Config support for trust_proxy, rate_limit_*, allow_unauthenticated_network
+- [x] 06-02-PLAN.md — occ user commands (add, remove, list, passwd, enable, disable)
+- [x] 06-03-PLAN.md — Network binding controls (bind_address config, container port binding, security warnings)
+- [x] 06-04-PLAN.md — Status Security section and wizard PAM user creation integration
+- [x] 06-05-PLAN.md — Config support for trust_proxy, rate_limit_*, allow_unauthenticated_network
 
 ### Phase 7: Update and Maintenance
 **Goal**: User can update opencode and monitor service health
@@ -350,7 +350,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 3. Service Lifecycle Commands | 2/2 | ✓ Complete | 2026-01-19 |
 | 4. Platform Service Installation | 4/4 | ✓ Complete | 2026-01-19 |
 | 5. Interactive Setup Wizard | 3/3 | ✓ Complete | 2026-01-20 |
-| 6. Security and Authentication | 1/5 | In progress | - |
+| 6. Security and Authentication | 5/5 | ✓ Complete | 2026-01-20 |
 | 7. Update and Maintenance | 0/2 | Not started | - |
 | 8. Polish and Documentation | 0/2 | Not started | - |
 | 9. Dockerfile Version Pinning | 0/1 | Not started | - |
@@ -366,4 +366,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-20 (Phase 6 in progress - 1/5 plans complete)*
+*Last updated: 2026-01-20 (Phase 6 complete - Security and Authentication)*
