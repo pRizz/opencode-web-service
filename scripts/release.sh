@@ -74,8 +74,9 @@ echo "==> Creating tag ${tag_name}..."
 git tag "${tag_name}"
 echo ""
 
-# Step 6: Push tag
-echo "==> Pushing tag to remote..."
+# Step 6: Push commit and tag
+echo "==> Pushing commit and tag to remote..."
+git push
 git push origin "${tag_name}"
 echo ""
 
@@ -83,7 +84,6 @@ echo "=========================================="
 echo "Release v${new_version} complete!"
 echo "=========================================="
 echo ""
-echo "Next steps:"
-echo "  1. Push the commit: git push"
-echo "  2. Publish to registries: just publish-all"
+echo "Next step:"
+echo "  Publish to registries: just publish-all"
 echo ""
