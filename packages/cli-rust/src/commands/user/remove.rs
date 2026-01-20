@@ -6,7 +6,9 @@ use anyhow::{Result, bail};
 use clap::Args;
 use console::style;
 use dialoguer::Confirm;
-use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, delete_user, user_exists};
+use opencode_cloud_core::docker::{
+    CONTAINER_NAME, DockerClient, delete_user, list_users, user_exists,
+};
 use opencode_cloud_core::{load_config, save_config};
 
 /// Arguments for the user remove command
@@ -30,11 +32,12 @@ pub async fn cmd_user_remove(args: &UserRemoveArgs, quiet: bool, _verbose: u8) -
         bail!("User '{}' does not exist in the container", username);
     }
 
-    // Load config to check users count
+    // Load config for later update
     let mut config = load_config()?;
 
-    // Check if this is the last tracked user
-    let is_last_user = config.users.len() == 1 && config.users.contains(username);
+    // Check if this is the last user in the container (not just tracked users)
+    let container_users = list_users(&client, CONTAINER_NAME).await?;
+    let is_last_user = container_users.len() == 1;
     if is_last_user && !args.force {
         bail!(
             "Cannot remove last user. Add another user first or use --force.\n\n\
