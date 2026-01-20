@@ -11,8 +11,9 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  check:
-    name: Check
+  # Formatting check - only needs to run once (platform-independent)
+  format:
+    name: Format Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +21,26 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  # Build, lint, and test on multiple platforms
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
 
       - name: Install just
         uses: extractions/setup-just@v2
@@ -39,9 +59,6 @@ jobs:
 
       - name: Install Node dependencies
         run: pnpm install
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
 
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
@@ -54,46 +71,6 @@ jobs:
 
       - name: Build Node packages
         run: |
-          pnpm -C packages/core build
-          pnpm -C packages/cli-node build
-
-      - name: Verify CLI works
-        run: |
-          cargo run -p opencode-cloud -- --version
-          node packages/cli-node/dist/index.js --version
-
-  # Test on macOS to ensure cross-platform compatibility
-  macos:
-    name: macOS Build
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Install Node dependencies
-        run: pnpm install
-
-      - name: Build and test
-        run: |
-          cargo build --workspace
-          cargo test --workspace
           pnpm -C packages/core build
           pnpm -C packages/cli-node build
 
