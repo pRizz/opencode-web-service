@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 Phase: 6 of 18 (Security and Authentication)
 Plan: 3 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-20 - Completed 06-03-PLAN.md (Network Binding Controls)
+Last activity: 2026-01-20 - Completed 06-02-PLAN.md (User CLI Commands)
 
 Progress: [##########] 40%
 
@@ -103,10 +103,10 @@ Recent decisions affecting current work:
 - [06-01]: Default bind_address: 127.0.0.1 (localhost-only by default)
 - [06-01]: validate_bind_address accepts localhost, IPv4, IPv6, and bracketed [::1]
 - [06-01]: list_users filters by /home/ directory to exclude system users
-- [06-03]: bind_address stored as string in config, validated on set
-- [06-03]: Warning shown on config set for 0.0.0.0 or :: addresses
-- [06-03]: Security status shown in start output: [LOCAL ONLY] or [NETWORK EXPOSED]
-- [06-03]: Browser opens to localhost even when bound to 0.0.0.0
+- [06-02]: Container running check: All user commands require container to be running first
+- [06-02]: Config persistence: User additions/removals update config.users array
+- [06-02]: Last user protection: Cannot remove last user without --force
+- [06-02]: Network security warnings: start command warns when exposed but no users
 
 ### Pending Todos
 
@@ -133,5 +133,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 06-03-PLAN.md (Network Binding Controls)
+Stopped at: Completed 06-02-PLAN.md (User CLI Commands)
 Resume file: None
