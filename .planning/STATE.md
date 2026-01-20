@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 6 of 18 (Security and Authentication)
-Plan: 1 of 5 in current phase
+Plan: 3 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-20 - Completed 06-01-PLAN.md (Config Schema and Exec Wrapper)
+Last activity: 2026-01-20 - Completed 06-03-PLAN.md (Network Binding Controls)
 
-Progress: [#########] 35%
+Progress: [##########] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 17
 - Average duration: 6 min
-- Total execution time: 1.57 hours
+- Total execution time: 1.70 hours
 
 **By Phase:**
 
@@ -32,10 +32,10 @@ Progress: [#########] 35%
 | 03 | 2 | 16 min | 8 min |
 | 04 | 4 | 21 min | 5 min |
 | 05 | 3 | 19 min | 6 min |
-| 06 | 1 | 6 min | 6 min |
+| 06 | 3 | 14 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 8 min, 6 min, 5 min, 6 min
+- Last 5 plans: 6 min, 5 min, 6 min, 8 min
 - Trend: Stable (~6 min average)
 
 *Updated after each plan completion*
@@ -103,6 +103,10 @@ Recent decisions affecting current work:
 - [06-01]: Default bind_address: 127.0.0.1 (localhost-only by default)
 - [06-01]: validate_bind_address accepts localhost, IPv4, IPv6, and bracketed [::1]
 - [06-01]: list_users filters by /home/ directory to exclude system users
+- [06-03]: bind_address stored as string in config, validated on set
+- [06-03]: Warning shown on config set for 0.0.0.0 or :: addresses
+- [06-03]: Security status shown in start output: [LOCAL ONLY] or [NETWORK EXPOSED]
+- [06-03]: Browser opens to localhost even when bound to 0.0.0.0
 
 ### Pending Todos
 
@@ -129,5 +133,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 06-01-PLAN.md (Config Schema and Exec Wrapper)
+Stopped at: Completed 06-03-PLAN.md (Network Binding Controls)
 Resume file: None
