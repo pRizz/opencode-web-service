@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 6 - Security and Authentication (Next)
+**Current focus:** Phase 6 - Security and Authentication
 
 ## Current Position
 
-Phase: 5 of 18 (Interactive Setup Wizard)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-20 - Completed 05-03-PLAN.md (Interactive Setup Wizard)
+Phase: 6 of 18 (Security and Authentication)
+Plan: 1 of 5 in current phase
+Status: In progress
+Last activity: 2026-01-20 - Completed 06-01-PLAN.md (Config Schema and Exec Wrapper)
 
-Progress: [########] 33%
+Progress: [#########] 35%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 6 min
-- Total execution time: 1.47 hours
+- Total execution time: 1.57 hours
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [########] 33%
 | 03 | 2 | 16 min | 8 min |
 | 04 | 4 | 21 min | 5 min |
 | 05 | 3 | 19 min | 6 min |
+| 06 | 1 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 8 min, 6 min, 5 min
+- Last 5 plans: 8 min, 6 min, 5 min, 6 min
 - Trend: Stable (~6 min average)
 
 *Updated after each plan completion*
@@ -98,6 +99,10 @@ Recent decisions affecting current work:
 - [05-03]: Quick setup mode: single confirmation skips port/hostname prompts
 - [05-03]: Random password: 24-char alphanumeric using rand crate
 - [05-03]: Auto-trigger excludes setup and config commands
+- [06-01]: Password via stdin: chpasswd reads username:password from stdin for security
+- [06-01]: Default bind_address: 127.0.0.1 (localhost-only by default)
+- [06-01]: validate_bind_address accepts localhost, IPv4, IPv6, and bracketed [::1]
+- [06-01]: list_users filters by /home/ directory to exclude system users
 
 ### Pending Todos
 
@@ -124,5 +129,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 05-03-PLAN.md (Interactive Setup Wizard)
+Stopped at: Completed 06-01-PLAN.md (Config Schema and Exec Wrapper)
 Resume file: None
