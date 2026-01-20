@@ -124,13 +124,12 @@ jobs:
           pnpm -C packages/core build
           pnpm -C packages/cli-node build
 
+      # Use pnpm publish to convert workspace:* references to actual versions
       - name: Publish @opencode-cloud/core
-        working-directory: packages/core
-        run: npm publish --access public --provenance
+        run: pnpm --filter @opencode-cloud/core publish --access public --provenance --no-git-checks
 
       - name: Wait for npm to index
         run: sleep 10
 
       - name: Publish opencode-cloud
-        working-directory: packages/cli-node
-        run: npm publish --access public --provenance
+        run: pnpm --filter opencode-cloud publish --access public --provenance --no-git-checks
