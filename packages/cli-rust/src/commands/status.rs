@@ -1,13 +1,14 @@
 //! Status command implementation
 //!
 //! Shows the current state of the opencode service including container info,
-//! port bindings, uptime, and health status.
+//! port bindings, uptime, health status, and security configuration.
 
 use crate::output::state_style;
 use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
 use opencode_cloud_core::config;
+use opencode_cloud_core::Config;
 use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, DockerError, OPENCODE_WEB_PORT};
 use opencode_cloud_core::platform::{get_service_manager, is_service_registration_supported};
 use std::time::Duration;
@@ -178,6 +179,12 @@ pub async fn cmd_status(_args: &StatusArgs, quiet: bool, _verbose: u8) -> Result
         }
     }
 
+    // Show Security section (container exists, whether running or stopped)
+    let config = config::load_config().ok();
+    if let Some(ref cfg) = config {
+        display_security_section(cfg);
+    }
+
     // If stopped, show when it stopped
     if !running {
         if let Some(ref finished) = finished_at {
@@ -290,6 +297,58 @@ fn format_docker_error(e: &DockerError) -> anyhow::Error {
             )
         }
         _ => anyhow!("{}", e),
+    }
+}
+
+/// Display the Security section of status output
+fn display_security_section(config: &Config) {
+    println!();
+    println!("{}", style("Security").bold());
+    println!("{}", style("--------").dim());
+
+    // Binding with badge
+    let bind_badge = if config.is_network_exposed() {
+        style("[NETWORK EXPOSED]").yellow().bold().to_string()
+    } else {
+        style("[LOCAL ONLY]").green().to_string()
+    };
+    println!(
+        "Binding:     {} {}",
+        style(&config.bind_address).cyan(),
+        bind_badge
+    );
+
+    // Auth users list
+    if config.users.is_empty() {
+        println!("Auth users:  {}", style("None configured").yellow());
+    } else {
+        let users_list = config.users.join(", ");
+        println!("Auth users:  {}", users_list);
+    }
+
+    // Trust proxy
+    let trust_proxy_str = if config.trust_proxy { "yes" } else { "no" };
+    println!("Trust proxy: {}", trust_proxy_str);
+
+    // Rate limit
+    println!(
+        "Rate limit:  {} attempts / {}s window",
+        config.rate_limit_attempts, config.rate_limit_window_seconds
+    );
+
+    // Warning if network exposed without users
+    if config.is_network_exposed()
+        && config.users.is_empty()
+        && !config.allow_unauthenticated_network
+    {
+        println!();
+        println!(
+            "{}",
+            style("Warning: Network exposed without authentication!")
+                .yellow()
+                .bold()
+        );
+        println!("Add users: {}", style("occ user add").cyan());
     }
 }
 
