@@ -70,7 +70,34 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
         handle_rebuild(&client, verbose).await?;
     } else if container_is_running(&client, CONTAINER_NAME).await? {
         // Already running (idempotent behavior) - only when not rebuilding
-        return show_already_running(port, quiet);
+        return show_already_running(port, bind_addr, config.is_network_exposed(), quiet);
+    }
+
+    // Security check: warn if network exposed without authentication
+    if !quiet
+        && config.is_network_exposed()
+        && config.users.is_empty()
+        && !config.allow_unauthenticated_network
+    {
+        eprintln!();
+        eprintln!(
+            "{} {}",
+            style("WARNING:").yellow().bold(),
+            style("Network exposed without authentication!").yellow()
+        );
+        eprintln!();
+        eprintln!(
+            "The service is bound to {} but no users are configured.",
+            style(bind_addr).cyan()
+        );
+        eprintln!("Anyone on your network can access the web UI without authentication.");
+        eprintln!();
+        eprintln!("To add a user: {}", style("occ user add").cyan());
+        eprintln!(
+            "To suppress this warning: {}",
+            style("occ config set allow_unauthenticated_network true").cyan()
+        );
+        eprintln!();
     }
 
     // Pre-check port availability
@@ -111,8 +138,14 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     spinner.success("Service started and ready");
 
     // Show result and optionally open browser
-    show_start_result(&container_id, port, quiet);
-    open_browser_if_requested(args.open, port);
+    show_start_result(
+        &container_id,
+        port,
+        bind_addr,
+        config.is_network_exposed(),
+        quiet,
+    );
+    open_browser_if_requested(args.open, port, bind_addr);
 
     Ok(())
 }
@@ -139,15 +172,22 @@ async fn handle_rebuild(client: &DockerClient, verbose: u8) -> Result<()> {
 }
 
 /// Show message when service is already running
-fn show_already_running(port: u16, quiet: bool) -> Result<()> {
+fn show_already_running(port: u16, bind_addr: &str, is_exposed: bool, quiet: bool) -> Result<()> {
     if quiet {
         return Ok(());
     }
 
-    let url = format!("http://127.0.0.1:{}", port);
+    let url = format!("http://{}:{}", bind_addr, port);
     println!("{}", style("Service is already running").dim());
     println!();
     println!("URL:        {}", style(&url).cyan());
+
+    // Show security status
+    if is_exposed {
+        println!("Security:   {}", style("[NETWORK EXPOSED]").yellow().bold());
+    } else {
+        println!("Security:   {}", style("[LOCAL ONLY]").green().bold());
+    }
     Ok(())
 }
 
@@ -218,8 +258,14 @@ async fn show_logs_if_container_exists(client: &DockerClient) {
 }
 
 /// Display the start result
-fn show_start_result(container_id: &str, port: u16, quiet: bool) {
-    let url = format!("http://127.0.0.1:{}", port);
+fn show_start_result(
+    container_id: &str,
+    port: u16,
+    bind_addr: &str,
+    is_exposed: bool,
+    quiet: bool,
+) {
+    let url = format!("http://{}:{}", bind_addr, port);
 
     if quiet {
         println!("{}", url);
@@ -233,17 +279,35 @@ fn show_start_result(container_id: &str, port: u16, quiet: bool) {
         style(&container_id[..12.min(container_id.len())]).dim()
     );
     println!("Port:       {} -> 3000", port);
+
+    // Show security status
+    if is_exposed {
+        println!("Security:   {}", style("[NETWORK EXPOSED]").yellow().bold());
+        println!(
+            "            {}",
+            style("Accessible on all network interfaces").dim()
+        );
+    } else {
+        println!("Security:   {}", style("[LOCAL ONLY]").green().bold());
+    }
+
     println!();
     println!("{}", style("Open in browser: occ start --open").dim());
 }
 
 /// Open browser if requested
-fn open_browser_if_requested(should_open: bool, port: u16) {
+fn open_browser_if_requested(should_open: bool, port: u16, bind_addr: &str) {
     if !should_open {
         return;
     }
 
-    let url = format!("http://127.0.0.1:{}", port);
+    // For network-exposed addresses like 0.0.0.0, use localhost for browser
+    let browser_addr = if bind_addr == "0.0.0.0" || bind_addr == "::" {
+        "127.0.0.1"
+    } else {
+        bind_addr
+    };
+    let url = format!("http://{}:{}", browser_addr, port);
     if let Err(e) = webbrowser::open(&url) {
         eprintln!(
             "{} Failed to open browser: {}",
