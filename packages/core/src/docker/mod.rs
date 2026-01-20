@@ -8,11 +8,13 @@
 //! - Image build and pull operations
 //! - Volume management for persistent storage
 //! - Container lifecycle (create, start, stop, remove)
+//! - Container exec for running commands inside containers
 
 mod client;
 pub mod container;
 mod dockerfile;
 mod error;
+pub mod exec;
 pub mod image;
 pub mod progress;
 pub mod volume;
@@ -27,6 +29,9 @@ pub use dockerfile::{DOCKERFILE, IMAGE_NAME_DOCKERHUB, IMAGE_NAME_GHCR, IMAGE_TA
 
 // Image operations
 pub use image::{build_image, image_exists, pull_image};
+
+// Container exec operations
+pub use exec::{exec_command, exec_command_exit_code, exec_command_with_stdin};
 
 // Volume management
 pub use volume::{
