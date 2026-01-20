@@ -9,7 +9,9 @@ pub mod wizard;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use console::style;
-use opencode_cloud_core::{InstanceLock, SingletonError, config, get_version, load_config};
+use opencode_cloud_core::{
+    InstanceLock, SingletonError, config, get_version, load_config, save_config,
+};
 
 /// Manage your opencode cloud service
 #[derive(Parser)]
@@ -52,6 +54,8 @@ enum Commands {
     Uninstall(commands::UninstallArgs),
     /// Manage configuration
     Config(commands::ConfigArgs),
+    /// Run interactive setup wizard
+    Setup(commands::SetupArgs),
 }
 
 /// Get the ASCII banner for help display
@@ -125,6 +129,30 @@ pub fn run() -> Result<()> {
         eprintln!("{} Data: {}", style("[info]").cyan(), data_dir);
     }
 
+    // Check if wizard needed (missing auth and not running setup/config command)
+    let needs_wizard = !config.has_required_auth()
+        && !matches!(
+            cli.command,
+            Some(Commands::Setup(_)) | Some(Commands::Config(_))
+        );
+
+    if needs_wizard {
+        eprintln!(
+            "{} First-time setup required. Running wizard...",
+            style("Note:").cyan()
+        );
+        eprintln!();
+        let rt = tokio::runtime::Runtime::new()?;
+        let new_config = rt.block_on(wizard::run_wizard(Some(&config)))?;
+        save_config(&new_config)?;
+        eprintln!();
+        eprintln!(
+            "{} Setup complete! Run your command again, or use 'occ start' to begin.",
+            style("Success:").green().bold()
+        );
+        return Ok(());
+    }
+
     match cli.command {
         Some(Commands::Start(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
@@ -155,6 +183,10 @@ pub fn run() -> Result<()> {
             rt.block_on(commands::cmd_uninstall(&args, cli.quiet, cli.verbose))
         }
         Some(Commands::Config(cmd)) => commands::cmd_config(cmd, &config, cli.quiet),
+        Some(Commands::Setup(args)) => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(commands::cmd_setup(&args, cli.quiet))
+        }
         None => {
             // No command - show a welcome message and hint to use --help
             if !cli.quiet {
