@@ -4,7 +4,7 @@
 
 use anyhow::{Result, bail};
 use console::style;
-use dialoguer::Password;
+use dialoguer::{Confirm, Password};
 use opencode_cloud_core::config::validate_bind_address;
 use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, container_is_running};
 use opencode_cloud_core::{load_config, save_config};
@@ -142,6 +142,129 @@ pub fn cmd_config_set(key: &str, value: Option<&str>, quiet: bool) -> Result<()>
             display_value = delay.to_string();
         }
 
+        "trust_proxy" | "proxy" => {
+            let val = require_value(value, key)?;
+            let trust = parse_bool(val).ok_or_else(|| {
+                anyhow::anyhow!("Invalid boolean value: {val}. Use: true/false, yes/no, or 1/0")
+            })?;
+            config.trust_proxy = trust;
+            display_value = trust.to_string();
+
+            if trust {
+                println!("{}", style("Trust proxy enabled").cyan());
+                println!();
+                println!("The service will trust X-Forwarded-* headers from reverse proxies.");
+                println!("Only enable this when running behind a trusted load balancer.");
+                println!();
+                println!("Supported headers:");
+                println!("  - X-Forwarded-For (client IP)");
+                println!("  - X-Forwarded-Proto (original protocol)");
+                println!("  - X-Forwarded-Host (original host)");
+            }
+        }
+
+        "rate_limit_attempts" | "rate_attempts" => {
+            let val = require_value(value, key)?;
+            let attempts: u32 = val.parse().map_err(|_| {
+                anyhow::anyhow!("Invalid number: {val}. Must be a positive integer.")
+            })?;
+            if attempts == 0 {
+                bail!("Rate limit attempts must be at least 1");
+            }
+            if attempts > 100 {
+                eprintln!(
+                    "{}",
+                    style("Warning: High rate limit (>100) may reduce security").yellow()
+                );
+            }
+            config.rate_limit_attempts = attempts;
+            display_value = attempts.to_string();
+        }
+
+        "rate_limit_window_seconds" | "rate_window" | "rate_limit_window" => {
+            let val = require_value(value, key)?;
+            let window: u32 = val.parse().map_err(|_| {
+                anyhow::anyhow!("Invalid number: {val}. Must be a positive integer.")
+            })?;
+            if window == 0 {
+                bail!("Rate limit window must be at least 1 second");
+            }
+            if window < 10 {
+                eprintln!(
+                    "{}",
+                    style("Warning: Very short window (<10s) may cause false positives").yellow()
+                );
+            }
+            config.rate_limit_window_seconds = window;
+            display_value = window.to_string();
+        }
+
+        "allow_unauthenticated_network" | "allow_unauth" | "unauth_network" => {
+            let val = require_value(value, key)?;
+            let allow = parse_bool(val).ok_or_else(|| {
+                anyhow::anyhow!("Invalid boolean value: {val}. Use: true/false, yes/no, or 1/0")
+            })?;
+
+            if allow {
+                // Double opt-in per CONTEXT.md
+                println!();
+                println!(
+                    "{}",
+                    style("WARNING: DANGEROUS SECURITY SETTING").red().bold()
+                );
+                println!();
+                println!("You are about to allow unauthenticated network access.");
+                println!("This means ANYONE on your network can access the opencode web UI");
+                println!("without logging in.");
+                println!();
+                println!("This is typically only appropriate for:");
+                println!("  - Development environments on trusted networks");
+                println!("  - Services behind an authenticating reverse proxy");
+                println!();
+
+                // First confirmation
+                let confirm1 = Confirm::new()
+                    .with_prompt("Do you understand this risk?")
+                    .default(false)
+                    .interact()?;
+
+                if !confirm1 {
+                    println!("Aborted. Setting not changed.");
+                    return Ok(());
+                }
+
+                // Second confirmation (double opt-in)
+                let confirm2 = Confirm::new()
+                    .with_prompt("Are you SURE you want to enable unauthenticated network access?")
+                    .default(false)
+                    .interact()?;
+
+                if !confirm2 {
+                    println!("Aborted. Setting not changed.");
+                    return Ok(());
+                }
+
+                config.allow_unauthenticated_network = true;
+                display_value = "true".to_string();
+                println!();
+                println!(
+                    "{}",
+                    style("Unauthenticated network access enabled.").yellow()
+                );
+                println!(
+                    "To disable: {}",
+                    style("occ config set allow_unauthenticated_network false").cyan()
+                );
+            } else {
+                config.allow_unauthenticated_network = false;
+                display_value = "false".to_string();
+                println!(
+                    "{}",
+                    style("Unauthenticated network access disabled.").green()
+                );
+            }
+        }
+
         _ => {
             bail!(
                 "Unknown configuration key: {key}\n\n\
@@ -154,7 +277,11 @@ pub fn cmd_config_set(key: &str, value: Option<&str>, quiet: bool) -> Result<()>
                   auto_restart\n  \
                   boot_mode\n  \
                   restart_retries\n  \
-                  restart_delay\n\n\
+                  restart_delay\n  \
+                  trust_proxy / proxy\n  \
+                  rate_limit_attempts / rate_attempts\n  \
+                  rate_limit_window_seconds / rate_window\n  \
+                  allow_unauthenticated_network / allow_unauth\n\n\
                 For environment variables, use: occ config env set KEY=value"
             );
         }
