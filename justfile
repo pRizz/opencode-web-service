@@ -43,7 +43,7 @@ test-node:
     pnpm -r test
 
 # Lint everything
-lint: lint-rust lint-node
+lint: lint-rust lint-node lint-shell
 
 # Lint Rust code
 lint-rust:
@@ -53,6 +53,13 @@ lint-rust:
 # Lint Node code
 lint-node:
     pnpm -r lint
+
+# Lint shell scripts
+lint-shell:
+    shellcheck scripts/*.sh
+
+# Pre-commit checks
+pre-commit: fmt lint build test
 
 # Format everything
 fmt:
