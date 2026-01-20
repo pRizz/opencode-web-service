@@ -28,6 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 14: Auto-rebuild Detection** - Detect CLI/image version mismatch and prompt for rebuild
 - [ ] **Phase 15: Prebuilt Image Option** - Option to pull prebuilt images vs building from scratch
 - [ ] **Phase 16: Code Quality Audit** - Reduce nesting, eliminate duplication, improve readability
+- [ ] **Phase 17: Custom Bind Mounts** - Allow users to mount local directories into the container
 
 ## Phase Details
 
@@ -294,10 +295,30 @@ Plans:
 - [ ] 16-02: TBD (refactor CLI commands)
 - [ ] 16-03: TBD (refactor core library)
 
+### Phase 17: Custom Bind Mounts
+**Goal**: Allow users to specify local filesystem directories to mount into the Docker container
+**Depends on**: Phase 5 (Interactive Setup Wizard - for config UI)
+**Requirements**: None (enhancement)
+**Note**: Users often want to work with local project directories inside the container. This phase adds configuration and CLI options to specify bind mounts that map host paths to container paths.
+**Success Criteria** (what must be TRUE):
+  1. User can add bind mounts via `occ config set mounts "/path/on/host:/path/in/container"`
+  2. User can add multiple mounts (array in config)
+  3. Mounts are applied when container starts
+  4. User can specify read-only mounts via `:ro` suffix
+  5. Invalid paths (non-existent directories) are validated before container start
+  6. `occ start --mount /path:/container/path` allows one-time mount without persisting to config
+  7. `occ status` shows active bind mounts
+**Plans**: TBD
+
+Plans:
+- [ ] 17-01: TBD (config schema for mounts, validation)
+- [ ] 17-02: TBD (container creation with bind mounts)
+- [ ] 17-03: TBD (CLI commands and status display)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -317,7 +338,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 14. Auto-rebuild Detection | 0/1 | Not started | - |
 | 15. Prebuilt Image Option | 0/2 | Not started | - |
 | 16. Code Quality Audit | 0/3 | Not started | - |
+| 17. Custom Bind Mounts | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 16 added - code quality audit)*
+*Last updated: 2026-01-19 (Phase 17 added - custom bind mounts)*
