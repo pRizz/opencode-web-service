@@ -35,3 +35,13 @@ just clean       # Clean build artifacts
 - Users need Rust 1.82+ installed for npm install
 - Config stored at `~/.config/opencode-cloud/config.json`
 - Data stored at `~/.local/share/opencode-cloud/`
+
+## Version and Metadata Sync
+
+**Important:** `packages/core/Cargo.toml` must use explicit values (not `workspace = true`) because it's published to npm where users install it standalone without the workspace root.
+
+When updating versions or metadata, keep these files in sync:
+- `Cargo.toml` (workspace root) - `[workspace.package]` section
+- `packages/core/Cargo.toml` - explicit values for version, edition, rust-version, license, repository, homepage, documentation, keywords, categories
+
+The `scripts/set-all-versions.sh` script handles version updates automatically. For other metadata changes, update both files manually.

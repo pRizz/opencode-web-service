@@ -171,6 +171,16 @@ This is a monorepo with:
 
 The npm package compiles the Rust core on install (no prebuilt binaries).
 
+### Cargo.toml Sync Requirement
+
+The `packages/core/Cargo.toml` file must use **explicit values** rather than `workspace = true` references. This is because when users install the npm package, they only get `packages/core/` without the workspace root `Cargo.toml`, so workspace inheritance would fail.
+
+When updating package metadata (version, edition, rust-version, etc.), keep both files in sync:
+- `Cargo.toml` (workspace root)
+- `packages/core/Cargo.toml`
+
+Use `scripts/set-all-versions.sh <version>` to update versions across all files automatically.
+
 ## License
 
 MIT
