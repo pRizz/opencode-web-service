@@ -10,8 +10,8 @@ use futures_util::stream::StreamExt;
 use opencode_cloud_core::bollard::container::{LogOutput, LogsOptions};
 use opencode_cloud_core::docker::{
     CONTAINER_NAME, DockerClient, DockerError, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT,
-    ProgressReporter, build_image, container_is_running, image_exists, setup_and_start,
-    stop_service,
+    ProgressReporter, build_image, container_exists, container_is_running, image_exists,
+    setup_and_start, stop_service,
 };
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
@@ -64,6 +64,22 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     let bind_addr = &config.bind_address;
 
     let any_rebuild = args.cached_rebuild || args.full_rebuild;
+
+    // Security check: block first start without security configured
+    let is_first_start = !container_exists(&client, CONTAINER_NAME).await?;
+
+    if is_first_start && config.users.is_empty() && !config.allow_unauthenticated_network {
+        return Err(anyhow!(
+            "{}\n\n\
+             No users are configured for authentication.\n\
+             The service cannot start without security configured.\n\n\
+             Quick setup:\n  {}\n\n\
+             Or allow unauthenticated access (not recommended):\n  {}",
+            style("Security not configured").red().bold(),
+            style("occ setup").cyan(),
+            style("occ config set allow_unauthenticated_network true").dim()
+        ));
+    }
 
     // Handle rebuild: remove existing container so a new one is created from the new image
     if any_rebuild {
