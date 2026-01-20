@@ -7,12 +7,14 @@ mod network;
 mod prechecks;
 mod summary;
 
+pub use auth::create_container_user;
 pub use prechecks::{verify_docker_available, verify_tty};
 
 use anyhow::{Result, anyhow};
 use console::{Term, style};
 use dialoguer::Confirm;
 use opencode_cloud_core::Config;
+use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, container_is_running};
 
 use auth::prompt_auth;
 use network::{prompt_hostname, prompt_port};
@@ -57,6 +59,9 @@ fn handle_interrupt() -> anyhow::Error {
 /// Guides the user through configuration, collecting values and returning
 /// a complete Config. Does NOT save - the caller is responsible for saving.
 ///
+/// Creates PAM-based users in the container if it's running.
+/// Migrates old auth_username/auth_password to new users array.
+///
 /// # Arguments
 /// * `existing_config` - Optional existing config to show current values
 ///
@@ -68,20 +73,33 @@ pub async fn run_wizard(existing_config: Option<&Config>) -> Result<Config> {
     verify_tty()?;
     verify_docker_available().await?;
 
+    // Connect to Docker for container operations
+    let client = DockerClient::new()?;
+    let is_container_running = container_is_running(&client, CONTAINER_NAME)
+        .await
+        .unwrap_or(false);
+
     println!();
     println!("{}", style("opencode-cloud Setup Wizard").cyan().bold());
     println!("{}", style("=".repeat(30)).dim());
     println!();
 
-    // 2. If existing config with auth, show current summary and ask to reconfigure
+    // 2. If existing config with users configured, show current summary and ask to reconfigure
     if let Some(config) = existing_config {
-        if config.has_required_auth() {
+        let has_users = !config.users.is_empty();
+        let has_old_auth = config.has_required_auth();
+
+        if has_users || has_old_auth {
             println!("{}", style("Current configuration:").bold());
-            println!(
-                "  Username: {}",
-                config.auth_username.as_deref().unwrap_or("-")
-            );
-            println!("  Password: ********");
+            if has_users {
+                println!("  Users:    {}", config.users.join(", "));
+            } else if has_old_auth {
+                println!(
+                    "  Username: {} (legacy)",
+                    config.auth_username.as_deref().unwrap_or("-")
+                );
+                println!("  Password: ********");
+            }
             println!("  Port:     {}", config.opencode_web_port);
             println!("  Binding:  {}", config.bind);
             println!();
@@ -122,8 +140,8 @@ pub async fn run_wizard(existing_config: Option<&Config>) -> Result<Config> {
     };
 
     let state = WizardState {
-        auth_username: Some(username),
-        auth_password: Some(password),
+        auth_username: Some(username.clone()),
+        auth_password: Some(password.clone()),
         port,
         bind,
     };
@@ -144,9 +162,47 @@ pub async fn run_wizard(existing_config: Option<&Config>) -> Result<Config> {
         return Err(anyhow!("Setup cancelled"));
     }
 
-    // 7. Build and return config
+    // 7. Create user in container if running
+    if is_container_running {
+        println!();
+        println!("{}", style("Creating user in container...").cyan());
+        auth::create_container_user(&client, &username, &password).await?;
+    } else {
+        println!();
+        println!(
+            "{}",
+            style("Note: User will be created when container starts.").dim()
+        );
+    }
+
+    // 8. Build and return config
     let mut config = existing_config.cloned().unwrap_or_default();
     state.apply_to_config(&mut config);
+
+    // Update config.users array (PAM-based auth tracking)
+    if !config.users.contains(&username) {
+        config.users.push(username);
+    }
+
+    // Migrate old auth_username/auth_password if present
+    if let Some(ref old_username) = config.auth_username {
+        if !old_username.is_empty() && !config.users.contains(old_username) {
+            println!(
+                "{}",
+                style(format!(
+                    "Migrating existing user '{}' to PAM-based authentication...",
+                    old_username
+                ))
+                .dim()
+            );
+            config.users.push(old_username.clone());
+        }
+    }
+
+    // Clear legacy auth fields (keep them empty for schema compatibility)
+    config.auth_username = Some(String::new());
+    config.auth_password = Some(String::new());
+
     Ok(config)
 }
 

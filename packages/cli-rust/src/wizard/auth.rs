@@ -1,10 +1,14 @@
 //! Auth credential prompts
 //!
 //! Handles username and password collection with random generation option.
+//! Also handles creating container users via PAM-based authentication.
 
 use anyhow::{Result, anyhow};
 use console::{Term, style};
 use dialoguer::{Confirm, Input, Password, Select};
+use opencode_cloud_core::docker::{
+    CONTAINER_NAME, DockerClient, create_user, set_user_password, user_exists,
+};
 use rand::Rng;
 use rand::distr::Alphanumeric;
 
@@ -122,6 +126,32 @@ pub fn prompt_auth(step: usize, total: usize) -> Result<(String, String)> {
             _ => unreachable!(),
         }
     }
+}
+
+/// Create a user in the container with the given password
+///
+/// If the user already exists, updates their password instead.
+/// Uses PAM-based authentication (chpasswd for secure password setting).
+pub async fn create_container_user(
+    client: &DockerClient,
+    username: &str,
+    password: &str,
+) -> Result<()> {
+    // Check if user already exists
+    if user_exists(client, CONTAINER_NAME, username).await? {
+        // User exists, just update password
+        println!("  User '{}' exists, updating password...", username);
+    } else {
+        // Create new user
+        println!("  Creating user '{}' in container...", username);
+        create_user(client, CONTAINER_NAME, username).await?;
+    }
+
+    // Set password
+    set_user_password(client, CONTAINER_NAME, username, password).await?;
+    println!("  Password set for '{}'", username);
+
+    Ok(())
 }
 
 #[cfg(test)]
