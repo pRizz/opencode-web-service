@@ -50,8 +50,7 @@ enum Commands {
     /// Remove service registration
     Uninstall(commands::UninstallArgs),
     /// Manage configuration
-    #[command(subcommand)]
-    Config(commands::ConfigCommands),
+    Config(commands::ConfigArgs),
 }
 
 /// Get the ASCII banner for help display

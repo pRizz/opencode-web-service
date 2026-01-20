@@ -11,7 +11,7 @@ mod status;
 mod stop;
 mod uninstall;
 
-pub use config::{ConfigCommands, cmd_config};
+pub use config::{ConfigArgs, cmd_config};
 pub use install::{InstallArgs, cmd_install};
 pub use logs::{LogsArgs, cmd_logs};
 pub use restart::{RestartArgs, cmd_restart};

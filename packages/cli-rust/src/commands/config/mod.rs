@@ -7,17 +7,28 @@ mod reset;
 mod show;
 
 use anyhow::Result;
-use clap::Subcommand;
+use clap::{Args, Subcommand};
 use opencode_cloud_core::Config;
 
 pub use get::cmd_config_get;
 pub use reset::cmd_config_reset;
 pub use show::cmd_config_show;
 
+/// Configuration command arguments
+#[derive(Args)]
+pub struct ConfigArgs {
+    /// Output as JSON instead of table format
+    #[arg(long)]
+    json: bool,
+
+    #[command(subcommand)]
+    command: Option<ConfigSubcommands>,
+}
+
 /// Configuration management subcommands
 #[derive(Subcommand)]
-pub enum ConfigCommands {
-    /// Show current configuration (default when no subcommand given)
+pub enum ConfigSubcommands {
+    /// Show current configuration
     Show {
         /// Output as JSON instead of table format
         #[arg(long)]
@@ -36,14 +47,18 @@ pub enum ConfigCommands {
     },
 }
 
-/// Handle config subcommands
+/// Handle config command
 ///
 /// Routes to the appropriate handler based on the subcommand.
-/// If no subcommand is given, defaults to Show (handled by clap default_subcommand).
-pub fn cmd_config(cmd: ConfigCommands, config: &Config, quiet: bool) -> Result<()> {
-    match cmd {
-        ConfigCommands::Show { json } => cmd_config_show(config, json, quiet),
-        ConfigCommands::Get { key } => cmd_config_get(config, &key, quiet),
-        ConfigCommands::Reset { force } => cmd_config_reset(force, quiet),
+/// If no subcommand is given, defaults to Show.
+pub fn cmd_config(args: ConfigArgs, config: &Config, quiet: bool) -> Result<()> {
+    match args.command {
+        Some(ConfigSubcommands::Show { json }) => cmd_config_show(config, json, quiet),
+        Some(ConfigSubcommands::Get { key }) => cmd_config_get(config, &key, quiet),
+        Some(ConfigSubcommands::Reset { force }) => cmd_config_reset(force, quiet),
+        None => {
+            // Default to show when no subcommand given
+            cmd_config_show(config, args.json, quiet)
+        }
     }
 }
