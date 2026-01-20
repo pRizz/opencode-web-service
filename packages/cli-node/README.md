@@ -9,6 +9,13 @@
 
 A production-ready toolkit for deploying [opencode](https://github.com/anomalyco/opencode) as a persistent cloud service.
 
+## Quick install (cargo)
+
+```bash
+cargo install opencode-cloud
+opencode-cloud --version
+```
+
 ## Features
 
 - Cross-platform CLI (`opencode-cloud` / `occ`)
