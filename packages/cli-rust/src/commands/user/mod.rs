@@ -49,9 +49,7 @@ pub async fn cmd_user(args: &UserArgs, quiet: bool, verbose: u8) -> Result<()> {
     // Check container is running first
     let client = DockerClient::new()?;
     if !container_is_running(&client, CONTAINER_NAME).await? {
-        bail!(
-            "Container not running. Start with `occ start` first."
-        );
+        bail!("Container not running. Start with `occ start` first.");
     }
 
     match &args.command {

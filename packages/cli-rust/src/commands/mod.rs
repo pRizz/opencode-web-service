@@ -11,6 +11,7 @@ mod start;
 mod status;
 mod stop;
 mod uninstall;
+mod user;
 
 pub use config::{ConfigArgs, cmd_config};
 pub use install::{InstallArgs, cmd_install};
@@ -21,3 +22,4 @@ pub use start::{StartArgs, cmd_start};
 pub use status::{StatusArgs, cmd_status};
 pub use stop::{StopArgs, cmd_stop};
 pub use uninstall::{UninstallArgs, cmd_uninstall};
+pub use user::{UserArgs, cmd_user};

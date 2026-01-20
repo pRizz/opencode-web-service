@@ -56,6 +56,8 @@ enum Commands {
     Config(commands::ConfigArgs),
     /// Run interactive setup wizard
     Setup(commands::SetupArgs),
+    /// Manage container users
+    User(commands::UserArgs),
 }
 
 /// Get the ASCII banner for help display
@@ -186,6 +188,10 @@ pub fn run() -> Result<()> {
         Some(Commands::Setup(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(commands::cmd_setup(&args, cli.quiet))
+        }
+        Some(Commands::User(args)) => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(commands::cmd_user(&args, cli.quiet, cli.verbose))
         }
         None => {
             // No command - show a welcome message and hint to use --help
