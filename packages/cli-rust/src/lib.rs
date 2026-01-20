@@ -8,7 +8,7 @@ mod output;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use console::style;
-use opencode_cloud_core::{Config, InstanceLock, SingletonError, config, get_version, load_config};
+use opencode_cloud_core::{InstanceLock, SingletonError, config, get_version, load_config};
 
 /// Manage your opencode cloud service
 #[derive(Parser)]
@@ -51,20 +51,7 @@ enum Commands {
     Uninstall(commands::UninstallArgs),
     /// Manage configuration
     #[command(subcommand)]
-    Config(ConfigCommands),
-}
-
-#[derive(Subcommand)]
-enum ConfigCommands {
-    /// Show current configuration
-    Show,
-    /// Set a configuration value
-    Set {
-        /// Configuration key to set
-        key: String,
-        /// Value to set
-        value: String,
-    },
+    Config(commands::ConfigCommands),
 }
 
 /// Get the ASCII banner for help display
@@ -167,7 +154,7 @@ pub fn run() -> Result<()> {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(commands::cmd_uninstall(&args, cli.quiet, cli.verbose))
         }
-        Some(Commands::Config(cmd)) => handle_config(cmd, &config),
+        Some(Commands::Config(cmd)) => commands::cmd_config(cmd, &config, cli.quiet),
         None => {
             // No command - show a welcome message and hint to use --help
             if !cli.quiet {
@@ -250,37 +237,6 @@ fn display_singleton_error(err: &SingletonError) {
                 "  {} Ensure XDG_DATA_HOME or HOME is set.",
                 style("Tip:").cyan()
             );
-        }
-    }
-}
-
-fn handle_config(cmd: ConfigCommands, config: &Config) -> Result<()> {
-    match cmd {
-        ConfigCommands::Show => {
-            // Display current config as formatted JSON
-            let json = serde_json::to_string_pretty(config)
-                .map_err(|err| anyhow::anyhow!("Config serialization failed: {err}"))?;
-            println!("{}", json);
-            Ok(())
-        }
-        ConfigCommands::Set { key, value } => {
-            // Placeholder - not yet implemented
-            eprintln!(
-                "{} config set is not yet implemented",
-                style("Note:").yellow()
-            );
-            eprintln!();
-            eprintln!(
-                "  Attempted to set: {} = {}",
-                style(&key).cyan(),
-                style(&value).green()
-            );
-            eprintln!();
-            eprintln!("  For now, edit the config file directly at:");
-            if let Some(path) = config::paths::get_config_path() {
-                eprintln!("  {}", style(path.display()).yellow());
-            }
-            Ok(())
         }
     }
 }
