@@ -27,6 +27,9 @@ pub use platform::{
     is_service_registration_supported,
 };
 
+// Re-export bollard to ensure all crates use the same version
+pub use bollard;
+
 // NAPI bindings for Node.js consumers (only when napi feature is enabled)
 #[cfg(feature = "napi")]
 use napi_derive::napi;

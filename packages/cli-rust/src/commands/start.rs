@@ -4,10 +4,10 @@
 
 use crate::output::CommandSpinner;
 use anyhow::{Result, anyhow};
-use bollard::container::{LogOutput, LogsOptions};
 use clap::Args;
 use console::style;
 use futures_util::stream::StreamExt;
+use opencode_cloud_core::bollard::container::{LogOutput, LogsOptions};
 use opencode_cloud_core::docker::{
     CONTAINER_NAME, DockerClient, DockerError, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT,
     OPENCODE_WEB_PORT, ProgressReporter, build_image, container_is_running, image_exists,

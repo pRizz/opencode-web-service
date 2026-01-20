@@ -1376,7 +1376,6 @@ name = "opencode-cloud"
 version = "1.0.2"
 dependencies = [
  "anyhow",
- "bollard",
  "chrono",
  "clap",
  "console 0.16.2",

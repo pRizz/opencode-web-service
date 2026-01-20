@@ -47,8 +47,9 @@ pub async fn cmd_status(_args: &StatusArgs, quiet: bool, _verbose: u8) -> Result
 
     let info = match inspect_result {
         Ok(info) => info,
-        Err(bollard::errors::Error::DockerResponseServerError {
-            status_code: 404, ..
+        Err(opencode_cloud_core::bollard::errors::Error::DockerResponseServerError {
+            status_code: 404,
+            ..
         }) => {
             if quiet {
                 std::process::exit(1);
