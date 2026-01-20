@@ -4,6 +4,7 @@
 
 mod get;
 mod reset;
+mod set;
 mod show;
 
 use anyhow::Result;
@@ -12,6 +13,7 @@ use opencode_cloud_core::Config;
 
 pub use get::cmd_config_get;
 pub use reset::cmd_config_reset;
+pub use set::cmd_config_set;
 pub use show::cmd_config_show;
 
 /// Configuration command arguments
@@ -39,6 +41,13 @@ pub enum ConfigSubcommands {
         /// Configuration key (e.g., "port", "auth_username", "bind")
         key: String,
     },
+    /// Set a configuration value
+    Set {
+        /// Configuration key to set (e.g., "port", "username", "password")
+        key: String,
+        /// Value to set (omit for password to prompt securely)
+        value: Option<String>,
+    },
     /// Reset configuration to defaults
     Reset {
         /// Skip confirmation prompt
@@ -55,6 +64,9 @@ pub fn cmd_config(args: ConfigArgs, config: &Config, quiet: bool) -> Result<()> 
     match args.command {
         Some(ConfigSubcommands::Show { json }) => cmd_config_show(config, json, quiet),
         Some(ConfigSubcommands::Get { key }) => cmd_config_get(config, &key, quiet),
+        Some(ConfigSubcommands::Set { key, value }) => {
+            cmd_config_set(&key, value.as_deref(), quiet)
+        }
         Some(ConfigSubcommands::Reset { force }) => cmd_config_reset(force, quiet),
         None => {
             // Default to show when no subcommand given
