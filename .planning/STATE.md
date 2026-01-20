@@ -9,7 +9,7 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 4 of 17 (Platform Service Installation)
+Phase: 4 of 18 (Platform Service Installation)
 Plan: 4 of 4 in current phase
 Status: Phase complete
 Last activity: 2026-01-19 - Completed 04-04-PLAN.md (Install/Uninstall CLI Commands)
@@ -103,6 +103,7 @@ Recent decisions affecting current work:
 - Phase 15 added: Prebuilt Image Option (pull vs build from source)
 - Phase 16 added: Code Quality Audit (reduce nesting, eliminate duplication)
 - Phase 17 added: Custom Bind Mounts (mount local directories into container)
+- Phase 18 added: CLI Sync Strategy (keep Rust and Node CLIs in sync)
 
 ### Blockers/Concerns
 

@@ -29,6 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 15: Prebuilt Image Option** - Option to pull prebuilt images vs building from scratch
 - [ ] **Phase 16: Code Quality Audit** - Reduce nesting, eliminate duplication, improve readability
 - [ ] **Phase 17: Custom Bind Mounts** - Allow users to mount local directories into the container
+- [ ] **Phase 18: CLI Sync Strategy** - Strategy for keeping Rust and Node CLIs in sync
 
 ## Phase Details
 
@@ -315,10 +316,28 @@ Plans:
 - [ ] 17-02: TBD (container creation with bind mounts)
 - [ ] 17-03: TBD (CLI commands and status display)
 
+### Phase 18: CLI Sync Strategy
+**Goal**: Develop and implement a strategy to ensure the Rust CLI and Node CLI remain feature-complete and behavior-consistent
+**Depends on**: Phase 8 (Polish and Documentation)
+**Requirements**: None (architecture/maintenance)
+**Note**: The project has two CLI entry points: packages/cli-rust (native Rust binary) and packages/cli-node (Node.js wrapper using NAPI bindings to core). Both should expose identical commands with identical behavior. This phase establishes patterns, testing, and automation to prevent drift.
+**Success Criteria** (what must be TRUE):
+  1. Documented strategy for CLI parity (which is source of truth, how to sync)
+  2. Shared command definitions or generated from single source
+  3. Test suite validates both CLIs produce identical output for all commands
+  4. CI fails if CLIs diverge in behavior or available commands
+  5. Clear process for adding new commands to both CLIs
+**Plans**: TBD
+
+Plans:
+- [ ] 18-01: TBD (audit current state, document strategy)
+- [ ] 18-02: TBD (shared definitions or code generation)
+- [ ] 18-03: TBD (parity test suite and CI integration)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17 -> 18
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -339,7 +358,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 15. Prebuilt Image Option | 0/2 | Not started | - |
 | 16. Code Quality Audit | 0/3 | Not started | - |
 | 17. Custom Bind Mounts | 0/3 | Not started | - |
+| 18. CLI Sync Strategy | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19 (Phase 17 added - custom bind mounts)*
+*Last updated: 2026-01-19 (Phase 18 added - CLI sync strategy)*
