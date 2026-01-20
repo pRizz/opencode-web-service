@@ -110,6 +110,10 @@ Recent decisions affecting current work:
 - [06-05]: Double confirmation for allow_unauthenticated_network: Two Y/N prompts required
 - [06-05]: Warning at >100 rate_limit_attempts for security awareness
 - [06-05]: Warning at <10s rate_limit_window for false positive awareness
+- [06-04]: Security section displays in status even when container stopped (config relevant for restart)
+- [06-04]: Legacy auth_username/auth_password cleared to empty strings (not None) for schema compatibility
+- [06-04]: First-start check uses container_exists (container is the runtime boundary)
+- [06-04]: Existing containers can restart without users (migration safety for existing deployments)
 
 ### Pending Todos
 
