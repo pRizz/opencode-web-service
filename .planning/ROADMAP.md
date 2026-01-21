@@ -149,11 +149,11 @@ Plans:
   2. Update preserves existing configuration and data volumes
   3. Health check endpoint available at `/health` for monitoring tools
   4. Configuration is validated on service startup with clear error messages for invalid config
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: TBD (update command)
-- [ ] 07-02: TBD (health check and config validation)
+- [ ] 07-01-PLAN.md — Update command with rollback support and progress feedback
+- [ ] 07-02-PLAN.md — Health check endpoint and config validation with actionable errors
 
 ### Phase 8: Polish and Documentation
 **Goal**: CLI provides excellent UX with clear help and clean uninstall
@@ -366,4 +366,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-20 (Phase 6 complete - Security and Authentication)*
+*Last updated: 2026-01-21 (Phase 7 planned - Update and Maintenance)*
