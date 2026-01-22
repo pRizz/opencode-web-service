@@ -164,11 +164,10 @@ Plans:
   2. Error messages are clear and include actionable guidance
   3. User can cleanly uninstall via `opencode-cloud uninstall`
   4. Uninstall removes service registration, config files, and optionally Docker volumes
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: TBD (help documentation)
-- [ ] 08-02: TBD (error handling and uninstall)
+- [ ] 08-01-PLAN.md — Uninstall UX improvements (confirmation prompt, remaining file paths display)
 
 ### Phase 9: Dockerfile Version Pinning
 **Goal**: Pin explicit versions for tools installed from GitHub in the Dockerfile to improve security and reproducibility
@@ -352,7 +351,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Interactive Setup Wizard | 3/3 | ✓ Complete | 2026-01-20 |
 | 6. Security and Authentication | 5/5 | ✓ Complete | 2026-01-20 |
 | 7. Update and Maintenance | 2/2 | ✓ Complete | 2026-01-22 |
-| 8. Polish and Documentation | 0/2 | Not started | - |
+| 8. Polish and Documentation | 0/1 | Not started | - |
 | 9. Dockerfile Version Pinning | 0/1 | Not started | - |
 | 10. Remote Administration via Cockpit | 0/1 | Not started | - |
 | 11. Remote Host Management | 0/1 | Not started | - |
@@ -366,4 +365,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-22 (Phase 7 complete - Update and Maintenance)*
+*Last updated: 2026-01-22 (Phase 8 planned)*
