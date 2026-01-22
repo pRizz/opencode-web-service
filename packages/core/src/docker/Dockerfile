@@ -311,6 +311,39 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 USER opencode
 
 # -----------------------------------------------------------------------------
+# Cockpit Web Console (2026-01-22)
+# -----------------------------------------------------------------------------
+# Cockpit provides web-based administration for the container
+# Ubuntu noble has cockpit 316 in main repos
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    cockpit-ws \
+    cockpit-system \
+    cockpit-bridge \
+    && rm -rf /var/lib/apt/lists/*
+
+# Enable Cockpit socket activation
+RUN systemctl enable cockpit.socket
+
+# Configure Cockpit for HTTP (TLS terminated externally) and proxy headers
+RUN mkdir -p /etc/cockpit && \
+    cat > /etc/cockpit/cockpit.conf << 'COCKPIT_CONF'
+[WebService]
+# Allow HTTP connections (TLS terminated externally like opencode)
+AllowUnencrypted = true
+
+# Trust proxy headers for X-Forwarded-For, X-Forwarded-Proto
+ProtocolHeader = X-Forwarded-Proto
+ForwardedForHeader = X-Forwarded-For
+
+# Limit concurrent login attempts
+MaxStartups = 10
+COCKPIT_CONF
+
+USER opencode
+
+# -----------------------------------------------------------------------------
 # CI/CD Tools
 # -----------------------------------------------------------------------------
 # act v0.2.84 (2026-01-01) - run GitHub Actions locally
