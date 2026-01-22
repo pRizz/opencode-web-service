@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Update and Maintenance** - Update command, health check endpoint
 - [x] **Phase 8: Polish and Documentation** - Help docs, error messages, uninstall cleanup
 - [x] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
-- [ ] **Phase 10: Remote Administration via Cockpit** - Integrate and expose remote admin of Docker container via Cockpit
+- [x] **Phase 10: Remote Administration via Cockpit** - Integrate and expose remote admin of Docker container via Cockpit
 - [ ] **Phase 11: Remote Host Management** - Allow occ to remotely install and interact with Docker containers on different hosts
 - [ ] **Phase 12: Web Desktop UI Investigation** - Investigate integrating secure web-exposed desktop UI (Friend OS, WDE, etc.)
 - [ ] **Phase 13: Container Security Tools** - Add trivy, gitleaks, hadolint, age, sops, mkcert to container
@@ -198,9 +198,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Transform Dockerfile from tini to systemd with Cockpit packages
-- [ ] 10-02-PLAN.md — Config schema (cockpit_port, cockpit_enabled) and container creation for systemd
-- [ ] 10-03-PLAN.md — CLI commands (occ cockpit) and status/start output updates
+- [x] 10-01-PLAN.md — Transform Dockerfile from tini to systemd with Cockpit packages
+- [x] 10-02-PLAN.md — Config schema (cockpit_port, cockpit_enabled) and container creation for systemd
+- [x] 10-03-PLAN.md — CLI commands (occ cockpit) and status/start output updates
 
 ### Phase 11: Remote Host Management
 **Goal**: Allow occ command to remotely install and interact with Docker containers running on different hosts
@@ -356,7 +356,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. Update and Maintenance | 2/2 | ✓ Complete | 2026-01-22 |
 | 8. Polish and Documentation | 1/1 | ✓ Complete | 2026-01-22 |
 | 9. Dockerfile Version Pinning | 2/2 | ✓ Complete | 2026-01-22 |
-| 10. Remote Administration via Cockpit | 0/3 | Not started | - |
+| 10. Remote Administration via Cockpit | 3/3 | ✓ Complete | 2026-01-22 |
 | 11. Remote Host Management | 0/1 | Not started | - |
 | 12. Web Desktop UI Investigation | 0/1 | Not started | - |
 | 13. Container Security Tools | 0/1 | Not started | - |
@@ -368,4 +368,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-22 (Phase 10 planned)*
+*Last updated: 2026-01-22 (Phase 10 complete)*
