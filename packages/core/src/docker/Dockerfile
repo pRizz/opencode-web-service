@@ -307,11 +307,11 @@ RUN curl -sL https://raw.githubusercontent.com/nektos/act/master/install.sh | su
 # -----------------------------------------------------------------------------
 # Rust Tooling - pinned versions (2026-01-22)
 # -----------------------------------------------------------------------------
-# cargo-nextest 0.9.123 - fast test runner
+# cargo-nextest 0.9.122 - fast test runner
 # cargo-audit 0.22.0 - security audit
 # cargo-deny 0.19.0 - dependency linter
 RUN . /home/opencode/.cargo/env \
-    && cargo install --locked cargo-nextest@0.9.123 cargo-audit@0.22.0 cargo-deny@0.19.0
+    && cargo install --locked cargo-nextest@0.9.122 cargo-audit@0.22.0 cargo-deny@0.19.0
 
 # Install mold fast linker (2026-01-22)
 USER root
