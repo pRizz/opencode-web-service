@@ -9,7 +9,9 @@ use clap::Args;
 use console::style;
 use opencode_cloud_core::Config;
 use opencode_cloud_core::config;
-use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, DockerError, OPENCODE_WEB_PORT};
+use opencode_cloud_core::docker::{
+    CONTAINER_NAME, DockerClient, DockerError, HealthError, OPENCODE_WEB_PORT, check_health,
+};
 use opencode_cloud_core::platform::{get_service_manager, is_service_registration_supported};
 use std::time::Duration;
 
@@ -120,6 +122,26 @@ pub async fn cmd_status(_args: &StatusArgs, quiet: bool, _verbose: u8) -> Result
     if running {
         let url = format!("http://127.0.0.1:{}", host_port);
         println!("URL:         {}", style(&url).cyan());
+
+        // Show health check status
+        match check_health(host_port).await {
+            Ok(response) => {
+                println!(
+                    "Health:      {} (v{})",
+                    style("Healthy").green(),
+                    response.version
+                );
+            }
+            Err(HealthError::ConnectionRefused) | Err(HealthError::Timeout) => {
+                println!("Health:      {}", style("Service starting...").yellow());
+            }
+            Err(HealthError::Unhealthy(code)) => {
+                println!("Health:      {} (HTTP {})", style("Unhealthy").red(), code);
+            }
+            Err(_) => {
+                println!("Health:      {}", style("Check failed").yellow());
+            }
+        }
     }
 
     println!(

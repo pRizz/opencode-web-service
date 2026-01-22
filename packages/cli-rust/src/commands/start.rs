@@ -63,6 +63,21 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     let port = args.port.unwrap_or(config.opencode_web_port);
     let bind_addr = &config.bind_address;
 
+    // Validate config before starting
+    match opencode_cloud_core::config::validate_config(&config) {
+        Ok(warnings) => {
+            for warning in warnings {
+                opencode_cloud_core::config::display_validation_warning(&warning);
+            }
+        }
+        Err(error) => {
+            opencode_cloud_core::config::display_validation_error(&error);
+            return Err(anyhow::anyhow!(
+                "Configuration invalid. Fix the error above and try again."
+            ));
+        }
+    }
+
     let any_rebuild = args.cached_rebuild || args.full_rebuild;
 
     // Security check: block first start without security configured
