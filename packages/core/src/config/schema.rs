@@ -81,6 +81,14 @@ pub struct Config {
     /// Passwords are NOT stored here - only in container's /etc/shadow
     #[serde(default)]
     pub users: Vec<String>,
+
+    /// Cockpit web console port (default: 9090)
+    #[serde(default = "default_cockpit_port")]
+    pub cockpit_port: u16,
+
+    /// Enable Cockpit web console (default: true)
+    #[serde(default = "default_cockpit_enabled")]
+    pub cockpit_enabled: bool,
 }
 
 fn default_opencode_web_port() -> u16 {
@@ -117,6 +125,14 @@ fn default_rate_limit_attempts() -> u32 {
 
 fn default_rate_limit_window() -> u32 {
     60
+}
+
+fn default_cockpit_port() -> u16 {
+    9090
+}
+
+fn default_cockpit_enabled() -> bool {
+    true
 }
 
 /// Validate and parse a bind address string
@@ -170,6 +186,8 @@ impl Default for Config {
             rate_limit_attempts: default_rate_limit_attempts(),
             rate_limit_window_seconds: default_rate_limit_window(),
             users: Vec::new(),
+            cockpit_port: default_cockpit_port(),
+            cockpit_enabled: default_cockpit_enabled(),
         }
     }
 }
@@ -302,6 +320,8 @@ mod tests {
             rate_limit_attempts: 10,
             rate_limit_window_seconds: 120,
             users: vec!["admin".to_string()],
+            cockpit_port: 9090,
+            cockpit_enabled: true,
         };
         let json = serde_json::to_string(&config).unwrap();
         let parsed: Config = serde_json::from_str(&json).unwrap();
@@ -557,5 +577,36 @@ mod tests {
         assert_eq!(parsed.rate_limit_attempts, 10);
         assert_eq!(parsed.rate_limit_window_seconds, 120);
         assert_eq!(parsed.users, vec!["admin", "developer"]);
+    }
+
+    // Tests for Cockpit fields
+
+    #[test]
+    fn test_default_config_cockpit_fields() {
+        let config = Config::default();
+        assert_eq!(config.cockpit_port, 9090);
+        assert!(config.cockpit_enabled);
+    }
+
+    #[test]
+    fn test_serialize_deserialize_with_cockpit_fields() {
+        let config = Config {
+            cockpit_port: 9091,
+            cockpit_enabled: false,
+            ..Config::default()
+        };
+        let json = serde_json::to_string(&config).unwrap();
+        let parsed: Config = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.cockpit_port, 9091);
+        assert!(!parsed.cockpit_enabled);
+    }
+
+    #[test]
+    fn test_cockpit_fields_default_on_missing() {
+        // Old configs without cockpit fields should get defaults
+        let json = r#"{"version": 1}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert_eq!(config.cockpit_port, 9090);
+        assert!(config.cockpit_enabled);
     }
 }
