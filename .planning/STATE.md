@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 6 of 18 (Security and Authentication)
-Plan: 5 of 5 in current phase
-Status: Phase complete
-Last activity: 2026-01-20 - Completed 06-05-PLAN.md (Security Config Commands)
+Phase: 7 of 18 (Update and Maintenance)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-22 - Completed 07-01-PLAN.md (Image Update with Rollback)
 
-Progress: [############] 47%
+Progress: [#############░░░] 49%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: 6 min
-- Total execution time: 2.02 hours
+- Total execution time: 2.10 hours
 
 **By Phase:**
 
@@ -33,9 +33,10 @@ Progress: [############] 47%
 | 04 | 4 | 21 min | 5 min |
 | 05 | 3 | 19 min | 6 min |
 | 06 | 5 | 33 min | 7 min |
+| 07 | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 6 min, 5 min, 9 min, 9 min
+- Last 5 plans: 6 min, 5 min, 9 min, 9 min, 5 min
 - Trend: Stable (~7 min average)
 
 *Updated after each plan completion*
@@ -114,6 +115,10 @@ Recent decisions affecting current work:
 - [06-04]: Legacy auth_username/auth_password cleared to empty strings (not None) for schema compatibility
 - [06-04]: First-start check uses container_exists (container is the runtime boundary)
 - [06-04]: Existing containers can restart without users (migration safety for existing deployments)
+- [07-01]: Tag current image as "previous" before update: Enables rollback to last known-good version
+- [07-01]: Passwords NOT preserved during update: Config only stores usernames for security
+- [07-01]: Step-by-step progress with confirmation: 5 steps for update, 4 for rollback
+- [07-01]: Use bollard TagImageOptions: Modern API instead of deprecated struct
 
 ### Pending Todos
 
@@ -139,6 +144,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-20
-Stopped at: Completed 06-05-PLAN.md (Security Config Commands) - Phase 6 complete
+Last session: 2026-01-22
+Stopped at: Completed 07-01-PLAN.md (Image Update with Rollback)
 Resume file: None
