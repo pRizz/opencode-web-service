@@ -151,6 +151,9 @@ pub async fn cmd_status(_args: &StatusArgs, quiet: bool, _verbose: u8) -> Result
     );
     println!("Image:       {}", image);
 
+    // Load config early for reuse in multiple sections
+    let config = config::load_config().ok();
+
     if running {
         // Calculate and display uptime
         if let Some(ref started) = started_at {
@@ -164,6 +167,23 @@ pub async fn cmd_status(_args: &StatusArgs, quiet: bool, _verbose: u8) -> Result
             "Port:        {} -> container:3000",
             style(host_port.to_string()).cyan()
         );
+
+        // Show Cockpit info if enabled
+        if let Some(ref cfg) = config {
+            if cfg.cockpit_enabled {
+                // For 0.0.0.0 or :: bind addresses, use localhost for display
+                let cockpit_addr = if cfg.bind_address == "0.0.0.0" || cfg.bind_address == "::" {
+                    "127.0.0.1"
+                } else {
+                    &cfg.bind_address
+                };
+                let cockpit_url = format!("http://{}:{}", cockpit_addr, cfg.cockpit_port);
+                println!(
+                    "Cockpit:     {} -> container:9090",
+                    style(&cockpit_url).cyan()
+                );
+            }
+        }
     }
 
     // Show health if available
@@ -202,7 +222,6 @@ pub async fn cmd_status(_args: &StatusArgs, quiet: bool, _verbose: u8) -> Result
     }
 
     // Show Security section (container exists, whether running or stopped)
-    let config = config::load_config().ok();
     if let Some(ref cfg) = config {
         display_security_section(cfg);
     }
