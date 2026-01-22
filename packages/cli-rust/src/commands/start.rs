@@ -221,6 +221,21 @@ fn show_already_running(port: u16, bind_addr: &str, is_exposed: bool, quiet: boo
     println!();
     println!("URL:        {}", style(&url).cyan());
 
+    // Show Cockpit URL if enabled
+    if let Ok(config) = opencode_cloud_core::config::load_config() {
+        if config.cockpit_enabled {
+            let cockpit_addr = if bind_addr == "0.0.0.0" || bind_addr == "::" {
+                "127.0.0.1"
+            } else {
+                bind_addr
+            };
+            println!(
+                "Cockpit:    http://{}:{} (web admin)",
+                cockpit_addr, config.cockpit_port
+            );
+        }
+    }
+
     // Show security status
     if is_exposed {
         println!("Security:   {}", style("[NETWORK EXPOSED]").yellow().bold());
@@ -328,6 +343,21 @@ fn show_start_result(
         style(&container_id[..12.min(container_id.len())]).dim()
     );
     println!("Port:       {} -> 3000", port);
+
+    // Show Cockpit availability if enabled
+    if let Ok(config) = opencode_cloud_core::config::load_config() {
+        if config.cockpit_enabled {
+            let cockpit_addr = if bind_addr == "0.0.0.0" || bind_addr == "::" {
+                "127.0.0.1"
+            } else {
+                bind_addr
+            };
+            println!(
+                "Cockpit:    http://{}:{} (web admin)",
+                cockpit_addr, config.cockpit_port
+            );
+        }
+    }
 
     // Show security status
     if is_exposed {
