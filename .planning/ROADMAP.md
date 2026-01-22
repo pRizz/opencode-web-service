@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Security and Authentication** - PAM-based auth, localhost binding, network exposure opt-in
 - [x] **Phase 7: Update and Maintenance** - Update command, health check endpoint
 - [x] **Phase 8: Polish and Documentation** - Help docs, error messages, uninstall cleanup
-- [ ] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
+- [x] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
 - [ ] **Phase 10: Remote Administration via Cockpit** - Integrate and expose remote admin of Docker container via Cockpit
 - [ ] **Phase 11: Remote Host Management** - Allow occ to remotely install and interact with Docker containers on different hosts
 - [ ] **Phase 12: Web Desktop UI Investigation** - Investigate integrating secure web-exposed desktop UI (Friend OS, WDE, etc.)
@@ -182,8 +182,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Pin all versions in Dockerfile with inline documentation
-- [ ] 09-02-PLAN.md — Create update script and CI automation for weekly version checks
+- [x] 09-01-PLAN.md — Pin all versions in Dockerfile with inline documentation
+- [x] 09-02-PLAN.md — Create update script and CI automation for weekly version checks
 
 ### Phase 10: Remote Administration via Cockpit
 **Goal**: Integrate and expose remote administration of the Docker container via Cockpit running in the container
@@ -353,7 +353,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 6. Security and Authentication | 5/5 | ✓ Complete | 2026-01-20 |
 | 7. Update and Maintenance | 2/2 | ✓ Complete | 2026-01-22 |
 | 8. Polish and Documentation | 1/1 | ✓ Complete | 2026-01-22 |
-| 9. Dockerfile Version Pinning | 0/2 | Not started | - |
+| 9. Dockerfile Version Pinning | 2/2 | ✓ Complete | 2026-01-22 |
 | 10. Remote Administration via Cockpit | 0/1 | Not started | - |
 | 11. Remote Host Management | 0/1 | Not started | - |
 | 12. Web Desktop UI Investigation | 0/1 | Not started | - |
@@ -366,4 +366,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-22 (Phase 9 planned)*
+*Last updated: 2026-01-22 (Phase 9 complete)*
