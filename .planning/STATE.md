@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 9 of 18 (Dockerfile Version Pinning)
-Plan: 1 of 1 in current phase
+Plan: 2 of 2 in current phase
 Status: Phase complete
-Last activity: 2026-01-22 - Completed 09-01-PLAN.md (Dockerfile Version Pinning)
+Last activity: 2026-01-22 - Completed 09-02-PLAN.md (Update Tooling)
 
-Progress: [###############░] 56%
+Progress: [################] 58%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
+- Total plans completed: 25
 - Average duration: 6 min
-- Total execution time: 2.31 hours
+- Total execution time: 2.44 hours
 
 **By Phase:**
 
@@ -35,10 +35,10 @@ Progress: [###############░] 56%
 | 06 | 5 | 33 min | 7 min |
 | 07 | 2 | 11 min | 6 min |
 | 08 | 1 | 2 min | 2 min |
-| 09 | 1 | 5 min | 5 min |
+| 09 | 2 | 13 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 9 min, 5 min, 6 min, 2 min, 5 min
+- Last 5 plans: 5 min, 6 min, 2 min, 5 min, 8 min
 - Trend: Stable (~5 min average)
 
 *Updated after each plan completion*
@@ -131,6 +131,8 @@ Recent decisions affecting current work:
 - [09-01]: Security exceptions: ca-certificates, gnupg, openssh-client marked UNPINNED
 - [09-01]: Self-managing installers trusted: mise, rustup, starship, oh-my-zsh, uv, opencode
 - [09-01]: Go runtime pinned to minor: go@1.24 instead of @latest
+- [09-02]: POSIX-compatible patterns: Use sed with | delimiter and grep -- for cross-platform compatibility
+- [09-02]: Weekly schedule: Monday 9am UTC for version checks via CI workflow
 
 ### Pending Todos
 
@@ -157,5 +159,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Completed 09-01-PLAN.md (Dockerfile Version Pinning) - Phase 9 complete
+Stopped at: Completed 09-02-PLAN.md (Update Tooling) - Phase 9 complete
 Resume file: None
