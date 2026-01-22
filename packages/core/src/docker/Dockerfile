@@ -168,10 +168,10 @@ ENV PATH="/home/opencode/.local/bin:${PATH}"
 # -----------------------------------------------------------------------------
 # Shell Setup: Zsh + Oh My Zsh + Starship
 # -----------------------------------------------------------------------------
-# Install Oh My Zsh
+# Oh My Zsh - self-managing installer, trusted to handle versions
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Install Starship prompt
+# Starship prompt - self-managing installer, trusted to handle versions
 RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir /home/opencode/.local/bin
 
 # Configure zsh with starship
@@ -181,18 +181,20 @@ RUN echo 'eval "$(starship init zsh)"' >> /home/opencode/.zshrc \
 # -----------------------------------------------------------------------------
 # mise: Universal Version Manager
 # -----------------------------------------------------------------------------
-# Install mise for managing Node.js, Python, Rust, Go
+# mise - self-managing installer, trusted to handle versions
 RUN curl https://mise.run | sh \
     && echo 'eval "$(/home/opencode/.local/bin/mise activate zsh)"' >> /home/opencode/.zshrc
 
-# Install language runtimes via mise
-# Using specific LTS/stable versions for reproducibility
+# Install language runtimes via mise (2026-01-22)
+# - node@lts: mise handles LTS resolution (currently 22.x)
+# - python@3.12: pinned to minor version
+# - go@1.24: pinned to minor version (was @latest)
 RUN /home/opencode/.local/bin/mise install node@lts \
     && /home/opencode/.local/bin/mise install python@3.12 \
-    && /home/opencode/.local/bin/mise install go@latest \
+    && /home/opencode/.local/bin/mise install go@1.24 \
     && /home/opencode/.local/bin/mise use --global node@lts \
     && /home/opencode/.local/bin/mise use --global python@3.12 \
-    && /home/opencode/.local/bin/mise use --global go@latest
+    && /home/opencode/.local/bin/mise use --global go@1.24
 
 # Set up mise shims in PATH for non-interactive shells
 ENV PATH="/home/opencode/.local/share/mise/shims:${PATH}"
@@ -200,7 +202,8 @@ ENV PATH="/home/opencode/.local/share/mise/shims:${PATH}"
 # -----------------------------------------------------------------------------
 # Rust Installation
 # -----------------------------------------------------------------------------
-# Install Rust via rustup (mise rust support is experimental)
+# rustup - self-managing installer, trusted to handle versions
+# Uses stable toolchain (rustup manages toolchain versioning)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
     && . /home/opencode/.cargo/env \
     && rustup component add rust-analyzer rustfmt clippy
@@ -213,17 +216,17 @@ ENV PATH="/home/opencode/.cargo/bin:${PATH}"
 # Switch to bash for mise activation (mise outputs bash-specific syntax)
 SHELL ["/bin/bash", "-c"]
 
-# Install pnpm (corepack is included with Node.js)
+# Install pnpm 10.x via corepack (2026-01-22)
 RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && corepack enable \
-    && corepack prepare pnpm@latest --activate
+    && corepack prepare pnpm@10.28.1 --activate
 
 # Set up pnpm global bin directory
 ENV PNPM_HOME="/home/opencode/.local/share/pnpm"
 ENV PATH="${PNPM_HOME}:${PATH}"
 RUN mkdir -p "${PNPM_HOME}"
 
-# Install uv (fast Python package manager)
+# uv - self-managing installer, trusted to handle versions (fast Python package manager)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install pipx for isolated Python application installs
@@ -236,27 +239,26 @@ RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && pnpm add -g typescript
 
 # -----------------------------------------------------------------------------
-# Modern CLI Tools (Rust-based)
+# Modern CLI Tools (Rust-based) - pinned versions (2026-01-22)
 # -----------------------------------------------------------------------------
-# Install via cargo for latest versions
+# ripgrep 15.1.0 - fast regex search
+# eza 0.23.4 - modern ls replacement
 RUN . /home/opencode/.cargo/env \
-    && cargo install --locked \
-    ripgrep \
-    eza
+    && cargo install --locked ripgrep@15.1.0 eza@0.23.4
 
-# Install lazygit (Go-based)
+# lazygit v0.58.1 (2026-01-12) - terminal UI for git
 RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && go install github.com/jesseduffield/lazygit@latest
+    && go install github.com/jesseduffield/lazygit@v0.58.1
 
 # -----------------------------------------------------------------------------
 # Additional Development Tools
 # -----------------------------------------------------------------------------
-# Install fzf
-RUN git clone --depth 1 https://github.com/junegunn/fzf.git /home/opencode/.fzf \
+# fzf v0.67.0 (2025-11-16) - fuzzy finder
+RUN git clone --branch v0.67.0 --depth 1 https://github.com/junegunn/fzf.git /home/opencode/.fzf \
     && /home/opencode/.fzf/install --all --no-bash --no-fish
 
-# Install yq (YAML processor)
-RUN curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$(dpkg --print-architecture) -o /home/opencode/.local/bin/yq \
+# yq v4.50.1 (2025-12-14) - YAML processor
+RUN curl -sL https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_$(dpkg --print-architecture) -o /home/opencode/.local/bin/yq \
     && chmod +x /home/opencode/.local/bin/yq
 
 # Install direnv (2026-01-22)
@@ -275,8 +277,9 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends shellcheck=0.9.* \
     && rm -rf /var/lib/apt/lists/*
 USER opencode
+# shfmt v3.12.0 (2025-07-06) - shell formatter
 RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && go install mvdan.cc/sh/v3/cmd/shfmt@latest
+    && go install mvdan.cc/sh/v3/cmd/shfmt@v3.12.0
 
 # Install btop system monitor (2026-01-22)
 USER root
@@ -298,17 +301,17 @@ USER opencode
 # -----------------------------------------------------------------------------
 # CI/CD Tools
 # -----------------------------------------------------------------------------
-# Install act (run GitHub Actions locally)
-RUN curl -sL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /home/opencode/.local/bin
+# act v0.2.84 (2026-01-01) - run GitHub Actions locally
+RUN curl -sL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /home/opencode/.local/bin v0.2.84
 
 # -----------------------------------------------------------------------------
-# Rust Tooling
+# Rust Tooling - pinned versions (2026-01-22)
 # -----------------------------------------------------------------------------
+# cargo-nextest 0.9.123 - fast test runner
+# cargo-audit 0.22.0 - security audit
+# cargo-deny 0.19.0 - dependency linter
 RUN . /home/opencode/.cargo/env \
-    && cargo install --locked \
-    cargo-nextest \
-    cargo-audit \
-    cargo-deny
+    && cargo install --locked cargo-nextest@0.9.123 cargo-audit@0.22.0 cargo-deny@0.19.0
 
 # Install mold fast linker (2026-01-22)
 USER root
@@ -347,14 +350,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compil
     && rm -rf /var/lib/apt/lists/*
 USER opencode
 
-# Install grpcurl
+# grpcurl v1.9.3 (2025-03-11) - gRPC debugging tool
 RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+    && go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.3
 
 # -----------------------------------------------------------------------------
 # opencode Installation
 # -----------------------------------------------------------------------------
-# Install opencode using official install script
+# opencode - self-managing installer, trusted to handle versions
 # The script installs to ~/.opencode/bin/
 RUN curl -fsSL https://opencode.ai/install | bash \
     && ls -la /home/opencode/.opencode/bin/opencode \
