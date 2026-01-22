@@ -17,6 +17,19 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
+# Version Pinning Policy
+# -----------------------------------------------------------------------------
+# - APT packages: Use major.minor.* wildcards for patch updates
+# - GitHub tools: Pin to release tags (vX.Y.Z)
+# - Cargo/Go: Pin to exact versions (@X.Y.Z)
+# - Security exceptions marked with: # UNPINNED: package - reason
+# - Self-managing installers (mise, rustup, etc.) trusted to handle versions
+#
+# To check for updates: just check-updates
+# Last version audit: 2026-01-22
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # Stage 1: Builder
 # -----------------------------------------------------------------------------
 # Install build dependencies and tools that require compilation
@@ -26,12 +39,13 @@ FROM ubuntu:24.04 AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
-# Install build essentials
+# Install build essentials (2026-01-22)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    build-essential=12.* \
+    # UNPINNED: ca-certificates - security-critical root certs, needs auto-updates
     ca-certificates \
-    curl \
-    git \
+    curl=8.5.* \
+    git=1:2.43.* \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
@@ -59,70 +73,73 @@ ENV LC_ALL=C.UTF-8
 # -----------------------------------------------------------------------------
 # Install core system packages in logical groups for better caching
 
-# Group 1: Core utilities and build tools
+# Group 1: Core utilities and build tools (2026-01-22)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Signal handling
-    tini \
-    dumb-init \
+    tini=0.19.* \
+    dumb-init=1.2.* \
     # Shell and terminal
-    zsh \
-    tmux \
+    zsh=5.9-* \
+    tmux=3.4-* \
     # Editors
-    vim \
-    neovim \
-    nano \
+    vim=2:9.1.* \
+    neovim=0.9.* \
+    nano=7.2-* \
     # Build essentials
-    build-essential \
-    pkg-config \
-    cmake \
+    build-essential=12.* \
+    pkg-config=1.8.* \
+    cmake=3.28.* \
     # Version control
-    git \
-    git-lfs \
+    git=1:2.43.* \
+    git-lfs=3.4.* \
     # Core utilities
-    curl \
-    wget \
+    curl=8.5.* \
+    wget=1.21.* \
+    # UNPINNED: ca-certificates - security-critical root certs, needs auto-updates
     ca-certificates \
+    # UNPINNED: gnupg - key management security, needs auto-updates
     gnupg \
-    lsb-release \
-    software-properties-common \
-    sudo \
+    lsb-release=12.* \
+    software-properties-common=0.99.* \
+    sudo=1.9.* \
+    # UNPINNED: openssh-client - security-critical, needs auto-updates
     openssh-client \
     # Process/system tools
-    htop \
-    procps \
-    less \
-    file \
-    tree \
+    htop=3.3.* \
+    procps=2:4.0.* \
+    less=590-* \
+    file=1:5.45-* \
+    tree=2.1.* \
     # JSON/YAML processing
-    jq \
+    jq=1.7.* \
     # Network tools
-    netcat-openbsd \
-    iputils-ping \
-    dnsutils \
+    netcat-openbsd=1.226-* \
+    iputils-ping=3:20240117-* \
+    dnsutils=1:9.18.* \
     # Compression
-    zip \
-    unzip \
-    xz-utils \
-    p7zip-full \
+    zip=3.0-* \
+    unzip=6.0-* \
+    xz-utils=5.6.* \
+    p7zip-full=16.02* \
     && rm -rf /var/lib/apt/lists/*
 
-# Group 2: Database clients
+# Group 2: Database clients (2026-01-22)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    sqlite3 \
-    postgresql-client \
-    default-mysql-client \
+    sqlite3=3.45.* \
+    postgresql-client=16+* \
+    default-mysql-client=1.1.* \
     && rm -rf /var/lib/apt/lists/*
 
-# Group 3: Development libraries (for compiling tools)
+# Group 3: Development libraries for compiling tools (2026-01-22)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl-dev \
-    libffi-dev \
-    zlib1g-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev \
-    libncurses-dev \
-    liblzma-dev \
+    libssl-dev=3.0.* \
+    libffi-dev=3.4.* \
+    zlib1g-dev=1:1.3.* \
+    libbz2-dev=1.0.* \
+    libreadline-dev=8.2-* \
+    libsqlite3-dev=3.45.* \
+    libncurses-dev=6.4+* \
+    liblzma-dev=5.6.* \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
@@ -242,9 +259,9 @@ RUN git clone --depth 1 https://github.com/junegunn/fzf.git /home/opencode/.fzf 
 RUN curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$(dpkg --print-architecture) -o /home/opencode/.local/bin/yq \
     && chmod +x /home/opencode/.local/bin/yq
 
-# Install direnv
+# Install direnv (2026-01-22)
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends direnv \
+RUN apt-get update && apt-get install -y --no-install-recommends direnv=2.32.* \
     && rm -rf /var/lib/apt/lists/*
 USER opencode
 RUN echo 'eval "$(direnv hook zsh)"' >> /home/opencode/.zshrc
@@ -253,17 +270,17 @@ RUN echo 'eval "$(direnv hook zsh)"' >> /home/opencode/.zshrc
 RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && pipx install httpie
 
-# Install shellcheck and shfmt
+# Install shellcheck (2026-01-22)
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends shellcheck \
+RUN apt-get update && apt-get install -y --no-install-recommends shellcheck=0.9.* \
     && rm -rf /var/lib/apt/lists/*
 USER opencode
 RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && go install mvdan.cc/sh/v3/cmd/shfmt@latest
 
-# Install btop (system monitor)
+# Install btop system monitor (2026-01-22)
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends btop \
+RUN apt-get update && apt-get install -y --no-install-recommends btop=1.3.* \
     && rm -rf /var/lib/apt/lists/*
 USER opencode
 
@@ -293,9 +310,9 @@ RUN . /home/opencode/.cargo/env \
     cargo-audit \
     cargo-deny
 
-# Install mold (fast linker) via apt for easier setup
+# Install mold fast linker (2026-01-22)
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends mold \
+RUN apt-get update && apt-get install -y --no-install-recommends mold=2.30.* \
     && rm -rf /var/lib/apt/lists/*
 USER opencode
 
@@ -323,10 +340,10 @@ RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && pipx install pytest
 
 # -----------------------------------------------------------------------------
-# Protocol Buffers / gRPC
+# Protocol Buffers / gRPC (2026-01-22)
 # -----------------------------------------------------------------------------
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler \
+RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler=3.21.* \
     && rm -rf /var/lib/apt/lists/*
 USER opencode
 
