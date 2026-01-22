@@ -10,14 +10,17 @@
 //! - Container lifecycle (create, start, stop, remove)
 //! - Container exec for running commands inside containers
 //! - User management operations (create, delete, lock/unlock users)
+//! - Image update and rollback operations
 
 mod client;
 pub mod container;
 mod dockerfile;
 mod error;
 pub mod exec;
+mod health;
 pub mod image;
 pub mod progress;
+pub mod update;
 pub mod users;
 pub mod volume;
 
@@ -26,11 +29,19 @@ pub use client::DockerClient;
 pub use error::DockerError;
 pub use progress::ProgressReporter;
 
+// Health check operations
+pub use health::{
+    HealthError, HealthResponse, ExtendedHealthResponse, check_health, check_health_extended,
+};
+
 // Dockerfile constants
 pub use dockerfile::{DOCKERFILE, IMAGE_NAME_DOCKERHUB, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT};
 
 // Image operations
 pub use image::{build_image, image_exists, pull_image};
+
+// Update operations
+pub use update::{UpdateResult, has_previous_image, rollback_image, update_image};
 
 // Container exec operations
 pub use exec::{exec_command, exec_command_exit_code, exec_command_with_stdin};
