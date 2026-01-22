@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 10 of 18 (Remote Administration via Cockpit)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-22 - Completed 10-01-PLAN.md (Dockerfile Cockpit Integration)
+Last activity: 2026-01-22 - Completed 10-02-PLAN.md (Cockpit Config and Container Systemd Support)
 
-Progress: [#################] 60%
+Progress: [##################] 62%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26
+- Total plans completed: 27
 - Average duration: 6 min
-- Total execution time: 2.51 hours
+- Total execution time: 2.58 hours
 
 **By Phase:**
 
@@ -36,10 +36,10 @@ Progress: [#################] 60%
 | 07 | 2 | 11 min | 6 min |
 | 08 | 1 | 2 min | 2 min |
 | 09 | 2 | 13 min | 7 min |
-| 10 | 1 | 4 min | 4 min |
+| 10 | 2 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 6 min, 2 min, 5 min, 8 min, 4 min
+- Last 5 plans: 2 min, 5 min, 8 min, 4 min, 4 min
 - Trend: Stable (~5 min average)
 
 *Updated after each plan completion*
@@ -139,6 +139,11 @@ Recent decisions affecting current work:
 - [10-01]: AllowUnencrypted=true: TLS terminated externally like opencode
 - [10-01]: Keep tini in image: Backward compatibility, though systemd now default
 - [10-01]: STOPSIGNAL SIGRTMIN+3: Proper systemd shutdown signal
+- [10-02]: Default cockpit_port 9090: Standard Cockpit port
+- [10-02]: Default cockpit_enabled true: Cockpit integrated in image
+- [10-02]: CAP_SYS_ADMIN capability: Required for systemd cgroup operations
+- [10-02]: tmpfs for /run and /tmp: Required for systemd runtime
+- [10-02]: cgroup mount read-only: Security - prevent container cgroup manipulation
 
 ### Pending Todos
 
@@ -165,5 +170,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Completed 10-01-PLAN.md (Dockerfile Cockpit Integration)
+Stopped at: Completed 10-02-PLAN.md (Cockpit Config and Container Systemd Support)
 Resume file: None
