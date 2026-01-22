@@ -60,6 +60,8 @@ enum Commands {
     User(commands::UserArgs),
     /// Update to the latest version or rollback
     Update(commands::UpdateArgs),
+    /// Open Cockpit web console
+    Cockpit(commands::CockpitArgs),
 }
 
 /// Get the ASCII banner for help display
@@ -198,6 +200,10 @@ pub fn run() -> Result<()> {
         Some(Commands::Update(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(commands::cmd_update(&args, cli.quiet, cli.verbose))
+        }
+        Some(Commands::Cockpit(args)) => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(commands::cmd_cockpit(&args, cli.quiet))
         }
         None => {
             // No command - show a welcome message and hint to use --help
