@@ -157,9 +157,8 @@ async fn handle_update(
         if !config.users.is_empty() {
             eprintln!();
             eprintln!(
-                "{} {}",
-                style("Note:").yellow(),
-                "User accounts were recreated but passwords were NOT preserved."
+                "{} User accounts were recreated but passwords were NOT preserved.",
+                style("Note:").yellow()
             );
             eprintln!(
                 "      You must reset passwords with: {}",
@@ -195,9 +194,8 @@ async fn handle_rollback(
     if !quiet {
         eprintln!();
         eprintln!(
-            "{} {}",
-            style("Warning:").yellow().bold(),
-            "This will briefly stop the service to rollback to the previous version."
+            "{} This will briefly stop the service to rollback to the previous version.",
+            style("Warning:").yellow().bold()
         );
         eprintln!();
     }
@@ -271,9 +269,8 @@ async fn handle_rollback(
         if !config.users.is_empty() {
             eprintln!();
             eprintln!(
-                "{} {}",
-                style("Note:").yellow(),
-                "User accounts were recreated but passwords were NOT preserved."
+                "{} User accounts were recreated but passwords were NOT preserved.",
+                style("Note:").yellow()
             );
             eprintln!(
                 "      You must reset passwords with: {}",

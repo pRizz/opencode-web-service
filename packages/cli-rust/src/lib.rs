@@ -58,6 +58,8 @@ enum Commands {
     Setup(commands::SetupArgs),
     /// Manage container users
     User(commands::UserArgs),
+    /// Update to the latest version or rollback
+    Update(commands::UpdateArgs),
 }
 
 /// Get the ASCII banner for help display
@@ -192,6 +194,10 @@ pub fn run() -> Result<()> {
         Some(Commands::User(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(commands::cmd_user(&args, cli.quiet, cli.verbose))
+        }
+        Some(Commands::Update(args)) => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(commands::cmd_update(&args, cli.quiet, cli.verbose))
         }
         None => {
             // No command - show a welcome message and hint to use --help
