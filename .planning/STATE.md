@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 8 - Polish and Documentation
+**Current focus:** Phase 9 - Dockerfile Version Pinning (Next)
 
 ## Current Position
 

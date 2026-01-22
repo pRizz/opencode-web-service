@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Interactive Setup Wizard** - Guided first-run experience
 - [x] **Phase 6: Security and Authentication** - PAM-based auth, localhost binding, network exposure opt-in
 - [x] **Phase 7: Update and Maintenance** - Update command, health check endpoint
-- [ ] **Phase 8: Polish and Documentation** - Help docs, error messages, uninstall cleanup
+- [x] **Phase 8: Polish and Documentation** - Help docs, error messages, uninstall cleanup
 - [ ] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
 - [ ] **Phase 10: Remote Administration via Cockpit** - Integrate and expose remote admin of Docker container via Cockpit
 - [ ] **Phase 11: Remote Host Management** - Allow occ to remotely install and interact with Docker containers on different hosts
@@ -167,7 +167,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 08-01-PLAN.md — Uninstall UX improvements (confirmation prompt, remaining file paths display)
+- [x] 08-01-PLAN.md — Uninstall UX improvements (confirmation prompt, remaining file paths display)
 
 ### Phase 9: Dockerfile Version Pinning
 **Goal**: Pin explicit versions for tools installed from GitHub in the Dockerfile to improve security and reproducibility
@@ -351,7 +351,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Interactive Setup Wizard | 3/3 | ✓ Complete | 2026-01-20 |
 | 6. Security and Authentication | 5/5 | ✓ Complete | 2026-01-20 |
 | 7. Update and Maintenance | 2/2 | ✓ Complete | 2026-01-22 |
-| 8. Polish and Documentation | 0/1 | Not started | - |
+| 8. Polish and Documentation | 1/1 | ✓ Complete | 2026-01-22 |
 | 9. Dockerfile Version Pinning | 0/1 | Not started | - |
 | 10. Remote Administration via Cockpit | 0/1 | Not started | - |
 | 11. Remote Host Management | 0/1 | Not started | - |
@@ -365,4 +365,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-22 (Phase 8 planned)*
+*Last updated: 2026-01-22 (Phase 8 complete)*

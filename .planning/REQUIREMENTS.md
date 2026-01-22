@@ -133,22 +133,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INST-03 | Phase 5 | Complete |
 | INST-04 | Phase 5 | Complete |
 | INST-05 | Phase 5 | Complete |
-| INST-06 | Phase 8 | Pending |
-| INST-07 | Phase 8 | Pending |
-| INST-08 | Phase 8 | Pending |
+| INST-06 | Phase 8 | Complete |
+| INST-07 | Phase 8 | Complete |
+| INST-08 | Phase 8 | Complete |
 | LIFE-01 | Phase 3 | Complete |
 | LIFE-02 | Phase 3 | Complete |
 | LIFE-03 | Phase 3 | Complete |
 | LIFE-04 | Phase 3 | Complete |
 | LIFE-05 | Phase 3 | Complete |
-| LIFE-06 | Phase 7 | Pending |
-| LIFE-07 | Phase 7 | Pending |
+| LIFE-06 | Phase 7 | Complete |
+| LIFE-07 | Phase 7 | Complete |
 | CONF-01 | Phase 5 | Complete |
 | CONF-02 | Phase 5 | Complete |
 | CONF-03 | Phase 5 | Complete |
 | CONF-04 | Phase 1 | Complete |
 | CONF-05 | Phase 5 | Complete |
-| CONF-06 | Phase 7 | Pending |
+| CONF-06 | Phase 7 | Complete |
 | CONF-07 | Phase 1 | Complete |
 | PERS-01 | Phase 4 | Complete |
 | PERS-02 | Phase 2 | Complete |
@@ -171,4 +171,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-20 (Phase 6 complete: SECU-01, SECU-02, SECU-03, SECU-04)*
+*Last updated: 2026-01-22 (Phase 8 complete: INST-06, INST-07, INST-08)*
