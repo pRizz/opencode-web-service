@@ -418,6 +418,34 @@ ENV PATH="/home/opencode/.opencode/bin:${PATH}"
 RUN git clone https://github.com/rokicool/gsd-opencode.git /home/opencode/.config/opencode/plugins/gsd-opencode
 
 # -----------------------------------------------------------------------------
+# opencode systemd Service (2026-01-22)
+# -----------------------------------------------------------------------------
+# Create opencode as a systemd service for Cockpit integration
+USER root
+RUN cat > /etc/systemd/system/opencode.service << 'OPENCODE_SERVICE'
+[Unit]
+Description=opencode Web Interface
+After=network.target
+
+[Service]
+Type=simple
+User=opencode
+WorkingDirectory=/home/opencode/workspace
+ExecStart=/home/opencode/.opencode/bin/opencode web --port 3000 --hostname 0.0.0.0
+Restart=always
+RestartSec=5
+Environment=PATH=/home/opencode/.opencode/bin:/home/opencode/.local/bin:/home/opencode/.cargo/bin:/home/opencode/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=multi-user.target
+OPENCODE_SERVICE
+
+# Enable opencode service to start at boot
+RUN systemctl enable opencode.service
+
+USER opencode
+
+# -----------------------------------------------------------------------------
 # Sensible Defaults Configuration
 # -----------------------------------------------------------------------------
 # Git configuration
@@ -487,23 +515,24 @@ RUN echo 'export PATH="/home/opencode/.local/bin:$PATH"' >> /home/opencode/.zshr
 # -----------------------------------------------------------------------------
 # Health Check
 # -----------------------------------------------------------------------------
-# Port 3000 must match OPENCODE_WEB_PORT in container.rs
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+# Check that opencode service is running (systemd) and health endpoint responds
+# Increased start-period from 5s to 30s because systemd takes longer to initialize
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD systemctl is-active --quiet opencode.service && curl -f http://localhost:3000/health || exit 1
 
 # -----------------------------------------------------------------------------
 # Final Configuration
 # -----------------------------------------------------------------------------
 WORKDIR /home/opencode/workspace
 
-# Expose opencode web port (matches OPENCODE_WEB_PORT in container.rs)
-EXPOSE 3000
+# Expose opencode web port (3000) and Cockpit port (9090)
+EXPOSE 3000 9090
 
-# Use tini as init system for proper signal handling
-ENTRYPOINT ["/usr/bin/tini", "--"]
+# Required volumes for systemd
+VOLUME ["/sys/fs/cgroup", "/run", "/tmp"]
 
-# Default command: start opencode web interface
-# - Port 3000 must match OPENCODE_WEB_PORT in container.rs
-# - Using full path to ensure binary is found (opencode installs to ~/.opencode/bin/)
-# - --hostname 0.0.0.0 is required for Docker port mapping (default 127.0.0.1 only listens on loopback)
-CMD ["/home/opencode/.opencode/bin/opencode", "web", "--port", "3000", "--hostname", "0.0.0.0"]
+# Use SIGRTMIN+3 for proper systemd shutdown
+STOPSIGNAL SIGRTMIN+3
+
+# systemd as init (required for Cockpit socket activation and opencode.service)
+CMD ["/sbin/init"]
