@@ -296,19 +296,8 @@ fn build_ssh_command(host: &HostConfig) -> Command {
         .arg("-o")
         .arg("StrictHostKeyChecking=accept-new");
 
-    // Host-specific options
-    if let Some(port) = host.port {
-        cmd.arg("-p").arg(port.to_string());
-    }
-    if let Some(key) = &host.identity_file {
-        cmd.arg("-i").arg(key);
-    }
-    if let Some(jump) = &host.jump_host {
-        cmd.arg("-J").arg(jump);
-    }
-
-    // Target
-    cmd.arg(format!("{}@{}", host.user, host.hostname));
+    // Host-specific options (port, identity, jump, user@host)
+    cmd.args(host.ssh_args());
 
     cmd
 }

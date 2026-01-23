@@ -99,6 +99,67 @@ impl HostConfig {
         self.description = Some(desc.into());
         self
     }
+
+    /// Get SSH command arguments for this host
+    ///
+    /// Returns arguments for port, identity file, jump host, and target (user@hostname).
+    /// Does NOT include standard options like BatchMode or ConnectTimeout.
+    pub fn ssh_args(&self) -> Vec<String> {
+        let mut args = Vec::new();
+
+        // Port (if specified)
+        if let Some(port) = self.port {
+            args.push("-p".to_string());
+            args.push(port.to_string());
+        }
+
+        // Identity file
+        if let Some(key) = &self.identity_file {
+            args.push("-i".to_string());
+            args.push(key.clone());
+        }
+
+        // Jump host
+        if let Some(jump) = &self.jump_host {
+            args.push("-J".to_string());
+            args.push(jump.clone());
+        }
+
+        // Target: user@hostname
+        args.push(format!("{}@{}", self.user, self.hostname));
+
+        args
+    }
+
+    /// Format the effective SSH command for display
+    ///
+    /// Returns a human-readable SSH command string showing how the connection
+    /// will be made, useful for debugging and user feedback.
+    pub fn format_ssh_command(&self) -> String {
+        let mut parts = vec!["ssh".to_string()];
+
+        // Port (if non-default)
+        if let Some(port) = self.port {
+            if port != 22 {
+                parts.push(format!("-p {}", port));
+            }
+        }
+
+        // Identity file
+        if let Some(key) = &self.identity_file {
+            parts.push(format!("-i {}", key));
+        }
+
+        // Jump host
+        if let Some(jump) = &self.jump_host {
+            parts.push(format!("-J {}", jump));
+        }
+
+        // Target: user@hostname
+        parts.push(format!("{}@{}", self.user, self.hostname));
+
+        parts.join(" ")
+    }
 }
 
 /// Root structure for hosts.json file

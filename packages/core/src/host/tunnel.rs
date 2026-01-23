@@ -199,20 +199,11 @@ pub async fn test_connection(host: &HostConfig) -> Result<String, HostError> {
         .arg("-o")
         .arg("StrictHostKeyChecking=accept-new");
 
-    // Host-specific options
-    if let Some(port) = host.port {
-        cmd.arg("-p").arg(port.to_string());
-    }
-    if let Some(key) = &host.identity_file {
-        cmd.arg("-i").arg(key);
-    }
-    if let Some(jump) = &host.jump_host {
-        cmd.arg("-J").arg(jump);
-    }
+    // Host-specific options (port, identity, jump, user@host)
+    cmd.args(host.ssh_args());
 
-    // Target with Docker version command
-    cmd.arg(format!("{}@{}", host.user, host.hostname))
-        .arg("docker")
+    // Docker version command
+    cmd.arg("docker")
         .arg("version")
         .arg("--format")
         .arg("{{.Server.Version}}");
