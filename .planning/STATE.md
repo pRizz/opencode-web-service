@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 11 - Remote Host Management (Next)
+**Current focus:** Phase 11 - Remote Host Management (In Progress)
 
 ## Current Position
 
-Phase: 10 of 18 (Remote Administration via Cockpit)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-22 - Completed 10-03-PLAN.md (Cockpit CLI Commands)
+Phase: 11 of 18 (Remote Host Management)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-23 - Completed 11-01-PLAN.md (Core Host Management Module)
 
-Progress: [##################] 64%
+Progress: [##################] 66%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
+- Total plans completed: 29
 - Average duration: 6 min
-- Total execution time: 2.7 hours
+- Total execution time: 2.8 hours
 
 **By Phase:**
 
@@ -37,9 +37,10 @@ Progress: [##################] 64%
 | 08 | 1 | 2 min | 2 min |
 | 09 | 2 | 13 min | 7 min |
 | 10 | 3 | 15 min | 5 min |
+| 11 | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 8 min, 4 min, 4 min, 7 min
+- Last 5 plans: 8 min, 4 min, 4 min, 7 min, 5 min
 - Trend: Stable (~6 min average)
 
 *Updated after each plan completion*
@@ -146,6 +147,11 @@ Recent decisions affecting current work:
 - [10-02]: cgroup mount read-only: Security - prevent container cgroup manipulation
 - [10-03]: Check cockpit_enabled before container status: Better error ordering for user feedback
 - [10-03]: Browser address normalization: Use 127.0.0.1 for 0.0.0.0/:: bind addresses
+- [11-01]: SSH tunnel via system ssh command (not library) - uses existing SSH config/agent
+- [11-01]: BatchMode=yes for non-interactive auth - fail fast if key not in agent
+- [11-01]: StrictHostKeyChecking=accept-new - accept new hosts automatically on first connection
+- [11-01]: Port 0 binding to find available local port for tunnel
+- [11-01]: Drop trait ensures SSH process cleanup on tunnel destruction
 
 ### Pending Todos
 
@@ -172,6 +178,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-22
-Stopped at: Completed 10-03-PLAN.md (Cockpit CLI Commands) - Phase 10 complete
+Last session: 2026-01-23
+Stopped at: Completed 11-01-PLAN.md (Core Host Management Module)
 Resume file: None
