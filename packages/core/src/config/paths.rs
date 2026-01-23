@@ -72,6 +72,13 @@ pub fn get_pid_path() -> Option<PathBuf> {
     get_data_dir().map(|d| d.join("opencode-cloud.pid"))
 }
 
+/// Get the full path to the hosts configuration file
+///
+/// Returns: `{config_dir}/hosts.json`
+pub fn get_hosts_path() -> Option<PathBuf> {
+    get_config_dir().map(|d| d.join("hosts.json"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,5 +111,12 @@ mod tests {
         let path = get_pid_path();
         assert!(path.is_some());
         assert!(path.unwrap().ends_with("opencode-cloud.pid"));
+    }
+
+    #[test]
+    fn test_hosts_path_ends_with_hosts_json() {
+        let path = get_hosts_path();
+        assert!(path.is_some());
+        assert!(path.unwrap().ends_with("hosts.json"));
     }
 }
