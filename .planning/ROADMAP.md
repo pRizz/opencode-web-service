@@ -204,19 +204,22 @@ Plans:
 - [x] 10-03-PLAN.md — CLI commands (occ cockpit) and status/start output updates
 
 ### Phase 11: Remote Host Management
-**Goal**: Allow occ command to remotely install and interact with Docker containers running on different hosts
+**Goal**: Allow occ command to remotely install and interact with Docker containers running on different hosts via SSH tunnel
 **Depends on**: Phase 10
 **Requirements**: None (enhancement)
-**Note**: Extends the CLI to manage opencode instances across multiple machines via SSH or Docker API, enabling centralized management of distributed deployments.
+**Note**: Extends the CLI to manage opencode instances across multiple machines via SSH tunnels to remote Docker daemons. Uses system ssh command for compatibility with existing SSH infrastructure (keys, agents, jump hosts).
 **Success Criteria** (what must be TRUE):
-  1. User can add remote hosts via `occ host add <hostname>`
-  2. User can list and manage containers on remote hosts
-  3. Secure connection to remote Docker daemons (SSH tunnel or TLS)
-  4. Commands work transparently across local and remote hosts
-**Plans**: TBD
+  1. User can add remote hosts via `occ host add <name> <hostname>`
+  2. User can list and manage hosts with `occ host list/show/edit/remove`
+  3. Secure connection via SSH tunnel (uses existing SSH keys/agent)
+  4. All container commands support `--host` flag for remote operations
+  5. Default host can be set, commands use it when `--host` not specified
+**Plans**: 3 plans
 
 Plans:
-- [ ] 11-01: TBD (remote host management)
+- [ ] 11-01-PLAN.md — Core host module (schema, storage, SSH tunnel, error types)
+- [ ] 11-02-PLAN.md — Host CLI commands (add, remove, list, show, edit, test, default)
+- [ ] 11-03-PLAN.md — Command routing (--host flag, DockerClient remote, output prefixing)
 
 ### Phase 12: Web Desktop UI Investigation
 **Goal**: Investigate integrating a secure web-exposed full custom browser desktop UI such as Friend OS, WDE, or similar
@@ -377,7 +380,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 8. Polish and Documentation | 1/1 | ✓ Complete | 2026-01-22 |
 | 9. Dockerfile Version Pinning | 2/2 | ✓ Complete | 2026-01-22 |
 | 10. Remote Administration via Cockpit | 3/3 | ✓ Complete | 2026-01-22 |
-| 11. Remote Host Management | 0/1 | Not started | - |
+| 11. Remote Host Management | 0/3 | Not started | - |
 | 12. Web Desktop UI Investigation | 0/1 | Not started | - |
 | 13. Container Security Tools | 0/1 | Not started | - |
 | 14. Auto-rebuild Detection | 0/1 | Not started | - |
@@ -389,4 +392,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-22 (Phase 19 added)*
+*Last updated: 2026-01-23 (Phase 11 planned)*
