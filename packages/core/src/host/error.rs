@@ -50,4 +50,12 @@ pub enum HostError {
     /// Remote Docker not available
     #[error("Docker not available on remote host: {0}")]
     RemoteDockerUnavailable(String),
+
+    /// Failed to read SSH config
+    #[error("Failed to read SSH config: {0}")]
+    SshConfigRead(String),
+
+    /// Failed to write SSH config
+    #[error("Failed to write SSH config: {0}")]
+    SshConfigWrite(String),
 }

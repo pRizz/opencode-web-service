@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::Args;
 use comfy_table::{Cell, Color, Table};
 use console::style;
-use opencode_cloud_core::load_hosts;
+use opencode_cloud_core::{get_hosts_path, load_hosts};
 
 /// Arguments for host list command
 #[derive(Args)]
@@ -108,6 +108,16 @@ pub async fn cmd_host_list(args: &HostListArgs, quiet: bool, _verbose: u8) -> Re
             "  {} {}",
             style("Default host:").dim(),
             style(default).cyan()
+        );
+    }
+
+    // Show the file path
+    if let Some(path) = get_hosts_path() {
+        println!();
+        println!(
+            "  {} {}",
+            style("Config file:").dim(),
+            style(path.display()).dim()
         );
     }
 

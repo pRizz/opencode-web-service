@@ -14,7 +14,7 @@ pub mod version;
 pub use version::{get_version, get_version_long};
 
 // Re-export config types and functions
-pub use config::{Config, load_config, save_config};
+pub use config::{Config, get_hosts_path, load_config, save_config};
 
 // Re-export singleton types
 pub use singleton::{InstanceLock, SingletonError};
@@ -30,7 +30,9 @@ pub use platform::{
 
 // Re-export host types
 pub use host::{
-    HostConfig, HostError, HostsFile, SshTunnel, load_hosts, save_hosts, test_connection,
+    HostConfig, HostError, HostsFile, SshConfigMatch, SshTunnel, get_ssh_config_path,
+    host_exists_in_ssh_config, load_hosts, query_ssh_config, save_hosts, test_connection,
+    write_ssh_config_entry,
 };
 
 // Re-export bollard to ensure all crates use the same version

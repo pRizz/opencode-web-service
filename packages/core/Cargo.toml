@@ -54,6 +54,8 @@ plist = "1.8"
 
 # Host management
 whoami = "1.5"
+ssh2-config = "0.6"
+dirs = "6"
 
 [build-dependencies]
 napi-build = "2"
