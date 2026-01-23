@@ -30,6 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 16: Code Quality Audit** - Reduce nesting, eliminate duplication, improve readability
 - [ ] **Phase 17: Custom Bind Mounts** - Allow users to mount local directories into the container
 - [ ] **Phase 18: CLI Sync Strategy** - Strategy for keeping Rust and Node CLIs in sync
+- [ ] **Phase 19: CI/CD Automation** - Automated Docker image uploads and version management via GitHub Actions
 
 ## Phase Details
 
@@ -340,10 +341,29 @@ Plans:
 - [ ] 18-02: TBD (shared definitions or code generation)
 - [ ] 18-03: TBD (parity test suite and CI integration)
 
+### Phase 19: CI/CD Automation
+**Goal**: Automate Docker image builds/uploads and version management via GitHub Actions with user-triggered workflows
+**Depends on**: Phase 15 (Prebuilt Image Option)
+**Requirements**: None (enhancement)
+**Note**: Builds on Phase 15's prebuilt image infrastructure. Adds automated CI/CD workflows for building and pushing Docker images to GHCR, plus interactive version bump workflows that prompt for version type (major/minor/patch) and create git tags.
+**Success Criteria** (what must be TRUE):
+  1. GitHub Action workflow builds and pushes Docker images to GHCR on release
+  2. Multi-arch images (amd64, arm64) built via buildx
+  3. Workflow for version bumps with user input (major/minor/patch selection)
+  4. Automatic git tag creation after version bump
+  5. Version bump updates all relevant files (Cargo.toml, package.json, etc.)
+  6. Release workflow triggered by tag push or manual dispatch
+  7. Images tagged with version and :latest
+**Plans**: TBD
+
+Plans:
+- [ ] 19-01: TBD (Docker image build and push workflow)
+- [ ] 19-02: TBD (Version bump workflow with user input)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17 -> 18
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17 -> 18 -> 19
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -365,7 +385,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 16. Code Quality Audit | 0/3 | Not started | - |
 | 17. Custom Bind Mounts | 0/3 | Not started | - |
 | 18. CLI Sync Strategy | 0/3 | Not started | - |
+| 19. CI/CD Automation | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-22 (Phase 10 complete)*
+*Last updated: 2026-01-22 (Phase 19 added)*
