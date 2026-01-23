@@ -11,6 +11,7 @@ use clap::{Parser, Subcommand};
 use console::style;
 use opencode_cloud_core::{
     InstanceLock, SingletonError, config, get_version, load_config, save_config,
+    load_hosts, DockerClient,
 };
 
 /// Manage your opencode cloud service
@@ -34,6 +35,10 @@ struct Cli {
     /// Disable colored output
     #[arg(long, global = true)]
     no_color: bool,
+
+    /// Target remote host (overrides default_host)
+    #[arg(long, global = true)]
+    host: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -75,6 +80,56 @@ fn get_banner() -> &'static str {
  \___/| .__/ \___|_| |_|\___\___/ \__,_|\___|
       |_|                            cloud
 "#
+}
+
+/// Resolve which Docker client to use based on --host flag and default_host config
+///
+/// Returns (DockerClient, Option<host_name>) where host_name is Some for remote connections.
+///
+/// Resolution order:
+/// 1. --host flag (explicit)
+/// 2. default_host from hosts.json
+/// 3. Local Docker (no host_name)
+pub async fn resolve_docker_client(
+    maybe_host: Option<&str>,
+) -> anyhow::Result<(DockerClient, Option<String>)> {
+    let hosts = load_hosts().unwrap_or_default();
+
+    // Determine target host
+    let target_host = maybe_host
+        .map(String::from)
+        .or_else(|| hosts.default_host.clone());
+
+    match target_host {
+        Some(name) if name != "local" && !name.is_empty() => {
+            // Remote host requested
+            let host_config = hosts.get_host(&name).ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Host '{}' not found. Run 'occ host list' to see available hosts.",
+                    name
+                )
+            })?;
+
+            let client = DockerClient::connect_remote(host_config, &name).await?;
+            Ok((client, Some(name)))
+        }
+        _ => {
+            // Local Docker
+            let client = DockerClient::new()?;
+            Ok((client, None))
+        }
+    }
+}
+
+/// Format a message with optional host prefix
+///
+/// For remote hosts: "[prod-1] Starting container..."
+/// For local: "Starting container..."
+pub fn format_host_message(host_name: Option<&str>, message: &str) -> String {
+    match host_name {
+        Some(name) => format!("[{}] {}", style(name).cyan(), message),
+        None => message.to_string(),
+    }
 }
 
 pub fn run() -> Result<()> {
@@ -137,6 +192,9 @@ pub fn run() -> Result<()> {
         eprintln!("{} Data: {}", style("[info]").cyan(), data_dir);
     }
 
+    // Store host flag for command handlers
+    let target_host = cli.host.clone();
+
     // Check if wizard needed (missing auth and not running setup/config command)
     let needs_wizard = !config.has_required_auth()
         && !matches!(
@@ -164,23 +222,23 @@ pub fn run() -> Result<()> {
     match cli.command {
         Some(Commands::Start(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_start(&args, cli.quiet, cli.verbose))
+            rt.block_on(commands::cmd_start(&args, target_host.as_deref(), cli.quiet, cli.verbose))
         }
         Some(Commands::Stop(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_stop(&args, cli.quiet))
+            rt.block_on(commands::cmd_stop(&args, target_host.as_deref(), cli.quiet))
         }
         Some(Commands::Restart(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_restart(&args, cli.quiet, cli.verbose))
+            rt.block_on(commands::cmd_restart(&args, target_host.as_deref(), cli.quiet, cli.verbose))
         }
         Some(Commands::Status(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_status(&args, cli.quiet, cli.verbose))
+            rt.block_on(commands::cmd_status(&args, target_host.as_deref(), cli.quiet, cli.verbose))
         }
         Some(Commands::Logs(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_logs(&args, cli.quiet))
+            rt.block_on(commands::cmd_logs(&args, target_host.as_deref(), cli.quiet))
         }
         Some(Commands::Install(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
@@ -197,15 +255,15 @@ pub fn run() -> Result<()> {
         }
         Some(Commands::User(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_user(&args, cli.quiet, cli.verbose))
+            rt.block_on(commands::cmd_user(&args, target_host.as_deref(), cli.quiet, cli.verbose))
         }
         Some(Commands::Update(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_update(&args, cli.quiet, cli.verbose))
+            rt.block_on(commands::cmd_update(&args, target_host.as_deref(), cli.quiet, cli.verbose))
         }
         Some(Commands::Cockpit(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::cmd_cockpit(&args, cli.quiet))
+            rt.block_on(commands::cmd_cockpit(&args, target_host.as_deref(), cli.quiet))
         }
         Some(Commands::Host(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
