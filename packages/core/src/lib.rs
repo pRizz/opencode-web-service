@@ -30,9 +30,10 @@ pub use platform::{
 
 // Re-export host types
 pub use host::{
-    HostConfig, HostError, HostsFile, SshConfigMatch, SshTunnel, get_ssh_config_path,
-    host_exists_in_ssh_config, load_hosts, query_ssh_config, save_hosts, test_connection,
-    write_ssh_config_entry,
+    DistroFamily, DistroInfo, HostConfig, HostError, HostsFile, SshConfigMatch, SshTunnel,
+    detect_distro, get_docker_install_commands, get_ssh_config_path, host_exists_in_ssh_config,
+    install_docker, load_hosts, query_ssh_config, save_hosts, test_connection,
+    verify_docker_installed, write_ssh_config_entry,
 };
 
 // Re-export bollard to ensure all crates use the same version

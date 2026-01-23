@@ -6,8 +6,9 @@ use console::style;
 use dialoguer::Confirm;
 use indicatif::{ProgressBar, ProgressStyle};
 use opencode_cloud_core::{
-    HostConfig, host_exists_in_ssh_config, load_hosts, query_ssh_config, save_hosts,
-    test_connection, write_ssh_config_entry,
+    HostConfig, HostError, detect_distro, get_docker_install_commands, host_exists_in_ssh_config,
+    install_docker, load_hosts, query_ssh_config, save_hosts, test_connection,
+    verify_docker_installed, write_ssh_config_entry,
 };
 
 /// Arguments for host add command
@@ -151,6 +152,24 @@ pub async fn cmd_host_add(args: &HostAddArgs, quiet: bool, _verbose: u8) -> Resu
                     ));
                     verification_succeeded = true;
                 }
+                Err(HostError::RemoteDockerUnavailable(_)) => {
+                    spinner.finish_with_message(format!(
+                        "{} Docker not installed",
+                        style("!").yellow()
+                    ));
+                    eprintln!();
+
+                    // Offer to install Docker
+                    if let Some(installed) =
+                        offer_docker_installation(&config, &args.hostname, quiet)?
+                    {
+                        if installed {
+                            verification_succeeded = true;
+                        }
+                    } else {
+                        bail!("Docker is required on the remote host");
+                    }
+                }
                 Err(e) => {
                     spinner.finish_with_message(format!("{} Connection failed", style("✗").red()));
                     eprintln!();
@@ -260,6 +279,175 @@ pub async fn cmd_host_add(args: &HostAddArgs, quiet: bool, _verbose: u8) -> Resu
     }
 
     Ok(())
+}
+
+/// Offer to install Docker on a remote host
+///
+/// Returns:
+/// - `Ok(Some(true))` - Docker was installed successfully
+/// - `Ok(Some(false))` - User declined or installation failed
+/// - `Ok(None)` - User declined installation
+fn offer_docker_installation(
+    config: &HostConfig,
+    hostname: &str,
+    quiet: bool,
+) -> Result<Option<bool>> {
+    if quiet {
+        return Ok(None);
+    }
+
+    println!(
+        "  {} Docker is not installed on {}",
+        style("Detected:").yellow(),
+        style(hostname).cyan()
+    );
+    println!();
+
+    // Detect the Linux distribution
+    let distro = match detect_distro(config) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!(
+                "  {} Could not detect Linux distribution: {}",
+                style("Error:").red(),
+                e
+            );
+            return Ok(None);
+        }
+    };
+
+    println!(
+        "  {} {} ({})",
+        style("Distribution:").dim(),
+        distro.pretty_name,
+        distro.family
+    );
+    println!();
+
+    // Get the commands that would be run
+    let commands = match get_docker_install_commands(&distro) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("  {} {}", style("Error:").red(), e);
+            println!();
+            println!(
+                "  {} Install Docker manually, then re-run this command.",
+                style("Tip:").dim()
+            );
+            return Ok(None);
+        }
+    };
+
+    // Show what will be done
+    println!(
+        "  {} The following commands will be run:",
+        style("Installation:").cyan()
+    );
+    for cmd in &commands {
+        println!("    {}", style(cmd).dim());
+    }
+    println!();
+
+    // Ask for confirmation
+    let should_install = Confirm::new()
+        .with_prompt("Install Docker on the remote host?")
+        .default(true)
+        .interact()?;
+
+    if !should_install {
+        println!();
+        println!(
+            "  {} You can install Docker manually, then run:",
+            style("Tip:").dim()
+        );
+        println!(
+            "       {}",
+            style(format!("occ host add {} {}", hostname, hostname)).yellow()
+        );
+        return Ok(None);
+    }
+
+    println!();
+
+    // Create a spinner for installation
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_style(
+        ProgressStyle::default_spinner()
+            .template("{spinner:.cyan} {msg}")
+            .expect("valid template"),
+    );
+    spinner.set_message("Installing Docker...");
+    spinner.enable_steady_tick(std::time::Duration::from_millis(100));
+
+    // Run installation with output streaming
+    match install_docker(config, &distro, |line| {
+        // Update spinner message with latest output
+        let trimmed = line.trim();
+        if !trimmed.is_empty() {
+            spinner.set_message(format!("Installing: {}", truncate_str(trimmed, 50)));
+        }
+    }) {
+        Ok(()) => {
+            spinner.finish_with_message(format!("{} Docker installed", style("✓").green()));
+        }
+        Err(e) => {
+            spinner.finish_with_message(format!("{} Installation failed: {}", style("✗").red(), e));
+            return Ok(Some(false));
+        }
+    }
+
+    println!();
+    println!(
+        "  {} Group membership changes require a new SSH session.",
+        style("Note:").yellow()
+    );
+
+    // Verify Docker is working (may need sudo if group not yet active)
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_style(
+        ProgressStyle::default_spinner()
+            .template("{spinner:.cyan} {msg}")
+            .expect("valid template"),
+    );
+    spinner.set_message("Verifying Docker installation...");
+    spinner.enable_steady_tick(std::time::Duration::from_millis(100));
+
+    match verify_docker_installed(config) {
+        Ok(version) => {
+            spinner.finish_with_message(format!(
+                "{} Docker {} verified",
+                style("✓").green(),
+                version
+            ));
+            Ok(Some(true))
+        }
+        Err(e) => {
+            spinner.finish_with_message(format!("{} Verification: {}", style("!").yellow(), e));
+            println!();
+            println!(
+                "  {} Docker was installed but verification failed.",
+                style("Note:").yellow()
+            );
+            println!(
+                "       This is often because the user needs to reconnect for group membership."
+            );
+            println!(
+                "       Try: {}",
+                style("ssh <host> docker --version").yellow()
+            );
+            // Still count as success since Docker was installed
+            Ok(Some(true))
+        }
+    }
+}
+
+/// Truncate a string to a maximum length, adding "..." if truncated
+fn truncate_str(s: &str, max_len: usize) -> String {
+    if s.len() <= max_len {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max_len.saturating_sub(3)])
+    }
 }
 
 /// Print helpful tips when connection verification fails
