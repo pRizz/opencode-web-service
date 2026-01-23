@@ -155,9 +155,14 @@ pub async fn create_container(
             ])),
             // cgroup mount (read-write for systemd)
             binds: Some(vec!["/sys/fs/cgroup:/sys/fs/cgroup:rw".to_string()]),
-            // Use host cgroup namespace for systemd (required on cgroups v2 hosts like Amazon Linux 2023)
+            // Use HOST cgroup namespace for systemd compatibility across Linux distros:
+            // - cgroups v2 (Amazon Linux 2023, Fedora 31+, Ubuntu 21.10+, Debian 11+): required
+            // - cgroups v1 (CentOS 7, Ubuntu 18.04, Debian 10): works fine
+            // - Docker Desktop (macOS/Windows VM): works fine
+            // Note: PRIVATE mode is more isolated but causes systemd to exit(255) on cgroups v2.
+            // Since we already use privileged mode, HOST namespace is acceptable.
             cgroupns_mode: Some(bollard::models::HostConfigCgroupnsModeEnum::HOST),
-            // Privileged mode often needed for systemd on Docker Desktop
+            // Privileged mode required for systemd to manage cgroups and system services
             privileged: Some(true),
             ..Default::default()
         }
