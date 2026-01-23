@@ -123,7 +123,7 @@ pub async fn cmd_install(args: &InstallArgs, quiet: bool, _verbose: u8) -> Resul
         } else {
             "login"
         };
-        println!("The service will start automatically on {}.", boot_desc);
+        println!("The service will start automatically on {boot_desc}.");
     }
 
     Ok(())

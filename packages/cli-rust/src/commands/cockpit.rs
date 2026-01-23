@@ -45,7 +45,7 @@ pub async fn cmd_cockpit(_args: &CockpitArgs, maybe_host: Option<&str>, quiet: b
     client
         .verify_connection()
         .await
-        .map_err(|e| anyhow::anyhow!("{}", e))?;
+        .map_err(|e| anyhow::anyhow!("{e}"))?;
 
     let running = container_is_running(&client, CONTAINER_NAME).await?;
     if !running {

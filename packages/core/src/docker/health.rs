@@ -58,7 +58,7 @@ pub enum HealthError {
 /// Returns the health response on success (HTTP 200).
 /// Returns an error for connection issues, timeouts, or non-200 responses.
 pub async fn check_health(port: u16) -> Result<HealthResponse, HealthError> {
-    let url = format!("http://127.0.0.1:{}/global/health", port);
+    let url = format!("http://127.0.0.1:{port}/global/health");
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(5))
@@ -159,7 +159,7 @@ mod tests {
         assert!(result.is_err());
         match result.unwrap_err() {
             HealthError::ConnectionRefused => {}
-            other => panic!("Expected ConnectionRefused, got: {:?}", other),
+            other => panic!("Expected ConnectionRefused, got: {other:?}"),
         }
     }
 }

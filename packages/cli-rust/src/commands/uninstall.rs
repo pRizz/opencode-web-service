@@ -122,7 +122,7 @@ pub async fn cmd_uninstall(args: &UninstallArgs, quiet: bool, _verbose: u8) -> R
         println!("  Data:   {}", style(&data_dir).dim());
         println!();
         println!("To completely remove all files:");
-        println!("  rm -rf {} {}", config_dir, data_dir);
+        println!("  rm -rf {config_dir} {data_dir}");
     }
 
     Ok(())

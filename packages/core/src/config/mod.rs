@@ -89,7 +89,7 @@ pub fn load_config() -> Result<Config> {
 
     // Parse JSONC (JSON with comments)
     let parsed_value = parse_to_serde_value(&contents, &Default::default())
-        .map_err(|e| anyhow::anyhow!("Invalid JSONC in config file: {}", e))?
+        .map_err(|e| anyhow::anyhow!("Invalid JSONC in config file: {e}"))?
         .ok_or_else(|| anyhow::anyhow!("Config file is empty"))?;
 
     // Deserialize into Config struct (deny_unknown_fields will reject unknown keys)

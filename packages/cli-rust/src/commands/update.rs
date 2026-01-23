@@ -62,7 +62,7 @@ pub async fn cmd_update(
     client
         .verify_connection()
         .await
-        .map_err(|e| anyhow!("Docker connection error: {}", e))?;
+        .map_err(|e| anyhow!("Docker connection error: {e}"))?;
 
     // Load config
     let config = load_config()?;
@@ -136,7 +136,7 @@ async fn handle_update(
     let spinner = CommandSpinner::new_maybe("Stopping service...", quiet);
     if let Err(e) = stop_service(client, true).await {
         spinner.fail("Failed to stop service");
-        return Err(anyhow!("Failed to stop service: {}", e));
+        return Err(anyhow!("Failed to stop service: {e}"));
     }
     spinner.success("Service stopped");
 
@@ -152,7 +152,7 @@ async fn handle_update(
 
     update_image(client, &mut progress)
         .await
-        .map_err(|e| anyhow!("Failed to update image: {}", e))?;
+        .map_err(|e| anyhow!("Failed to update image: {e}"))?;
 
     // Step 3: Recreate container
     if verbose > 0 {
@@ -170,7 +170,7 @@ async fn handle_update(
     .await
     {
         spinner.fail("Failed to recreate container");
-        return Err(anyhow!("Failed to recreate container: {}", e));
+        return Err(anyhow!("Failed to recreate container: {e}"));
     }
     spinner.success("Container recreated");
 
@@ -193,7 +193,7 @@ async fn handle_update(
         eprintln!();
         eprintln!(
             "URL:      {}",
-            style(format!("http://{}:{}", bind_addr, port)).cyan()
+            style(format!("http://{bind_addr}:{port}")).cyan()
         );
         if !config.users.is_empty() {
             eprintln!();
@@ -264,7 +264,7 @@ async fn handle_rollback(
     let spinner = CommandSpinner::new_maybe("Stopping service...", quiet);
     if let Err(e) = stop_service(client, true).await {
         spinner.fail("Failed to stop service");
-        return Err(anyhow!("Failed to stop service: {}", e));
+        return Err(anyhow!("Failed to stop service: {e}"));
     }
     spinner.success("Service stopped");
 
@@ -275,7 +275,7 @@ async fn handle_rollback(
     let spinner = CommandSpinner::new_maybe("Rolling back to previous image...", quiet);
     if let Err(e) = rollback_image(client).await {
         spinner.fail("Failed to rollback image");
-        return Err(anyhow!("Failed to rollback: {}", e));
+        return Err(anyhow!("Failed to rollback: {e}"));
     }
     spinner.success("Rolled back to previous image");
 
@@ -295,7 +295,7 @@ async fn handle_rollback(
     .await
     {
         spinner.fail("Failed to recreate container");
-        return Err(anyhow!("Failed to recreate container: {}", e));
+        return Err(anyhow!("Failed to recreate container: {e}"));
     }
     spinner.success("Container recreated");
 
@@ -315,7 +315,7 @@ async fn handle_rollback(
         eprintln!();
         eprintln!(
             "URL:      {}",
-            style(format!("http://{}:{}", bind_addr, port)).cyan()
+            style(format!("http://{bind_addr}:{port}")).cyan()
         );
         if !config.users.is_empty() {
             eprintln!();
@@ -358,8 +358,8 @@ async fn recreate_users(
             // Only fail if error is not "already exists"
             let err_msg = e.to_string();
             if !err_msg.contains("already exists") {
-                spinner.fail(&format!("Failed to recreate user: {}", username));
-                return Err(anyhow!("Failed to recreate user {}: {}", username, e));
+                spinner.fail(&format!("Failed to recreate user: {username}"));
+                return Err(anyhow!("Failed to recreate user {username}: {e}"));
             }
         }
     }

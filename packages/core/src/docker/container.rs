@@ -62,8 +62,7 @@ pub async fn create_container(
     // Check if container already exists
     if container_exists(client, container_name).await? {
         return Err(DockerError::Container(format!(
-            "Container '{}' already exists. Remove it first with 'occ stop --remove' or use a different name.",
-            container_name
+            "Container '{container_name}' already exists. Remove it first with 'occ stop --remove' or use a different name."
         )));
     }
 
@@ -77,8 +76,7 @@ pub async fn create_container(
 
     if !super::image::image_exists(client, image_repo, image_tag).await? {
         return Err(DockerError::Container(format!(
-            "Image '{}' not found. Run 'occ pull' first to download the image.",
-            image_name
+            "Image '{image_name}' not found. Run 'occ pull' first to download the image."
         )));
     }
 
@@ -208,11 +206,10 @@ pub async fn create_container(
             let msg = e.to_string();
             if msg.contains("port is already allocated") || msg.contains("address already in use") {
                 DockerError::Container(format!(
-                    "Port {} is already in use. Stop the service using that port or use a different port with --port.",
-                    port
+                    "Port {port} is already in use. Stop the service using that port or use a different port with --port."
                 ))
             } else {
-                DockerError::Container(format!("Failed to create container: {}", e))
+                DockerError::Container(format!("Failed to create container: {e}"))
             }
         })?;
 
@@ -229,7 +226,7 @@ pub async fn start_container(client: &DockerClient, name: &str) -> Result<(), Do
         .start_container(name, None::<StartContainerOptions<String>>)
         .await
         .map_err(|e| {
-            DockerError::Container(format!("Failed to start container {}: {}", name, e))
+            DockerError::Container(format!("Failed to start container {name}: {e}"))
         })?;
 
     debug!("Container {} started", name);
@@ -261,9 +258,9 @@ pub async fn stop_container(
             // "container already stopped" is not an error
             if msg.contains("is not running") || msg.contains("304") {
                 debug!("Container {} was already stopped", name);
-                return DockerError::Container(format!("Container '{}' is not running", name));
+                return DockerError::Container(format!("Container '{name}' is not running"));
             }
-            DockerError::Container(format!("Failed to stop container {}: {}", name, e))
+            DockerError::Container(format!("Failed to stop container {name}: {e}"))
         })?;
 
     debug!("Container {} stopped", name);
@@ -294,7 +291,7 @@ pub async fn remove_container(
         .remove_container(name, Some(options))
         .await
         .map_err(|e| {
-            DockerError::Container(format!("Failed to remove container {}: {}", name, e))
+            DockerError::Container(format!("Failed to remove container {name}: {e}"))
         })?;
 
     debug!("Container {} removed", name);
@@ -311,8 +308,7 @@ pub async fn container_exists(client: &DockerClient, name: &str) -> Result<bool,
             status_code: 404, ..
         }) => Ok(false),
         Err(e) => Err(DockerError::Container(format!(
-            "Failed to inspect container {}: {}",
-            name, e
+            "Failed to inspect container {name}: {e}"
         ))),
     }
 }
@@ -330,8 +326,7 @@ pub async fn container_is_running(client: &DockerClient, name: &str) -> Result<b
             status_code: 404, ..
         }) => Ok(false),
         Err(e) => Err(DockerError::Container(format!(
-            "Failed to inspect container {}: {}",
-            name, e
+            "Failed to inspect container {name}: {e}"
         ))),
     }
 }
@@ -352,12 +347,10 @@ pub async fn container_state(client: &DockerClient, name: &str) -> Result<String
         Err(bollard::errors::Error::DockerResponseServerError {
             status_code: 404, ..
         }) => Err(DockerError::Container(format!(
-            "Container '{}' not found",
-            name
+            "Container '{name}' not found"
         ))),
         Err(e) => Err(DockerError::Container(format!(
-            "Failed to inspect container {}: {}",
-            name, e
+            "Failed to inspect container {name}: {e}"
         ))),
     }
 }

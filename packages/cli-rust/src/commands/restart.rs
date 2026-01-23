@@ -44,7 +44,7 @@ pub async fn cmd_restart(
     // Verify connection
     client.verify_connection().await.map_err(|e| {
         let msg = format_docker_error(&e);
-        anyhow!("{}", msg)
+        anyhow!("{msg}")
     })?;
 
     // Load config for port and bind_address
@@ -94,7 +94,7 @@ pub async fn cmd_restart(
             ));
 
             if !quiet {
-                let url = format!("http://{}:{}", bind_addr, port);
+                let url = format!("http://{bind_addr}:{port}");
                 println!();
                 println!("URL:        {}", style(&url).cyan());
                 println!(
@@ -144,5 +144,5 @@ fn format_docker_error(e: &DockerError) -> String {
 fn show_docker_error(e: &DockerError) {
     let msg = format_docker_error(e);
     eprintln!();
-    eprintln!("{}", msg);
+    eprintln!("{msg}");
 }

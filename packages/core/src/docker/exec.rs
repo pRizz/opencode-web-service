@@ -41,7 +41,7 @@ pub async fn exec_command(
         .inner()
         .create_exec(container, exec_config)
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to create exec: {}", e)))?;
+        .map_err(|e| DockerError::Container(format!("Failed to create exec: {e}")))?;
 
     let start_config = StartExecOptions {
         detach: false,
@@ -54,7 +54,7 @@ pub async fn exec_command(
         .inner()
         .start_exec(&exec.id, Some(start_config))
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to start exec: {}", e)))?
+        .map_err(|e| DockerError::Container(format!("Failed to start exec: {e}")))?
     {
         StartExecResults::Attached {
             output: mut stream, ..
@@ -66,8 +66,7 @@ pub async fn exec_command(
                     }
                     Err(e) => {
                         return Err(DockerError::Container(format!(
-                            "Error reading exec output: {}",
-                            e
+                            "Error reading exec output: {e}"
                         )));
                     }
                 }
@@ -129,7 +128,7 @@ pub async fn exec_command_with_stdin(
         .inner()
         .create_exec(container, exec_config)
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to create exec: {}", e)))?;
+        .map_err(|e| DockerError::Container(format!("Failed to create exec: {e}")))?;
 
     let start_config = StartExecOptions {
         detach: false,
@@ -142,7 +141,7 @@ pub async fn exec_command_with_stdin(
         .inner()
         .start_exec(&exec.id, Some(start_config))
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to start exec: {}", e)))?
+        .map_err(|e| DockerError::Container(format!("Failed to start exec: {e}")))?
     {
         StartExecResults::Attached {
             output: mut stream,
@@ -152,13 +151,13 @@ pub async fn exec_command_with_stdin(
             input_sink
                 .write_all(stdin_data.as_bytes())
                 .await
-                .map_err(|e| DockerError::Container(format!("Failed to write to stdin: {}", e)))?;
+                .map_err(|e| DockerError::Container(format!("Failed to write to stdin: {e}")))?;
 
             // Close stdin to signal EOF
             input_sink
                 .shutdown()
                 .await
-                .map_err(|e| DockerError::Container(format!("Failed to close stdin: {}", e)))?;
+                .map_err(|e| DockerError::Container(format!("Failed to close stdin: {e}")))?;
 
             // Collect output
             while let Some(result) = stream.next().await {
@@ -168,8 +167,7 @@ pub async fn exec_command_with_stdin(
                     }
                     Err(e) => {
                         return Err(DockerError::Container(format!(
-                            "Error reading exec output: {}",
-                            e
+                            "Error reading exec output: {e}"
                         )));
                     }
                 }
@@ -218,7 +216,7 @@ pub async fn exec_command_exit_code(
         .inner()
         .create_exec(container, exec_config)
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to create exec: {}", e)))?;
+        .map_err(|e| DockerError::Container(format!("Failed to create exec: {e}")))?;
 
     let exec_id = exec.id.clone();
 
@@ -232,7 +230,7 @@ pub async fn exec_command_exit_code(
         .inner()
         .start_exec(&exec.id, Some(start_config))
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to start exec: {}", e)))?
+        .map_err(|e| DockerError::Container(format!("Failed to start exec: {e}")))?
     {
         StartExecResults::Attached { mut output, .. } => {
             // Drain the output stream (we don't care about the content)
@@ -250,7 +248,7 @@ pub async fn exec_command_exit_code(
         .inner()
         .inspect_exec(&exec_id)
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to inspect exec: {}", e)))?;
+        .map_err(|e| DockerError::Container(format!("Failed to inspect exec: {e}")))?;
 
     // Exit code is None if process is still running, which shouldn't happen
     let exit_code = inspect.exit_code.unwrap_or(-1);

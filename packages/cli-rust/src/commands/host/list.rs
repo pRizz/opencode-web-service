@@ -59,7 +59,7 @@ pub async fn cmd_host_list(args: &HostListArgs, quiet: bool, _verbose: u8) -> Re
     // Names only mode (for scripting)
     if args.names_only || quiet {
         for (name, _) in &filtered {
-            println!("{}", name);
+            println!("{name}");
         }
         return Ok(());
     }

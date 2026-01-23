@@ -203,8 +203,7 @@ pub async fn pull_image(
             Ok(full_name)
         }
         Err(dockerhub_err) => Err(DockerError::Pull(format!(
-            "Failed to pull from both registries. GHCR: {}. Docker Hub: {}",
-            ghcr_err, dockerhub_err
+            "Failed to pull from both registries. GHCR: {ghcr_err}. Docker Hub: {dockerhub_err}"
         ))),
     }
 }
@@ -246,8 +245,7 @@ async fn pull_from_registry(
 
     Err(last_error.unwrap_or_else(|| {
         DockerError::Pull(format!(
-            "Pull failed for {} after {} attempts",
-            full_name, MAX_PULL_RETRIES
+            "Pull failed for {full_name} after {MAX_PULL_RETRIES} attempts"
         ))
     }))
 }

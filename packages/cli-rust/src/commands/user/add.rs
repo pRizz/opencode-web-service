@@ -62,7 +62,7 @@ pub async fn cmd_user_add(
 ) -> Result<()> {
     // Get username - prompt if not provided
     let username = if let Some(ref name) = args.username {
-        validate_username(name).map_err(|e| anyhow::anyhow!("{}", e))?;
+        validate_username(name).map_err(|e| anyhow::anyhow!("{e}"))?;
         name.clone()
     } else {
         Input::new()
@@ -74,7 +74,7 @@ pub async fn cmd_user_add(
 
     // Check if user already exists
     if user_exists(client, CONTAINER_NAME, &username).await? {
-        bail!("User '{}' already exists in the container", username);
+        bail!("User '{username}' already exists in the container");
     }
 
     // Get password

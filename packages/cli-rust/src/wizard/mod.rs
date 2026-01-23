@@ -190,8 +190,7 @@ pub async fn run_wizard(existing_config: Option<&Config>) -> Result<Config> {
             println!(
                 "{}",
                 style(format!(
-                    "Migrating existing user '{}' to PAM-based authentication...",
-                    old_username
+                    "Migrating existing user '{old_username}' to PAM-based authentication..."
                 ))
                 .dim()
             );

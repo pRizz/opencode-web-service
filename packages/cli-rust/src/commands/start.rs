@@ -70,7 +70,7 @@ pub async fn cmd_start(
 
     client.verify_connection().await.map_err(|e| {
         let msg = format_docker_error(&e);
-        anyhow!("{}", msg)
+        anyhow!("{msg}")
     })?;
 
     // Load config for port and bind_address
@@ -254,7 +254,7 @@ fn show_already_running(
         return Ok(());
     }
 
-    let url = format!("http://{}:{}", bind_addr, port);
+    let url = format!("http://{bind_addr}:{port}");
     let msg = crate::format_host_message(host_name, "Service is already running");
     println!("{}", style(msg).dim());
     println!();
@@ -286,9 +286,9 @@ fn show_already_running(
 
 /// Create error message for port already in use
 fn port_in_use_error(port: u16) -> anyhow::Error {
-    let mut msg = format!("Port {} is already in use", port);
+    let mut msg = format!("Port {port} is already in use");
     if let Some(p) = find_next_available_port(port) {
-        msg.push_str(&format!(". Try: occ start --port {}", p));
+        msg.push_str(&format!(". Try: occ start --port {p}"));
     }
     anyhow!(msg)
 }
@@ -369,10 +369,10 @@ fn show_start_result(
     quiet: bool,
     _host_name: Option<&str>,
 ) {
-    let url = format!("http://{}:{}", bind_addr, port);
+    let url = format!("http://{bind_addr}:{port}");
 
     if quiet {
-        println!("{}", url);
+        println!("{url}");
         return;
     }
 
@@ -382,7 +382,7 @@ fn show_start_result(
         "Container:  {}",
         style(&container_id[..12.min(container_id.len())]).dim()
     );
-    println!("Port:       {} -> 3000", port);
+    println!("Port:       {port} -> 3000");
 
     // Show Cockpit availability if enabled
     if let Ok(config) = opencode_cloud_core::config::load_config() {
@@ -426,7 +426,7 @@ fn open_browser_if_requested(should_open: bool, port: u16, bind_addr: &str) {
     } else {
         bind_addr
     };
-    let url = format!("http://{}:{}", browser_addr, port);
+    let url = format!("http://{browser_addr}:{port}");
     if let Err(e) = webbrowser::open(&url) {
         eprintln!(
             "{} Failed to open browser: {}",
@@ -487,7 +487,7 @@ fn format_docker_error(e: &DockerError) -> String {
 fn show_docker_error(e: &DockerError) {
     let msg = format_docker_error(e);
     eprintln!();
-    eprintln!("{}", msg);
+    eprintln!("{msg}");
 }
 
 /// Check if a port is available for binding
@@ -572,8 +572,7 @@ async fn wait_for_service_ready(
     loop {
         if start.elapsed() > timeout {
             return Err(anyhow!(
-                "Service did not become ready within {} seconds. Check logs with: occ logs",
-                HEALTH_CHECK_TIMEOUT_SECS
+                "Service did not become ready within {HEALTH_CHECK_TIMEOUT_SECS} seconds. Check logs with: occ logs"
             ));
         }
 
@@ -581,15 +580,14 @@ async fn wait_for_service_ready(
         if last_log_check.elapsed() > log_check_interval {
             if let Some(error) = check_for_fatal_errors(client).await {
                 return Err(anyhow!(
-                    "Fatal error detected in container:\n  {}\n\nThe service cannot start. Try rebuilding the Docker image: occ start --full-rebuild",
-                    error
+                    "Fatal error detected in container:\n  {error}\n\nThe service cannot start. Try rebuilding the Docker image: occ start --full-rebuild"
                 ));
             }
             last_log_check = Instant::now();
         }
 
         // Try to connect to the service
-        let addr = format!("127.0.0.1:{}", port).parse().unwrap();
+        let addr = format!("127.0.0.1:{port}").parse().unwrap();
         let connected = TcpStream::connect_timeout(&addr, Duration::from_secs(1)).is_ok();
 
         if connected {
@@ -598,8 +596,7 @@ async fn wait_for_service_ready(
                 return Ok(());
             }
             spinner.update(&format!(
-                "Service responding ({}/{})",
-                consecutive_success, HEALTH_CHECK_CONSECUTIVE_REQUIRED
+                "Service responding ({consecutive_success}/{HEALTH_CHECK_CONSECUTIVE_REQUIRED})"
             ));
         } else {
             consecutive_success = 0;
@@ -637,7 +634,7 @@ async fn show_recent_logs(client: &DockerClient, lines: usize) {
             _ => continue,
         };
 
-        eprint!("  {}", line);
+        eprint!("  {line}");
         count += 1;
     }
 }

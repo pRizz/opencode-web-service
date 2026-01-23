@@ -21,7 +21,7 @@ pub async fn cmd_host_default(args: &HostDefaultArgs, quiet: bool, _verbose: u8)
             match &hosts.default_host {
                 Some(name) => {
                     if quiet {
-                        println!("{}", name);
+                        println!("{name}");
                     } else {
                         println!("Default host: {}", style(name).cyan());
                     }
@@ -60,9 +60,7 @@ pub async fn cmd_host_default(args: &HostDefaultArgs, quiet: bool, _verbose: u8)
             // Set default
             if !hosts.has_host(name) {
                 bail!(
-                    "Host '{}' not found. Add it first with: occ host add {} <hostname>",
-                    name,
-                    name
+                    "Host '{name}' not found. Add it first with: occ host add {name} <hostname>"
                 );
             }
 

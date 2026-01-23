@@ -95,7 +95,7 @@ pub async fn setup_and_start(
             .inspect_container(container::CONTAINER_NAME, None)
             .await
             .map_err(|e| {
-                DockerError::Container(format!("Failed to inspect existing container: {}", e))
+                DockerError::Container(format!("Failed to inspect existing container: {e}"))
             })?;
         info.id
             .unwrap_or_else(|| container::CONTAINER_NAME.to_string())
@@ -133,8 +133,7 @@ pub async fn stop_service(client: &DockerClient, remove: bool) -> Result<(), Doc
     // Check if container exists
     if !container::container_exists(client, name).await? {
         return Err(DockerError::Container(format!(
-            "Container '{}' does not exist",
-            name
+            "Container '{name}' does not exist"
         )));
     }
 

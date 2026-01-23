@@ -120,7 +120,7 @@ fn get_user_id() -> Result<u32> {
     uid_str
         .trim()
         .parse()
-        .map_err(|e| anyhow!("Failed to parse UID: {}", e))
+        .map_err(|e| anyhow!("Failed to parse UID: {e}"))
 }
 
 impl ServiceManager for LaunchdManager {

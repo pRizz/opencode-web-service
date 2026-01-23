@@ -172,8 +172,7 @@ pub fn validate_bind_address(addr: &str) -> Result<IpAddr, String> {
 
     stripped.parse::<IpAddr>().map_err(|_| {
         format!(
-            "Invalid IP address: '{}'. Use 127.0.0.1, ::1, 0.0.0.0, ::, or localhost",
-            addr
+            "Invalid IP address: '{addr}'. Use 127.0.0.1, ::1, 0.0.0.0, ::, or localhost"
         )
     })
 }

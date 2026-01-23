@@ -48,9 +48,9 @@ fn format_elapsed(duration: Duration) -> String {
     let seconds = total_secs % 60;
 
     if hours > 0 {
-        format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+        format!("{hours:02}:{minutes:02}:{seconds:02}")
     } else {
-        format!("{:02}:{:02}", minutes, seconds)
+        format!("{minutes:02}:{seconds:02}")
     }
 }
 
@@ -116,8 +116,8 @@ impl ProgressReporter {
         // Format: "[elapsed] Context · message" or "[elapsed] message"
         // Timer at the beginning for easy scanning
         match &self.context {
-            Some(ctx) => format!("[{}] {} · {}", elapsed, ctx, clean_msg),
-            None => format!("[{}] {}", elapsed, clean_msg),
+            Some(ctx) => format!("[{elapsed}] {ctx} · {clean_msg}"),
+            None => format!("[{elapsed}] {clean_msg}"),
         }
     }
 

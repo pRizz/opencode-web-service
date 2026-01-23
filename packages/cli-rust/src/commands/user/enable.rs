@@ -34,7 +34,7 @@ pub async fn cmd_user_enable(
 
     // Check if user exists
     if !user_exists(client, CONTAINER_NAME, username).await? {
-        bail!("User '{}' does not exist in the container", username);
+        bail!("User '{username}' does not exist in the container");
     }
 
     // Unlock the user account
@@ -63,7 +63,7 @@ pub async fn cmd_user_disable(
 
     // Check if user exists
     if !user_exists(client, CONTAINER_NAME, username).await? {
-        bail!("User '{}' does not exist in the container", username);
+        bail!("User '{username}' does not exist in the container");
     }
 
     // Lock the user account

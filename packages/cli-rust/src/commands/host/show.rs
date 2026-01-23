@@ -26,7 +26,7 @@ pub async fn cmd_host_show(args: &HostShowArgs, quiet: bool, _verbose: u8) -> Re
     if args.json || quiet {
         // JSON output
         let json = serde_json::to_string_pretty(config)?;
-        println!("{}", json);
+        println!("{json}");
         return Ok(());
     }
 

@@ -39,16 +39,16 @@ impl SshConfigMatch {
         let mut parts = Vec::new();
 
         if let Some(user) = &self.user {
-            parts.push(format!("User={}", user));
+            parts.push(format!("User={user}"));
         }
         if let Some(port) = self.port {
-            parts.push(format!("Port={}", port));
+            parts.push(format!("Port={port}"));
         }
         if let Some(key) = &self.identity_file {
-            parts.push(format!("IdentityFile={}", key));
+            parts.push(format!("IdentityFile={key}"));
         }
         if let Some(jump) = &self.proxy_jump {
-            parts.push(format!("ProxyJump={}", jump));
+            parts.push(format!("ProxyJump={jump}"));
         }
 
         parts.join(", ")
@@ -82,7 +82,7 @@ pub fn query_ssh_config(hostname: &str) -> Result<SshConfigMatch, HostError> {
     // Use ALLOW_UNKNOWN_FIELDS to be lenient with SSH config options we don't support
     let config = SshConfig::default()
         .parse(&mut reader, ParseRule::ALLOW_UNKNOWN_FIELDS)
-        .map_err(|e| HostError::SshConfigRead(format!("Failed to parse SSH config: {}", e)))?;
+        .map_err(|e| HostError::SshConfigRead(format!("Failed to parse SSH config: {e}")))?;
 
     // Query for the hostname
     let params = config.query(hostname);
@@ -140,7 +140,7 @@ pub fn write_ssh_config_entry(
     if let Some(ssh_dir) = config_path.parent() {
         if !ssh_dir.exists() {
             fs::create_dir_all(ssh_dir).map_err(|e| {
-                HostError::SshConfigWrite(format!("Failed to create .ssh directory: {}", e))
+                HostError::SshConfigWrite(format!("Failed to create .ssh directory: {e}"))
             })?;
 
             // Set directory permissions to 700 on Unix
@@ -149,7 +149,7 @@ pub fn write_ssh_config_entry(
                 use std::os::unix::fs::PermissionsExt;
                 let perms = fs::Permissions::from_mode(0o700);
                 fs::set_permissions(ssh_dir, perms).map_err(|e| {
-                    HostError::SshConfigWrite(format!("Failed to set .ssh permissions: {}", e))
+                    HostError::SshConfigWrite(format!("Failed to set .ssh permissions: {e}"))
                 })?;
             }
         }
@@ -158,25 +158,24 @@ pub fn write_ssh_config_entry(
     // Build the config entry
     let mut entry = String::new();
     entry.push_str(&format!(
-        "\n# Added by opencode-cloud for host '{}'\n",
-        alias
+        "\n# Added by opencode-cloud for host '{alias}'\n"
     ));
-    entry.push_str(&format!("Host {}\n", alias));
-    entry.push_str(&format!("    HostName {}\n", hostname));
+    entry.push_str(&format!("Host {alias}\n"));
+    entry.push_str(&format!("    HostName {hostname}\n"));
 
     if let Some(u) = user {
-        entry.push_str(&format!("    User {}\n", u));
+        entry.push_str(&format!("    User {u}\n"));
     }
     if let Some(p) = port {
         if p != 22 {
-            entry.push_str(&format!("    Port {}\n", p));
+            entry.push_str(&format!("    Port {p}\n"));
         }
     }
     if let Some(key) = identity_file {
-        entry.push_str(&format!("    IdentityFile {}\n", key));
+        entry.push_str(&format!("    IdentityFile {key}\n"));
     }
     if let Some(jump) = jump_host {
-        entry.push_str(&format!("    ProxyJump {}\n", jump));
+        entry.push_str(&format!("    ProxyJump {jump}\n"));
     }
 
     // Append to config file (create if doesn't exist)
@@ -193,12 +192,12 @@ pub fn write_ssh_config_entry(
     {
         use std::os::unix::fs::PermissionsExt;
         let metadata = file.metadata().map_err(|e| {
-            HostError::SshConfigWrite(format!("Failed to get file metadata: {}", e))
+            HostError::SshConfigWrite(format!("Failed to get file metadata: {e}"))
         })?;
         if metadata.len() == 0 {
             let perms = fs::Permissions::from_mode(0o600);
             fs::set_permissions(&config_path, perms).map_err(|e| {
-                HostError::SshConfigWrite(format!("Failed to set config permissions: {}", e))
+                HostError::SshConfigWrite(format!("Failed to set config permissions: {e}"))
             })?;
         }
     }

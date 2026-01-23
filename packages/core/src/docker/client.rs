@@ -61,13 +61,13 @@ impl DockerClient {
     pub async fn connect_remote(host: &HostConfig, host_name: &str) -> Result<Self, DockerError> {
         // Create SSH tunnel
         let tunnel = SshTunnel::new(host, host_name)
-            .map_err(|e| DockerError::Connection(format!("SSH tunnel failed: {}", e)))?;
+            .map_err(|e| DockerError::Connection(format!("SSH tunnel failed: {e}")))?;
 
         // Wait for tunnel to be ready with exponential backoff
         tunnel
             .wait_ready()
             .await
-            .map_err(|e| DockerError::Connection(format!("SSH tunnel not ready: {}", e)))?;
+            .map_err(|e| DockerError::Connection(format!("SSH tunnel not ready: {e}")))?;
 
         // Connect Bollard to the tunnel's local port
         let docker_url = tunnel.docker_url();
@@ -123,12 +123,12 @@ impl DockerClient {
         timeout_secs: u64,
     ) -> Result<Self, DockerError> {
         let tunnel = SshTunnel::new(host, host_name)
-            .map_err(|e| DockerError::Connection(format!("SSH tunnel failed: {}", e)))?;
+            .map_err(|e| DockerError::Connection(format!("SSH tunnel failed: {e}")))?;
 
         tunnel
             .wait_ready()
             .await
-            .map_err(|e| DockerError::Connection(format!("SSH tunnel not ready: {}", e)))?;
+            .map_err(|e| DockerError::Connection(format!("SSH tunnel not ready: {e}")))?;
 
         let docker_url = tunnel.docker_url();
 

@@ -52,13 +52,11 @@ pub async fn create_user(
         // Check if user already exists
         if user_exists(client, container, username).await? {
             return Err(DockerError::Container(format!(
-                "User '{}' already exists",
-                username
+                "User '{username}' already exists"
             )));
         }
         return Err(DockerError::Container(format!(
-            "Failed to create user '{}': useradd returned exit code {}",
-            username, exit_code
+            "Failed to create user '{username}': useradd returned exit code {exit_code}"
         )));
     }
 
@@ -91,7 +89,7 @@ pub async fn set_user_password(
     password: &str,
 ) -> Result<(), DockerError> {
     let cmd = vec!["chpasswd"];
-    let stdin_data = format!("{}:{}\n", username, password);
+    let stdin_data = format!("{username}:{password}\n");
 
     exec_command_with_stdin(client, container, cmd, &stdin_data).await?;
 
@@ -137,8 +135,7 @@ pub async fn lock_user(
 
     if exit_code != 0 {
         return Err(DockerError::Container(format!(
-            "Failed to lock user '{}': passwd returned exit code {}",
-            username, exit_code
+            "Failed to lock user '{username}': passwd returned exit code {exit_code}"
         )));
     }
 
@@ -163,8 +160,7 @@ pub async fn unlock_user(
 
     if exit_code != 0 {
         return Err(DockerError::Container(format!(
-            "Failed to unlock user '{}': passwd returned exit code {}",
-            username, exit_code
+            "Failed to unlock user '{username}': passwd returned exit code {exit_code}"
         )));
     }
 
@@ -191,13 +187,11 @@ pub async fn delete_user(
         // Check if user doesn't exist
         if !user_exists(client, container, username).await? {
             return Err(DockerError::Container(format!(
-                "User '{}' does not exist",
-                username
+                "User '{username}' does not exist"
             )));
         }
         return Err(DockerError::Container(format!(
-            "Failed to delete user '{}': userdel returned exit code {}",
-            username, exit_code
+            "Failed to delete user '{username}': userdel returned exit code {exit_code}"
         )));
     }
 
@@ -355,7 +349,7 @@ mod tests {
             shell: "/bin/bash".to_string(),
             locked: true,
         };
-        let debug = format!("{:?}", info);
+        let debug = format!("{info:?}");
         assert!(debug.contains("test"));
         assert!(debug.contains("1000"));
         assert!(debug.contains("locked: true"));

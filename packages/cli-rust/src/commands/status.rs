@@ -77,7 +77,7 @@ pub async fn cmd_status(
             return Ok(());
         }
         Err(e) => {
-            return Err(anyhow!("Failed to inspect container: {}", e));
+            return Err(anyhow!("Failed to inspect container: {e}"));
         }
     };
 
@@ -134,7 +134,7 @@ pub async fn cmd_status(
     println!("State:       {}", state_style(&status));
 
     if running {
-        let url = format!("http://127.0.0.1:{}", host_port);
+        let url = format!("http://127.0.0.1:{host_port}");
         println!("URL:         {}", style(&url).cyan());
 
         // Show health check status
@@ -163,7 +163,7 @@ pub async fn cmd_status(
         CONTAINER_NAME,
         style(id_short).dim()
     );
-    println!("Image:       {}", image);
+    println!("Image:       {image}");
 
     // Load config early for reuse in multiple sections
     let config = config::load_config().ok();
@@ -173,7 +173,7 @@ pub async fn cmd_status(
         if let Some(ref started) = started_at {
             if let Some((uptime, started_display)) = parse_uptime(started) {
                 let uptime_str = format_duration(uptime);
-                println!("Uptime:      {} (since {})", uptime_str, started_display);
+                println!("Uptime:      {uptime_str} (since {started_display})");
             }
         }
 
@@ -208,7 +208,7 @@ pub async fn cmd_status(
             "starting" => style(health_status).yellow(),
             _ => style(health_status).dim(),
         };
-        println!("Health:      {}", health_styled);
+        println!("Health:      {health_styled}");
     }
 
     println!("Config:      {}", style(&config_path).dim());
@@ -231,7 +231,7 @@ pub async fn cmd_status(
             } else {
                 style("no").yellow().to_string()
             };
-            println!("Installed:   {}", install_status);
+            println!("Installed:   {install_status}");
         }
     }
 
@@ -302,33 +302,33 @@ fn format_duration(duration: Duration) -> String {
     let secs = duration.as_secs();
 
     if secs < 60 {
-        return format!("{}s", secs);
+        return format!("{secs}s");
     }
 
     let mins = secs / 60;
     if mins < 60 {
         let remaining_secs = secs % 60;
         if remaining_secs > 0 {
-            return format!("{}m {}s", mins, remaining_secs);
+            return format!("{mins}m {remaining_secs}s");
         }
-        return format!("{}m", mins);
+        return format!("{mins}m");
     }
 
     let hours = mins / 60;
     let remaining_mins = mins % 60;
     if hours < 24 {
         if remaining_mins > 0 {
-            return format!("{}h {}m", hours, remaining_mins);
+            return format!("{hours}h {remaining_mins}m");
         }
-        return format!("{}h", hours);
+        return format!("{hours}h");
     }
 
     let days = hours / 24;
     let remaining_hours = hours % 24;
     if remaining_hours > 0 {
-        return format!("{}d {}h", days, remaining_hours);
+        return format!("{days}d {remaining_hours}h");
     }
-    format!("{}d", days)
+    format!("{days}d")
 }
 
 /// Format Docker errors with actionable guidance
@@ -351,7 +351,7 @@ fn format_docker_error(e: &DockerError) -> anyhow::Error {
                 "Then log out and back in."
             )
         }
-        _ => anyhow!("{}", e),
+        _ => anyhow!("{e}"),
     }
 }
 
@@ -378,12 +378,12 @@ fn display_security_section(config: &Config) {
         println!("Auth users:  {}", style("None configured").yellow());
     } else {
         let users_list = config.users.join(", ");
-        println!("Auth users:  {}", users_list);
+        println!("Auth users:  {users_list}");
     }
 
     // Trust proxy
     let trust_proxy_str = if config.trust_proxy { "yes" } else { "no" };
-    println!("Trust proxy: {}", trust_proxy_str);
+    println!("Trust proxy: {trust_proxy_str}");
 
     // Rate limit
     println!(

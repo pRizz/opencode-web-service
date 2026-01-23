@@ -51,7 +51,7 @@ fn generate_random_password() -> String {
 pub fn prompt_auth(step: usize, total: usize) -> Result<(String, String)> {
     println!(
         "{} {}",
-        style(format!("[{}/{}]", step, total)).dim(),
+        style(format!("[{step}/{total}]")).dim(),
         style("Authentication").bold()
     );
     println!();
@@ -140,16 +140,16 @@ pub async fn create_container_user(
     // Check if user already exists
     if user_exists(client, CONTAINER_NAME, username).await? {
         // User exists, just update password
-        println!("  User '{}' exists, updating password...", username);
+        println!("  User '{username}' exists, updating password...");
     } else {
         // Create new user
-        println!("  Creating user '{}' in container...", username);
+        println!("  Creating user '{username}' in container...");
         create_user(client, CONTAINER_NAME, username).await?;
     }
 
     // Set password
     set_user_password(client, CONTAINER_NAME, username, password).await?;
-    println!("  Password set for '{}'", username);
+    println!("  Password set for '{username}'");
 
     Ok(())
 }

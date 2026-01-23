@@ -105,8 +105,7 @@ pub async fn resolve_docker_client(
             // Remote host requested
             let host_config = hosts.get_host(&name).ok_or_else(|| {
                 anyhow::anyhow!(
-                    "Host '{}' not found. Run 'occ host list' to see available hosts.",
-                    name
+                    "Host '{name}' not found. Run 'occ host list' to see available hosts."
                 )
             })?;
 
@@ -163,7 +162,7 @@ pub fn run() -> Result<()> {
             // Display rich error for invalid config
             eprintln!("{} Configuration error", style("Error:").red().bold());
             eprintln!();
-            eprintln!("  {}", e);
+            eprintln!("  {e}");
             eprintln!();
             eprintln!("  Config file: {}", style(config_path.display()).yellow());
             eprintln!();
@@ -358,7 +357,7 @@ fn display_singleton_error(err: &SingletonError) {
                 style("Error:").red().bold()
             );
             eprintln!();
-            eprintln!("  {}", msg);
+            eprintln!("  {msg}");
             eprintln!();
             if let Some(data_dir) = config::paths::get_data_dir() {
                 eprintln!("  {} Check permissions for:", style("Tip:").cyan());
@@ -368,7 +367,7 @@ fn display_singleton_error(err: &SingletonError) {
         SingletonError::LockFailed(msg) => {
             eprintln!("{} Failed to acquire lock", style("Error:").red().bold());
             eprintln!();
-            eprintln!("  {}", msg);
+            eprintln!("  {msg}");
         }
         SingletonError::InvalidPath => {
             eprintln!(

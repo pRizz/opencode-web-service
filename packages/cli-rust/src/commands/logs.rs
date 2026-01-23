@@ -67,7 +67,7 @@ pub async fn cmd_logs(args: &LogsArgs, maybe_host: Option<&str>, quiet: bool) ->
             ));
         }
         Err(e) => {
-            return Err(anyhow!("Failed to inspect container: {}", e));
+            return Err(anyhow!("Failed to inspect container: {e}"));
         }
         Ok(_) => {}
     }
@@ -146,13 +146,13 @@ pub async fn cmd_logs(args: &LogsArgs, maybe_host: Option<&str>, quiet: bool) ->
 /// Print a log line, ensuring newline at end
 fn print_line(line: &str, prefix: Option<&str>) {
     let output = match prefix {
-        Some(p) => format!("{}{}", p, line),
+        Some(p) => format!("{p}{line}"),
         None => line.to_string(),
     };
     if output.ends_with('\n') {
-        print!("{}", output);
+        print!("{output}");
     } else {
-        println!("{}", output);
+        println!("{output}");
     }
 }
 
@@ -160,13 +160,13 @@ fn print_line(line: &str, prefix: Option<&str>) {
 fn print_styled_line(line: &str, prefix: Option<&str>) {
     let styled = log_level_style(line);
     let output = match prefix {
-        Some(p) => format!("{}{}", p, styled),
+        Some(p) => format!("{p}{styled}"),
         None => styled.to_string(),
     };
     if output.ends_with('\n') {
-        print!("{}", output);
+        print!("{output}");
     } else {
-        println!("{}", output);
+        println!("{output}");
     }
 }
 
@@ -190,7 +190,7 @@ fn format_docker_error(e: &DockerError) -> anyhow::Error {
                 "Then log out and back in."
             )
         }
-        _ => anyhow!("{}", e),
+        _ => anyhow!("{e}"),
     }
 }
 

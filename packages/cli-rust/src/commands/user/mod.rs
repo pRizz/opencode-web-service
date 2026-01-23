@@ -58,8 +58,7 @@ pub async fn cmd_user(
     if !container_is_running(&client, CONTAINER_NAME).await? {
         let msg = if let Some(name) = &host_name {
             format!(
-                "Container not running on {}. Start with `occ start --host {}`.",
-                name, name
+                "Container not running on {name}. Start with `occ start --host {name}`."
             )
         } else {
             "Container not running. Start with `occ start` first.".to_string()

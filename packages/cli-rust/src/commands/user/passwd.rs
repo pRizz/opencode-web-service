@@ -26,7 +26,7 @@ pub async fn cmd_user_passwd(
 
     // Check if user exists
     if !user_exists(client, CONTAINER_NAME, username).await? {
-        bail!("User '{}' does not exist in the container", username);
+        bail!("User '{username}' does not exist in the container");
     }
 
     // Prompt for new password

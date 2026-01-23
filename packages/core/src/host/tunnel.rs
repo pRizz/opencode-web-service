@@ -35,7 +35,7 @@ impl SshTunnel {
 
         // Local port forward: local_port -> remote docker.sock
         cmd.arg("-L")
-            .arg(format!("{}:/var/run/docker.sock", local_port));
+            .arg(format!("{local_port}:/var/run/docker.sock"));
 
         // No command, just forward
         cmd.arg("-N");
@@ -255,7 +255,7 @@ mod tests {
         assert!(port > 0);
 
         // Port should be available (we can bind to it)
-        let listener = TcpListener::bind(format!("127.0.0.1:{}", port));
+        let listener = TcpListener::bind(format!("127.0.0.1:{port}"));
         assert!(listener.is_ok());
     }
 

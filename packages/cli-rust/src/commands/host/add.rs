@@ -180,7 +180,7 @@ pub async fn cmd_host_add(args: &HostAddArgs, quiet: bool, _verbose: u8) -> Resu
                 Err(e) => {
                     spinner.finish_with_message(format!("{} Connection failed", style("✗").red()));
                     eprintln!();
-                    eprintln!("  {}", e);
+                    eprintln!("  {e}");
                     eprintln!();
 
                     // Provide helpful tips based on the error
@@ -369,7 +369,7 @@ fn offer_docker_installation(
         );
         println!(
             "       {}",
-            style(format!("occ host add {} {}", hostname, hostname)).yellow()
+            style(format!("occ host add {hostname} {hostname}")).yellow()
         );
         return Ok(None);
     }
@@ -472,7 +472,7 @@ fn print_connection_failure_tips(
     if no_user_specified {
         println!(
             "  {} Cloud instances often use specific usernames:",
-            style(format!("{}.", tip_num)).dim()
+            style(format!("{tip_num}.")).dim()
         );
         println!("     • AWS EC2: {}", style("--user ubuntu").yellow());
         println!(
@@ -495,13 +495,13 @@ fn print_connection_failure_tips(
         if !keys.is_empty() {
             println!(
                 "  {} Try specifying an identity file:",
-                style(format!("{}.", tip_num)).dim()
+                style(format!("{tip_num}.")).dim()
             );
             for key in keys.iter().take(5) {
                 // Show up to 5 keys
                 println!(
                     "     {}",
-                    style(format!("--identity-file {}", key)).yellow()
+                    style(format!("--identity-file {key}")).yellow()
                 );
             }
             if keys.len() > 5 {
@@ -524,7 +524,7 @@ fn print_connection_failure_tips(
     };
     println!(
         "  {} Verify SSH access manually: {}",
-        style(format!("{}.", tip_num)).dim(),
+        style(format!("{tip_num}.")).dim(),
         style(&ssh_cmd).yellow()
     );
     tip_num += 1;
@@ -532,14 +532,14 @@ fn print_connection_failure_tips(
     // Suggest checking Docker
     println!(
         "  {} Ensure Docker is running on the remote host",
-        style(format!("{}.", tip_num)).dim()
+        style(format!("{tip_num}.")).dim()
     );
     tip_num += 1;
 
     // Suggest --no-verify
     println!(
         "  {} Use {} to add the host without verification",
-        style(format!("{}.", tip_num)).dim(),
+        style(format!("{tip_num}.")).dim(),
         style("--no-verify").yellow()
     );
 }

@@ -141,18 +141,18 @@ impl HostConfig {
         // Port (if non-default)
         if let Some(port) = self.port {
             if port != 22 {
-                parts.push(format!("-p {}", port));
+                parts.push(format!("-p {port}"));
             }
         }
 
         // Identity file
         if let Some(key) = &self.identity_file {
-            parts.push(format!("-i {}", key));
+            parts.push(format!("-i {key}"));
         }
 
         // Jump host
         if let Some(jump) = &self.jump_host {
-            parts.push(format!("-J {}", jump));
+            parts.push(format!("-J {jump}"));
         }
 
         // Target: user@hostname

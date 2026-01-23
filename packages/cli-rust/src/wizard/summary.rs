@@ -25,7 +25,7 @@ pub fn display_summary(state: &WizardState) {
     table.add_row(vec![Cell::new("Port:"), Cell::new(state.port)]);
     table.add_row(vec![Cell::new("Binding:"), Cell::new(&state.bind)]);
 
-    println!("{}", table);
+    println!("{table}");
 
     // Show config file location
     if let Some(path) = get_config_path() {

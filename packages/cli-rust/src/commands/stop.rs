@@ -29,7 +29,7 @@ pub async fn cmd_stop(_args: &StopArgs, maybe_host: Option<&str>, quiet: bool) -
     // Verify connection
     client.verify_connection().await.map_err(|e| {
         let msg = format_docker_error(&e);
-        anyhow!("{}", msg)
+        anyhow!("{msg}")
     })?;
 
     // Check if already stopped (idempotent behavior)
@@ -99,5 +99,5 @@ fn format_docker_error(e: &DockerError) -> String {
 fn show_docker_error(e: &DockerError) {
     let msg = format_docker_error(e);
     eprintln!();
-    eprintln!("{}", msg);
+    eprintln!("{msg}");
 }

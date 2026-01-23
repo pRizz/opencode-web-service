@@ -37,17 +37,16 @@ pub async fn cmd_user_remove(
     // Protect the opencode system user - cannot be removed even with --force
     if username == PROTECTED_USER {
         bail!(
-            "Cannot remove '{}' - this is a protected system user required for the container to function.\n\n\
+            "Cannot remove '{PROTECTED_USER}' - this is a protected system user required for the container to function.\n\n\
             To manage authentication users, use:\n  \
             occ user add <username>\n  \
-            occ user remove <username>",
-            PROTECTED_USER
+            occ user remove <username>"
         );
     }
 
     // Check if user exists
     if !user_exists(client, CONTAINER_NAME, username).await? {
-        bail!("User '{}' does not exist in the container", username);
+        bail!("User '{username}' does not exist in the container");
     }
 
     // Load config for later update
@@ -62,15 +61,14 @@ pub async fn cmd_user_remove(
             To add a new user:\n  \
             occ user add <username>\n\n\
             To force removal:\n  \
-            occ user remove {} --force",
-            username
+            occ user remove {username} --force"
         );
     }
 
     // Confirm removal
     if !args.force {
         let confirm = Confirm::new()
-            .with_prompt(format!("Remove user '{}'?", username))
+            .with_prompt(format!("Remove user '{username}'?"))
             .default(false)
             .interact()
             .unwrap_or(false);

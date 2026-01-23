@@ -18,10 +18,7 @@ pub fn get_version_long() -> String {
     let build_date = option_env!("OCC_BUILD_DATE").unwrap_or("unknown");
 
     format!(
-        "{version} (git: {git_hash}, built: {build_date})",
-        version = version,
-        git_hash = git_hash,
-        build_date = build_date
+        "{version} (git: {git_hash}, built: {build_date})"
     )
 }
 

@@ -57,7 +57,7 @@ pub fn save_hosts(hosts: &HostsFile) -> Result<(), HostError> {
     if let Some(parent) = hosts_path.parent() {
         if !parent.exists() {
             fs::create_dir_all(parent)
-                .map_err(|e| HostError::SaveFailed(format!("Failed to create directory: {}", e)))?;
+                .map_err(|e| HostError::SaveFailed(format!("Failed to create directory: {e}")))?;
         }
     }
 
@@ -65,13 +65,13 @@ pub fn save_hosts(hosts: &HostsFile) -> Result<(), HostError> {
     if hosts_path.exists() {
         let backup_path = hosts_path.with_extension("json.bak");
         fs::copy(&hosts_path, &backup_path)
-            .map_err(|e| HostError::SaveFailed(format!("Failed to create backup: {}", e)))?;
+            .map_err(|e| HostError::SaveFailed(format!("Failed to create backup: {e}")))?;
         tracing::debug!("Created hosts backup: {}", backup_path.display());
     }
 
     // Serialize with pretty formatting
     let json = serde_json::to_string_pretty(hosts)
-        .map_err(|e| HostError::SaveFailed(format!("Failed to serialize: {}", e)))?;
+        .map_err(|e| HostError::SaveFailed(format!("Failed to serialize: {e}")))?;
 
     // Write to file
     let mut file = File::create(&hosts_path).map_err(|e| {

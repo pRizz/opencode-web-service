@@ -63,7 +63,7 @@ pub async fn cmd_host_test(args: &HostTestArgs, quiet: bool, _verbose: u8) -> Re
         Err(e) => {
             spinner.finish_with_message(format!("{} Connection failed", style("✗").red().bold()));
             println!();
-            println!("  {}", e);
+            println!("  {e}");
             println!();
 
             // Provide troubleshooting hints

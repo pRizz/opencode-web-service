@@ -389,7 +389,7 @@ fn check_container_running() -> Result<bool> {
         let client = DockerClient::new()?;
         container_is_running(&client, CONTAINER_NAME)
             .await
-            .map_err(|e| anyhow::anyhow!("{}", e))
+            .map_err(|e| anyhow::anyhow!("{e}"))
     })
 }
 

@@ -43,7 +43,7 @@ fn validate_port(input: &str) -> Result<u16, String> {
 pub fn prompt_port(step: usize, total: usize, default_port: u16) -> Result<u16> {
     println!(
         "{} {}",
-        style(format!("[{}/{}]", step, total)).dim(),
+        style(format!("[{step}/{total}]")).dim(),
         style("Port Configuration").bold()
     );
     println!();
@@ -52,7 +52,7 @@ pub fn prompt_port(step: usize, total: usize, default_port: u16) -> Result<u16> 
 
     loop {
         let port_str: String = Input::new()
-            .with_prompt(format!("Port (default: {})", default_port))
+            .with_prompt(format!("Port (default: {default_port})"))
             .default(default_port.to_string())
             .validate_with(|input: &String| validate_port(input).map(|_| ()))
             .interact_text()
@@ -72,12 +72,12 @@ pub fn prompt_port(step: usize, total: usize, default_port: u16) -> Result<u16> 
         if !check_port_available(port) {
             println!(
                 "{}",
-                style(format!("Port {} is already in use", port)).red()
+                style(format!("Port {port} is already in use")).red()
             );
 
             if let Some(next_port) = find_next_available_port(port) {
                 let use_next = Confirm::new()
-                    .with_prompt(format!("Use port {} instead?", next_port))
+                    .with_prompt(format!("Use port {next_port} instead?"))
                     .default(true)
                     .interact()
                     .map_err(|_| handle_interrupt())?;
@@ -102,7 +102,7 @@ pub fn prompt_port(step: usize, total: usize, default_port: u16) -> Result<u16> 
 pub fn prompt_hostname(step: usize, total: usize, default_bind: &str) -> Result<String> {
     println!(
         "{} {}",
-        style(format!("[{}/{}]", step, total)).dim(),
+        style(format!("[{step}/{total}]")).dim(),
         style("Network Binding").bold()
     );
     println!();

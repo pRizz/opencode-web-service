@@ -29,8 +29,8 @@ pub enum UpdateResult {
 /// # Arguments
 /// * `client` - Docker client
 pub async fn tag_current_as_previous(client: &DockerClient) -> Result<(), DockerError> {
-    let current_image = format!("{}:{}", IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT);
-    let previous_image = format!("{}:{}", IMAGE_NAME_GHCR, PREVIOUS_TAG);
+    let current_image = format!("{IMAGE_NAME_GHCR}:{IMAGE_TAG_DEFAULT}");
+    let previous_image = format!("{IMAGE_NAME_GHCR}:{PREVIOUS_TAG}");
 
     debug!(
         "Tagging current image {} as {}",
@@ -54,7 +54,7 @@ pub async fn tag_current_as_previous(client: &DockerClient) -> Result<(), Docker
         .tag_image(&current_image, Some(options))
         .await
         .map_err(|e| {
-            DockerError::Container(format!("Failed to tag current image as previous: {}", e))
+            DockerError::Container(format!("Failed to tag current image as previous: {e}"))
         })?;
 
     debug!("Successfully tagged current image as previous");
@@ -117,8 +117,8 @@ pub async fn rollback_image(client: &DockerClient) -> Result<(), DockerError> {
         ));
     }
 
-    let previous_image = format!("{}:{}", IMAGE_NAME_GHCR, PREVIOUS_TAG);
-    let current_image = format!("{}:{}", IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT);
+    let previous_image = format!("{IMAGE_NAME_GHCR}:{PREVIOUS_TAG}");
+    let current_image = format!("{IMAGE_NAME_GHCR}:{IMAGE_TAG_DEFAULT}");
 
     debug!("Rolling back from {} to {}", current_image, previous_image);
 
@@ -132,7 +132,7 @@ pub async fn rollback_image(client: &DockerClient) -> Result<(), DockerError> {
         .inner()
         .tag_image(&previous_image, Some(options))
         .await
-        .map_err(|e| DockerError::Container(format!("Failed to rollback image: {}", e)))?;
+        .map_err(|e| DockerError::Container(format!("Failed to rollback image: {e}")))?;
 
     debug!("Successfully rolled back to previous image");
     Ok(())

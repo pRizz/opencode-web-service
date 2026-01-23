@@ -32,7 +32,7 @@ impl std::fmt::Display for DistroFamily {
             DistroFamily::Alpine => write!(f, "Alpine"),
             DistroFamily::Arch => write!(f, "Arch"),
             DistroFamily::Suse => write!(f, "SUSE"),
-            DistroFamily::Unknown(id) => write!(f, "Unknown ({})", id),
+            DistroFamily::Unknown(id) => write!(f, "Unknown ({id})"),
         }
     }
 }
@@ -185,8 +185,7 @@ pub fn get_docker_install_commands(distro: &DistroInfo) -> Result<Vec<&'static s
         ]),
 
         DistroFamily::Unknown(id) => Err(HostError::ConnectionFailed(format!(
-            "Unsupported Linux distribution: {}. Please install Docker manually.",
-            id
+            "Unsupported Linux distribution: {id}. Please install Docker manually."
         ))),
     }
 }
