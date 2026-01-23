@@ -5,6 +5,7 @@
 
 pub mod config;
 pub mod docker;
+pub mod host;
 pub mod platform;
 pub mod singleton;
 pub mod version;
@@ -26,6 +27,9 @@ pub use platform::{
     InstallResult, ServiceConfig, ServiceManager, get_service_manager,
     is_service_registration_supported,
 };
+
+// Re-export host types
+pub use host::{HostConfig, HostError, HostsFile, SshTunnel, load_hosts, save_hosts, test_connection};
 
 // Re-export bollard to ensure all crates use the same version
 pub use bollard;
