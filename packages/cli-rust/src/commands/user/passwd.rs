@@ -16,12 +16,16 @@ pub struct UserPasswdArgs {
 }
 
 /// Change a user's password
-pub async fn cmd_user_passwd(args: &UserPasswdArgs, quiet: bool, _verbose: u8) -> Result<()> {
-    let client = DockerClient::new()?;
+pub async fn cmd_user_passwd(
+    client: &DockerClient,
+    args: &UserPasswdArgs,
+    quiet: bool,
+    _verbose: u8,
+) -> Result<()> {
     let username = &args.username;
 
     // Check if user exists
-    if !user_exists(&client, CONTAINER_NAME, username).await? {
+    if !user_exists(client, CONTAINER_NAME, username).await? {
         bail!("User '{}' does not exist in the container", username);
     }
 
@@ -36,7 +40,7 @@ pub async fn cmd_user_passwd(args: &UserPasswdArgs, quiet: bool, _verbose: u8) -
     }
 
     // Set the new password
-    set_user_password(&client, CONTAINER_NAME, username, &password).await?;
+    set_user_password(client, CONTAINER_NAME, username, &password).await?;
 
     // Display success
     if !quiet {

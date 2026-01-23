@@ -6,7 +6,7 @@ use anyhow::{Result, bail};
 use clap::Args;
 use console::style;
 use opencode_cloud_core::config::load_config;
-use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, container_is_running};
+use opencode_cloud_core::docker::{CONTAINER_NAME, container_is_running};
 
 /// Arguments for the cockpit command
 #[derive(Args)]
@@ -18,7 +18,7 @@ pub struct CockpitArgs {}
 /// 1. Checks if Cockpit is enabled in config
 /// 2. Checks if the container is running
 /// 3. Opens the Cockpit URL in the default browser
-pub async fn cmd_cockpit(_args: &CockpitArgs, quiet: bool) -> Result<()> {
+pub async fn cmd_cockpit(_args: &CockpitArgs, maybe_host: Option<&str>, quiet: bool) -> Result<()> {
     // Load config
     let config = load_config()?;
 
@@ -39,8 +39,9 @@ pub async fn cmd_cockpit(_args: &CockpitArgs, quiet: bool) -> Result<()> {
         );
     }
 
-    // Connect to Docker and check container status
-    let client = DockerClient::new().map_err(|e| anyhow::anyhow!("{}", e))?;
+    // Resolve Docker client (local or remote)
+    let (client, _host_name) = crate::resolve_docker_client(maybe_host).await?;
+
     client
         .verify_connection()
         .await

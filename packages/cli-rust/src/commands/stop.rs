@@ -7,7 +7,7 @@ use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
 use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DockerClient, DockerError, container_is_running, stop_service,
+    CONTAINER_NAME, DockerError, container_is_running, stop_service,
 };
 
 /// Arguments for the stop command
@@ -22,9 +22,9 @@ pub struct StopArgs {
 /// 1. Connects to Docker
 /// 2. Checks if service is running (idempotent - exits 0 if already stopped)
 /// 3. Stops the container with 30s graceful timeout
-pub async fn cmd_stop(_args: &StopArgs, quiet: bool) -> Result<()> {
-    // Connect to Docker
-    let client = connect_docker()?;
+pub async fn cmd_stop(_args: &StopArgs, maybe_host: Option<&str>, quiet: bool) -> Result<()> {
+    // Resolve Docker client (local or remote)
+    let (client, host_name) = crate::resolve_docker_client(maybe_host).await?;
 
     // Verify connection
     client.verify_connection().await.map_err(|e| {
@@ -35,36 +35,40 @@ pub async fn cmd_stop(_args: &StopArgs, quiet: bool) -> Result<()> {
     // Check if already stopped (idempotent behavior)
     if !container_is_running(&client, CONTAINER_NAME).await? {
         if !quiet {
-            println!("{}", style("Service is already stopped").dim());
+            let msg =
+                crate::format_host_message(host_name.as_deref(), "Service is already stopped");
+            println!("{}", style(msg).dim());
         }
         return Ok(());
     }
 
     // Create spinner
-    let spinner = CommandSpinner::new_maybe("Stopping service...", quiet);
-    spinner.update("Stopping service (30s timeout)...");
+    let msg = crate::format_host_message(host_name.as_deref(), "Stopping service...");
+    let spinner = CommandSpinner::new_maybe(&msg, quiet);
+    spinner.update(&crate::format_host_message(
+        host_name.as_deref(),
+        "Stopping service (30s timeout)...",
+    ));
 
     // Stop with 30 second graceful timeout (passed via stop_container)
     match stop_service(&client, false).await {
         Ok(()) => {
-            spinner.success("Service stopped");
+            spinner.success(&crate::format_host_message(
+                host_name.as_deref(),
+                "Service stopped",
+            ));
         }
         Err(e) => {
-            spinner.fail("Failed to stop");
+            spinner.fail(&crate::format_host_message(
+                host_name.as_deref(),
+                "Failed to stop",
+            ));
             show_docker_error(&e);
             return Err(e.into());
         }
     }
 
     Ok(())
-}
-
-/// Connect to Docker with actionable error messages
-fn connect_docker() -> Result<DockerClient> {
-    DockerClient::new().map_err(|e| {
-        let msg = format_docker_error(&e);
-        anyhow!("{}", msg)
-    })
 }
 
 /// Format Docker errors with actionable guidance

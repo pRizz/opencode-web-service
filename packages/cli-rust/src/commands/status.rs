@@ -10,7 +10,7 @@ use console::style;
 use opencode_cloud_core::Config;
 use opencode_cloud_core::config;
 use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DockerClient, DockerError, HealthError, OPENCODE_WEB_PORT, check_health,
+    CONTAINER_NAME, DockerError, HealthError, OPENCODE_WEB_PORT, check_health,
 };
 use opencode_cloud_core::platform::{get_service_manager, is_service_registration_supported};
 use std::time::Duration;
@@ -35,15 +35,29 @@ pub struct StatusArgs {}
 /// - Exits 0 if running
 /// - Exits 1 if stopped
 /// - No output
-pub async fn cmd_status(_args: &StatusArgs, quiet: bool, _verbose: u8) -> Result<()> {
-    // Connect to Docker
-    let client = DockerClient::new().map_err(|e| format_docker_error(&e))?;
+pub async fn cmd_status(
+    _args: &StatusArgs,
+    maybe_host: Option<&str>,
+    quiet: bool,
+    _verbose: u8,
+) -> Result<()> {
+    // Resolve Docker client (local or remote)
+    let (client, host_name) = crate::resolve_docker_client(maybe_host).await?;
 
     // Verify connection
     client
         .verify_connection()
         .await
         .map_err(|e| format_docker_error(&e))?;
+
+    // Show host header if remote
+    if !quiet && host_name.is_some() {
+        println!(
+            "{}",
+            crate::format_host_message(host_name.as_deref(), "Status")
+        );
+        println!();
+    }
 
     // Check if container exists
     let inspect_result = client.inner().inspect_container(CONTAINER_NAME, None).await;

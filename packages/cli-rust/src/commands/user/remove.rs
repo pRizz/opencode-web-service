@@ -26,8 +26,12 @@ pub struct UserRemoveArgs {
 const PROTECTED_USER: &str = "opencode";
 
 /// Remove a user from the container
-pub async fn cmd_user_remove(args: &UserRemoveArgs, quiet: bool, _verbose: u8) -> Result<()> {
-    let client = DockerClient::new()?;
+pub async fn cmd_user_remove(
+    client: &DockerClient,
+    args: &UserRemoveArgs,
+    quiet: bool,
+    _verbose: u8,
+) -> Result<()> {
     let username = &args.username;
 
     // Protect the opencode system user - cannot be removed even with --force
@@ -42,7 +46,7 @@ pub async fn cmd_user_remove(args: &UserRemoveArgs, quiet: bool, _verbose: u8) -
     }
 
     // Check if user exists
-    if !user_exists(&client, CONTAINER_NAME, username).await? {
+    if !user_exists(client, CONTAINER_NAME, username).await? {
         bail!("User '{}' does not exist in the container", username);
     }
 
@@ -50,7 +54,7 @@ pub async fn cmd_user_remove(args: &UserRemoveArgs, quiet: bool, _verbose: u8) -
     let mut config = load_config()?;
 
     // Check if this is the last user in the container (not just tracked users)
-    let container_users = list_users(&client, CONTAINER_NAME).await?;
+    let container_users = list_users(client, CONTAINER_NAME).await?;
     let is_last_user = container_users.len() == 1;
     if is_last_user && !args.force {
         bail!(
@@ -80,7 +84,7 @@ pub async fn cmd_user_remove(args: &UserRemoveArgs, quiet: bool, _verbose: u8) -
     }
 
     // Delete the user
-    delete_user(&client, CONTAINER_NAME, username).await?;
+    delete_user(client, CONTAINER_NAME, username).await?;
 
     // Update config - remove username from users array
     config.users.retain(|u| u != username);

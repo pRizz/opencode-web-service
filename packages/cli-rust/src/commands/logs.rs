@@ -8,9 +8,7 @@ use clap::Args;
 use console::style;
 use futures_util::StreamExt;
 use opencode_cloud_core::bollard::container::{LogOutput, LogsOptions};
-use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DockerClient, DockerError, container_is_running,
-};
+use opencode_cloud_core::docker::{CONTAINER_NAME, DockerError, container_is_running};
 
 /// Arguments for the logs command
 #[derive(Args)]
@@ -39,9 +37,15 @@ pub struct LogsArgs {
 /// Use --grep to filter lines.
 ///
 /// In quiet mode, outputs raw lines without status messages or colors.
-pub async fn cmd_logs(args: &LogsArgs, quiet: bool) -> Result<()> {
-    // Connect to Docker
-    let client = DockerClient::new().map_err(|e| format_docker_error(&e))?;
+pub async fn cmd_logs(args: &LogsArgs, maybe_host: Option<&str>, quiet: bool) -> Result<()> {
+    // Resolve Docker client (local or remote)
+    let (client, host_name) = crate::resolve_docker_client(maybe_host).await?;
+
+    // For logs, optionally prefix each line with host name
+    // This helps identify source when tailing multiple hosts
+    let line_prefix = host_name
+        .as_ref()
+        .map(|n| format!("[{}] ", style(n).cyan()));
 
     // Verify connection
     client
@@ -111,13 +115,13 @@ pub async fn cmd_logs(args: &LogsArgs, quiet: bool) -> Result<()> {
                 // Print the line
                 if quiet {
                     // Quiet mode: raw output
-                    print_line(&line);
+                    print_line(&line, line_prefix.as_deref());
                 } else if console::colors_enabled() {
                     // Color mode: apply log level styling
-                    print_styled_line(&line);
+                    print_styled_line(&line, line_prefix.as_deref());
                 } else {
                     // No colors: raw output
-                    print_line(&line);
+                    print_line(&line, line_prefix.as_deref());
                 }
             }
             Err(_) => {
@@ -140,21 +144,29 @@ pub async fn cmd_logs(args: &LogsArgs, quiet: bool) -> Result<()> {
 }
 
 /// Print a log line, ensuring newline at end
-fn print_line(line: &str) {
-    if line.ends_with('\n') {
-        print!("{}", line);
+fn print_line(line: &str, prefix: Option<&str>) {
+    let output = match prefix {
+        Some(p) => format!("{}{}", p, line),
+        None => line.to_string(),
+    };
+    if output.ends_with('\n') {
+        print!("{}", output);
     } else {
-        println!("{}", line);
+        println!("{}", output);
     }
 }
 
 /// Print a styled log line based on log level
-fn print_styled_line(line: &str) {
+fn print_styled_line(line: &str, prefix: Option<&str>) {
     let styled = log_level_style(line);
-    if line.ends_with('\n') {
-        print!("{}", styled);
+    let output = match prefix {
+        Some(p) => format!("{}{}", p, styled),
+        None => styled.to_string(),
+    };
+    if output.ends_with('\n') {
+        print!("{}", output);
     } else {
-        println!("{}", styled);
+        println!("{}", output);
     }
 }
 

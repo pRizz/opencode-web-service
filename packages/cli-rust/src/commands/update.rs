@@ -41,9 +41,24 @@ pub struct UpdateArgs {
 /// 3. Recreates container
 /// 4. Recreates users
 /// 5. Starts the service
-pub async fn cmd_update(args: &UpdateArgs, quiet: bool, verbose: u8) -> Result<()> {
-    // Connect to Docker
-    let client = DockerClient::new().map_err(|e| anyhow!("Docker connection error: {}", e))?;
+pub async fn cmd_update(
+    args: &UpdateArgs,
+    maybe_host: Option<&str>,
+    quiet: bool,
+    verbose: u8,
+) -> Result<()> {
+    // Resolve Docker client (local or remote)
+    let (client, host_name) = crate::resolve_docker_client(maybe_host).await?;
+
+    if verbose > 0 {
+        let target = host_name.as_deref().unwrap_or("local");
+        eprintln!(
+            "{} Connecting to Docker on {}...",
+            style("[info]").cyan(),
+            target
+        );
+    }
+
     client
         .verify_connection()
         .await
@@ -54,10 +69,26 @@ pub async fn cmd_update(args: &UpdateArgs, quiet: bool, verbose: u8) -> Result<(
 
     if args.rollback {
         // Rollback flow
-        handle_rollback(&client, &config, args.yes, quiet, verbose).await
+        handle_rollback(
+            &client,
+            &config,
+            args.yes,
+            quiet,
+            verbose,
+            host_name.as_deref(),
+        )
+        .await
     } else {
         // Update flow
-        handle_update(&client, &config, args.yes, quiet, verbose).await
+        handle_update(
+            &client,
+            &config,
+            args.yes,
+            quiet,
+            verbose,
+            host_name.as_deref(),
+        )
+        .await
     }
 }
 
@@ -68,6 +99,7 @@ async fn handle_update(
     skip_confirm: bool,
     quiet: bool,
     verbose: u8,
+    _host_name: Option<&str>,
 ) -> Result<()> {
     let port = config.opencode_web_port;
     let bind_addr = &config.bind_address;
@@ -187,6 +219,7 @@ async fn handle_rollback(
     skip_confirm: bool,
     quiet: bool,
     verbose: u8,
+    _host_name: Option<&str>,
 ) -> Result<()> {
     let port = config.opencode_web_port;
     let bind_addr = &config.bind_address;

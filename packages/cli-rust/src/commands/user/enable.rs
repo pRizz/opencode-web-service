@@ -24,17 +24,21 @@ pub struct UserDisableArgs {
 }
 
 /// Enable a user account
-pub async fn cmd_user_enable(args: &UserEnableArgs, quiet: bool, _verbose: u8) -> Result<()> {
-    let client = DockerClient::new()?;
+pub async fn cmd_user_enable(
+    client: &DockerClient,
+    args: &UserEnableArgs,
+    quiet: bool,
+    _verbose: u8,
+) -> Result<()> {
     let username = &args.username;
 
     // Check if user exists
-    if !user_exists(&client, CONTAINER_NAME, username).await? {
+    if !user_exists(client, CONTAINER_NAME, username).await? {
         bail!("User '{}' does not exist in the container", username);
     }
 
     // Unlock the user account
-    unlock_user(&client, CONTAINER_NAME, username).await?;
+    unlock_user(client, CONTAINER_NAME, username).await?;
 
     // Display success
     if !quiet {
@@ -49,17 +53,21 @@ pub async fn cmd_user_enable(args: &UserEnableArgs, quiet: bool, _verbose: u8) -
 }
 
 /// Disable a user account
-pub async fn cmd_user_disable(args: &UserDisableArgs, quiet: bool, _verbose: u8) -> Result<()> {
-    let client = DockerClient::new()?;
+pub async fn cmd_user_disable(
+    client: &DockerClient,
+    args: &UserDisableArgs,
+    quiet: bool,
+    _verbose: u8,
+) -> Result<()> {
     let username = &args.username;
 
     // Check if user exists
-    if !user_exists(&client, CONTAINER_NAME, username).await? {
+    if !user_exists(client, CONTAINER_NAME, username).await? {
         bail!("User '{}' does not exist in the container", username);
     }
 
     // Lock the user account
-    lock_user(&client, CONTAINER_NAME, username).await?;
+    lock_user(client, CONTAINER_NAME, username).await?;
 
     // Display success
     if !quiet {

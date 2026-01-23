@@ -50,8 +50,23 @@ pub struct StartArgs {
 /// 4. Builds image if needed (first run)
 /// 5. Creates and starts the container
 /// 6. Shows URL and container info
-pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()> {
-    let client = connect_docker(verbose)?;
+pub async fn cmd_start(
+    args: &StartArgs,
+    maybe_host: Option<&str>,
+    quiet: bool,
+    verbose: u8,
+) -> Result<()> {
+    // Resolve Docker client (local or remote)
+    let (client, host_name) = crate::resolve_docker_client(maybe_host).await?;
+
+    if verbose > 0 {
+        let target = host_name.as_deref().unwrap_or("local");
+        eprintln!(
+            "{} Connecting to Docker on {}...",
+            style("[info]").cyan(),
+            target
+        );
+    }
 
     client.verify_connection().await.map_err(|e| {
         let msg = format_docker_error(&e);
@@ -101,7 +116,13 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
         handle_rebuild(&client, verbose).await?;
     } else if container_is_running(&client, CONTAINER_NAME).await? {
         // Already running (idempotent behavior) - only when not rebuilding
-        return show_already_running(port, bind_addr, config.is_network_exposed(), quiet);
+        return show_already_running(
+            port,
+            bind_addr,
+            config.is_network_exposed(),
+            quiet,
+            host_name.as_deref(),
+        );
     }
 
     // Security check: warn if network exposed without authentication
@@ -146,7 +167,8 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     }
 
     // Start container
-    let spinner = CommandSpinner::new_maybe("Starting container...", quiet);
+    let msg = crate::format_host_message(host_name.as_deref(), "Starting container...");
+    let spinner = CommandSpinner::new_maybe(&msg, quiet);
     let container_id = match start_container(
         &client,
         port,
@@ -158,7 +180,10 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     {
         Ok(id) => id,
         Err(e) => {
-            spinner.fail("Failed to start container");
+            spinner.fail(&crate::format_host_message(
+                host_name.as_deref(),
+                "Failed to start container",
+            ));
             show_docker_error(&e);
             show_logs_if_container_exists(&client).await;
             return Err(e.into());
@@ -166,15 +191,21 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
     };
 
     // Wait for service to be ready
-    if let Err(e) = wait_for_service_ready(&client, port, &spinner).await {
-        spinner.fail("Service failed to become ready");
+    if let Err(e) = wait_for_service_ready(&client, port, &spinner, host_name.as_deref()).await {
+        spinner.fail(&crate::format_host_message(
+            host_name.as_deref(),
+            "Service failed to become ready",
+        ));
         eprintln!();
         eprintln!("{}", style("Recent container logs:").yellow());
         show_recent_logs(&client, 20).await;
         return Err(e);
     }
 
-    spinner.success("Service started and ready");
+    spinner.success(&crate::format_host_message(
+        host_name.as_deref(),
+        "Service started and ready",
+    ));
 
     // Show result and optionally open browser
     show_start_result(
@@ -183,6 +214,7 @@ pub async fn cmd_start(args: &StartArgs, quiet: bool, verbose: u8) -> Result<()>
         bind_addr,
         config.is_network_exposed(),
         quiet,
+        host_name.as_deref(),
     );
     open_browser_if_requested(args.open, port, bind_addr);
 
@@ -211,13 +243,20 @@ async fn handle_rebuild(client: &DockerClient, verbose: u8) -> Result<()> {
 }
 
 /// Show message when service is already running
-fn show_already_running(port: u16, bind_addr: &str, is_exposed: bool, quiet: bool) -> Result<()> {
+fn show_already_running(
+    port: u16,
+    bind_addr: &str,
+    is_exposed: bool,
+    quiet: bool,
+    host_name: Option<&str>,
+) -> Result<()> {
     if quiet {
         return Ok(());
     }
 
     let url = format!("http://{}:{}", bind_addr, port);
-    println!("{}", style("Service is already running").dim());
+    let msg = crate::format_host_message(host_name, "Service is already running");
+    println!("{}", style(msg).dim());
     println!();
     println!("URL:        {}", style(&url).cyan());
 
@@ -328,6 +367,7 @@ fn show_start_result(
     bind_addr: &str,
     is_exposed: bool,
     quiet: bool,
+    _host_name: Option<&str>,
 ) {
     let url = format!("http://{}:{}", bind_addr, port);
 
@@ -394,18 +434,6 @@ fn open_browser_if_requested(should_open: bool, port: u16, bind_addr: &str) {
             e
         );
     }
-}
-
-/// Connect to Docker with actionable error messages
-fn connect_docker(verbose: u8) -> Result<DockerClient> {
-    if verbose > 0 {
-        eprintln!("{} Connecting to Docker...", style("[info]").cyan());
-    }
-
-    DockerClient::new().map_err(|e| {
-        let msg = format_docker_error(&e);
-        anyhow!("{}", msg)
-    })
 }
 
 /// Format Docker errors with actionable guidance
@@ -529,6 +557,7 @@ async fn wait_for_service_ready(
     client: &DockerClient,
     port: u16,
     spinner: &CommandSpinner,
+    _host_name: Option<&str>,
 ) -> Result<()> {
     let start = Instant::now();
     let timeout = Duration::from_secs(HEALTH_CHECK_TIMEOUT_SECS);

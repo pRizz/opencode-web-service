@@ -12,11 +12,14 @@ use opencode_cloud_core::docker::{CONTAINER_NAME, DockerClient, list_users};
 pub struct UserListArgs {}
 
 /// List users in the container
-pub async fn cmd_user_list(_args: &UserListArgs, quiet: bool, _verbose: u8) -> Result<()> {
-    let client = DockerClient::new()?;
-
+pub async fn cmd_user_list(
+    client: &DockerClient,
+    _args: &UserListArgs,
+    quiet: bool,
+    _verbose: u8,
+) -> Result<()> {
     // Get users from container
-    let users = list_users(&client, CONTAINER_NAME).await?;
+    let users = list_users(client, CONTAINER_NAME).await?;
 
     // Handle empty list
     if users.is_empty() {

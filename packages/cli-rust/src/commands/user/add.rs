@@ -54,9 +54,12 @@ fn validate_username(username: &str) -> Result<(), String> {
 }
 
 /// Add a new user to the container
-pub async fn cmd_user_add(args: &UserAddArgs, quiet: bool, _verbose: u8) -> Result<()> {
-    let client = DockerClient::new()?;
-
+pub async fn cmd_user_add(
+    client: &DockerClient,
+    args: &UserAddArgs,
+    quiet: bool,
+    _verbose: u8,
+) -> Result<()> {
     // Get username - prompt if not provided
     let username = if let Some(ref name) = args.username {
         validate_username(name).map_err(|e| anyhow::anyhow!("{}", e))?;
@@ -70,7 +73,7 @@ pub async fn cmd_user_add(args: &UserAddArgs, quiet: bool, _verbose: u8) -> Resu
     };
 
     // Check if user already exists
-    if user_exists(&client, CONTAINER_NAME, &username).await? {
+    if user_exists(client, CONTAINER_NAME, &username).await? {
         bail!("User '{}' already exists in the container", username);
     }
 
@@ -90,10 +93,10 @@ pub async fn cmd_user_add(args: &UserAddArgs, quiet: bool, _verbose: u8) -> Resu
     };
 
     // Create the user
-    create_user(&client, CONTAINER_NAME, &username).await?;
+    create_user(client, CONTAINER_NAME, &username).await?;
 
     // Set password
-    set_user_password(&client, CONTAINER_NAME, &username, &password).await?;
+    set_user_password(client, CONTAINER_NAME, &username, &password).await?;
 
     // Update config - add username to users array
     let mut config = load_config()?;
