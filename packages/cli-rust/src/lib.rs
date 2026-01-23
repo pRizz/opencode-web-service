@@ -62,6 +62,8 @@ enum Commands {
     Update(commands::UpdateArgs),
     /// Open Cockpit web console
     Cockpit(commands::CockpitArgs),
+    /// Manage remote hosts
+    Host(commands::HostArgs),
 }
 
 /// Get the ASCII banner for help display
@@ -204,6 +206,10 @@ pub fn run() -> Result<()> {
         Some(Commands::Cockpit(args)) => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(commands::cmd_cockpit(&args, cli.quiet))
+        }
+        Some(Commands::Host(args)) => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(commands::cmd_host(&args, cli.quiet, cli.verbose))
         }
         None => {
             // No command - show a welcome message and hint to use --help

@@ -1,6 +1,6 @@
 //! occ host show - Show details for a host
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use clap::Args;
 use console::style;
 use opencode_cloud_core::load_hosts;
@@ -44,7 +44,10 @@ pub async fn cmd_host_show(args: &HostShowArgs, quiet: bool, _verbose: u8) -> Re
     println!(
         "  {:<15} {}",
         style("Port:").dim(),
-        config.port.map(|p| p.to_string()).unwrap_or_else(|| "22 (default)".to_string())
+        config
+            .port
+            .map(|p| p.to_string())
+            .unwrap_or_else(|| "22 (default)".to_string())
     );
 
     if let Some(key) = &config.identity_file {
@@ -56,7 +59,11 @@ pub async fn cmd_host_show(args: &HostShowArgs, quiet: bool, _verbose: u8) -> Re
     }
 
     if !config.groups.is_empty() {
-        println!("  {:<15} {}", style("Groups:").dim(), config.groups.join(", "));
+        println!(
+            "  {:<15} {}",
+            style("Groups:").dim(),
+            config.groups.join(", ")
+        );
     }
 
     if let Some(desc) = &config.description {

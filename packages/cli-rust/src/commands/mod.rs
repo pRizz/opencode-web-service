@@ -4,6 +4,7 @@
 
 mod cockpit;
 mod config;
+mod host;
 mod install;
 mod logs;
 mod restart;
@@ -17,6 +18,7 @@ mod user;
 
 pub use cockpit::{CockpitArgs, cmd_cockpit};
 pub use config::{ConfigArgs, cmd_config};
+pub use host::{HostArgs, cmd_host};
 pub use install::{InstallArgs, cmd_install};
 pub use logs::{LogsArgs, cmd_logs};
 pub use restart::{RestartArgs, cmd_restart};

@@ -1,6 +1,6 @@
 //! occ host edit - Edit host configuration
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use clap::Args;
 use console::style;
 use opencode_cloud_core::{load_hosts, save_hosts};
@@ -70,12 +70,20 @@ pub async fn cmd_host_edit(args: &HostEditArgs, quiet: bool, _verbose: u8) -> Re
     }
 
     if let Some(key) = &args.identity_file {
-        config.identity_file = if key.is_empty() { None } else { Some(key.clone()) };
+        config.identity_file = if key.is_empty() {
+            None
+        } else {
+            Some(key.clone())
+        };
         changed = true;
     }
 
     if let Some(jump) = &args.jump_host {
-        config.jump_host = if jump.is_empty() { None } else { Some(jump.clone()) };
+        config.jump_host = if jump.is_empty() {
+            None
+        } else {
+            Some(jump.clone())
+        };
         changed = true;
     }
 
@@ -94,7 +102,11 @@ pub async fn cmd_host_edit(args: &HostEditArgs, quiet: bool, _verbose: u8) -> Re
     }
 
     if let Some(desc) = &args.description {
-        config.description = if desc.is_empty() { None } else { Some(desc.clone()) };
+        config.description = if desc.is_empty() {
+            None
+        } else {
+            Some(desc.clone())
+        };
         changed = true;
     }
 
