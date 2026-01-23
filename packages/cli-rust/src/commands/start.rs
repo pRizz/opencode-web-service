@@ -473,7 +473,8 @@ fn find_next_available_port(start: u16) -> Option<u16> {
 }
 
 /// Configuration for health check waiting
-const HEALTH_CHECK_TIMEOUT_SECS: u64 = 10;
+/// Note: 60 seconds allows time for systemd to boot and start all services
+const HEALTH_CHECK_TIMEOUT_SECS: u64 = 60;
 const HEALTH_CHECK_INTERVAL_MS: u64 = 500;
 const HEALTH_CHECK_CONSECUTIVE_REQUIRED: u32 = 3;
 

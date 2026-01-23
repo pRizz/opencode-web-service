@@ -265,6 +265,38 @@ pub fn cmd_config_set(key: &str, value: Option<&str>, quiet: bool) -> Result<()>
             }
         }
 
+        "cockpit_enabled" | "cockpit" => {
+            let val = require_value(value, key)?;
+            let enabled = parse_bool(val).ok_or_else(|| {
+                anyhow::anyhow!("Invalid boolean value: {val}. Use: true/false, yes/no, or 1/0")
+            })?;
+
+            if enabled {
+                println!();
+                println!(
+                    "{}",
+                    style("Note: Cockpit requires Linux host with native Docker").yellow()
+                );
+                println!("Cockpit does NOT work on macOS Docker Desktop.");
+                println!();
+                println!("When enabled, the container uses systemd as init.");
+                println!("When disabled (default), the container uses tini (works everywhere).");
+                println!();
+            }
+
+            config.cockpit_enabled = enabled;
+            display_value = enabled.to_string();
+        }
+
+        "cockpit_port" => {
+            let val = require_value(value, key)?;
+            let port: u16 = val.parse().map_err(|_| {
+                anyhow::anyhow!("Invalid port number: {val}. Must be a number between 1-65535")
+            })?;
+            config.cockpit_port = port;
+            display_value = port.to_string();
+        }
+
         _ => {
             bail!(
                 "Unknown configuration key: {key}\n\n\
@@ -281,7 +313,9 @@ pub fn cmd_config_set(key: &str, value: Option<&str>, quiet: bool) -> Result<()>
                   trust_proxy / proxy\n  \
                   rate_limit_attempts / rate_attempts\n  \
                   rate_limit_window_seconds / rate_window\n  \
-                  allow_unauthenticated_network / allow_unauth\n\n\
+                  allow_unauthenticated_network / allow_unauth\n  \
+                  cockpit_enabled / cockpit\n  \
+                  cockpit_port\n\n\
                 For environment variables, use: occ config env set KEY=value"
             );
         }

@@ -95,6 +95,14 @@ pub fn cmd_config_show(config: &Config, json: bool, _quiet: bool) -> Result<()> 
                 config.users.join(", ")
             }),
         ]);
+        table.add_row(vec![
+            Cell::new("cockpit_enabled"),
+            Cell::new(config.cockpit_enabled.to_string()),
+        ]);
+        table.add_row(vec![
+            Cell::new("cockpit_port"),
+            Cell::new(config.cockpit_port.to_string()),
+        ]);
 
         println!("{table}");
 
@@ -161,6 +169,8 @@ struct MaskedConfig {
     rate_limit_attempts: u32,
     rate_limit_window_seconds: u32,
     users: Vec<String>,
+    cockpit_enabled: bool,
+    cockpit_port: u16,
 }
 
 impl From<&Config> for MaskedConfig {
@@ -189,6 +199,8 @@ impl From<&Config> for MaskedConfig {
             rate_limit_attempts: config.rate_limit_attempts,
             rate_limit_window_seconds: config.rate_limit_window_seconds,
             users: config.users.clone(),
+            cockpit_enabled: config.cockpit_enabled,
+            cockpit_port: config.cockpit_port,
         }
     }
 }

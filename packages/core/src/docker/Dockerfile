@@ -323,8 +323,9 @@ RUN apt-get update && \
     cockpit-bridge \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable Cockpit socket activation
-RUN systemctl enable cockpit.socket
+# Enable Cockpit socket activation (manual symlink since systemctl doesn't work during build)
+RUN mkdir -p /etc/systemd/system/sockets.target.wants \
+    && ln -sf /lib/systemd/system/cockpit.socket /etc/systemd/system/sockets.target.wants/cockpit.socket
 
 # Configure Cockpit for HTTP (TLS terminated externally) and proxy headers
 RUN mkdir -p /etc/cockpit && \
@@ -422,26 +423,27 @@ RUN git clone https://github.com/rokicool/gsd-opencode.git /home/opencode/.confi
 # -----------------------------------------------------------------------------
 # Create opencode as a systemd service for Cockpit integration
 USER root
-RUN cat > /etc/systemd/system/opencode.service << 'OPENCODE_SERVICE'
-[Unit]
-Description=opencode Web Interface
-After=network.target
+RUN printf '%s\n' \
+    '[Unit]' \
+    'Description=opencode Web Interface' \
+    'After=network.target' \
+    '' \
+    '[Service]' \
+    'Type=simple' \
+    'User=opencode' \
+    'WorkingDirectory=/home/opencode/workspace' \
+    'ExecStart=/home/opencode/.opencode/bin/opencode web --port 3000 --hostname 0.0.0.0' \
+    'Restart=always' \
+    'RestartSec=5' \
+    'Environment=PATH=/home/opencode/.opencode/bin:/home/opencode/.local/bin:/home/opencode/.cargo/bin:/home/opencode/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' \
+    '' \
+    '[Install]' \
+    'WantedBy=multi-user.target' \
+    > /etc/systemd/system/opencode.service
 
-[Service]
-Type=simple
-User=opencode
-WorkingDirectory=/home/opencode/workspace
-ExecStart=/home/opencode/.opencode/bin/opencode web --port 3000 --hostname 0.0.0.0
-Restart=always
-RestartSec=5
-Environment=PATH=/home/opencode/.opencode/bin:/home/opencode/.local/bin:/home/opencode/.cargo/bin:/home/opencode/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
-[Install]
-WantedBy=multi-user.target
-OPENCODE_SERVICE
-
-# Enable opencode service to start at boot
-RUN systemctl enable opencode.service
+# Enable opencode service to start at boot (manual symlink since systemctl doesn't work during build)
+RUN mkdir -p /etc/systemd/system/multi-user.target.wants \
+    && ln -sf /etc/systemd/system/opencode.service /etc/systemd/system/multi-user.target.wants/opencode.service
 
 USER opencode
 
@@ -513,12 +515,32 @@ ALIASES
 RUN echo 'export PATH="/home/opencode/.local/bin:$PATH"' >> /home/opencode/.zshrc
 
 # -----------------------------------------------------------------------------
+# Entrypoint Script (Hybrid Init Support)
+# -----------------------------------------------------------------------------
+# Supports both tini (default, works everywhere) and systemd (for Cockpit on Linux)
+# Set USE_SYSTEMD=1 environment variable to use systemd init
+# Note: Entrypoint runs as root to support both modes; tini mode drops to opencode user
+USER root
+RUN printf '%s\n' \
+    '#!/bin/bash' \
+    'if [ "${USE_SYSTEMD}" = "1" ]; then' \
+    '    exec /sbin/init' \
+    'else' \
+    '    # Use runuser to switch to opencode user without password prompt' \
+    '    exec /usr/bin/tini -- runuser -u opencode -- /home/opencode/.opencode/bin/opencode web --port 3000 --hostname 0.0.0.0' \
+    'fi' \
+    > /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+
+# Note: Don't set USER here - entrypoint needs root to use runuser
+# The tini mode drops privileges to opencode user via runuser
+
+# -----------------------------------------------------------------------------
 # Health Check
 # -----------------------------------------------------------------------------
-# Check that opencode service is running (systemd) and health endpoint responds
-# Increased start-period from 5s to 30s because systemd takes longer to initialize
+# Check that opencode health endpoint responds
+# Works for both tini and systemd modes
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD systemctl is-active --quiet opencode.service && curl -f http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # -----------------------------------------------------------------------------
 # Final Configuration
@@ -528,11 +550,5 @@ WORKDIR /home/opencode/workspace
 # Expose opencode web port (3000) and Cockpit port (9090)
 EXPOSE 3000 9090
 
-# Required volumes for systemd
-VOLUME ["/sys/fs/cgroup", "/run", "/tmp"]
-
-# Use SIGRTMIN+3 for proper systemd shutdown
-STOPSIGNAL SIGRTMIN+3
-
-# systemd as init (required for Cockpit socket activation and opencode.service)
-CMD ["/sbin/init"]
+# Hybrid init: entrypoint script chooses tini or systemd based on USE_SYSTEMD env
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

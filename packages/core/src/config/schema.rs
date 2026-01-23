@@ -83,10 +83,21 @@ pub struct Config {
     pub users: Vec<String>,
 
     /// Cockpit web console port (default: 9090)
+    /// Only used when cockpit_enabled is true
     #[serde(default = "default_cockpit_port")]
     pub cockpit_port: u16,
 
-    /// Enable Cockpit web console (default: true)
+    /// Enable Cockpit web console (default: false)
+    ///
+    /// When enabled:
+    /// - Container uses systemd as init (required for Cockpit)
+    /// - Requires Linux host with native Docker (does NOT work on macOS Docker Desktop)
+    /// - Cockpit web UI accessible at cockpit_port
+    ///
+    /// When disabled (default):
+    /// - Container uses tini as init (lightweight, works everywhere)
+    /// - Works on macOS, Linux, and Windows
+    /// - No Cockpit web UI
     #[serde(default = "default_cockpit_enabled")]
     pub cockpit_enabled: bool,
 }
@@ -132,7 +143,7 @@ fn default_cockpit_port() -> u16 {
 }
 
 fn default_cockpit_enabled() -> bool {
-    true
+    false
 }
 
 /// Validate and parse a bind address string
@@ -585,7 +596,8 @@ mod tests {
     fn test_default_config_cockpit_fields() {
         let config = Config::default();
         assert_eq!(config.cockpit_port, 9090);
-        assert!(config.cockpit_enabled);
+        // cockpit_enabled defaults to false (requires Linux host)
+        assert!(!config.cockpit_enabled);
     }
 
     #[test]
@@ -607,6 +619,7 @@ mod tests {
         let json = r#"{"version": 1}"#;
         let config: Config = serde_json::from_str(json).unwrap();
         assert_eq!(config.cockpit_port, 9090);
-        assert!(config.cockpit_enabled);
+        // cockpit_enabled defaults to false (requires Linux host)
+        assert!(!config.cockpit_enabled);
     }
 }

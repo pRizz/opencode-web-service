@@ -139,21 +139,48 @@ pub async fn create_container(
         exposed_ports.insert("9090/tcp".to_string(), HashMap::new());
     }
 
-    // Create host config with systemd support
-    let host_config = HostConfig {
-        mounts: Some(mounts),
-        port_bindings: Some(port_bindings),
-        auto_remove: Some(false),
-        // CAP_SYS_ADMIN required for systemd cgroup access
-        cap_add: Some(vec!["SYS_ADMIN".to_string()]),
-        // tmpfs for /run and /tmp (required for systemd)
-        tmpfs: Some(HashMap::from([
-            ("/run".to_string(), String::new()),
-            ("/tmp".to_string(), String::new()),
-        ])),
-        // cgroup mount (read-only for security)
-        binds: Some(vec!["/sys/fs/cgroup:/sys/fs/cgroup:ro".to_string()]),
-        ..Default::default()
+    // Create host config
+    // When Cockpit is enabled, add systemd-specific settings (requires Linux host)
+    // When Cockpit is disabled, use simpler tini-based config (works everywhere)
+    let host_config = if cockpit_enabled_val {
+        HostConfig {
+            mounts: Some(mounts),
+            port_bindings: Some(port_bindings),
+            auto_remove: Some(false),
+            // CAP_SYS_ADMIN required for systemd cgroup access
+            cap_add: Some(vec!["SYS_ADMIN".to_string()]),
+            // tmpfs for /run, /run/lock, and /tmp (required for systemd)
+            tmpfs: Some(HashMap::from([
+                ("/run".to_string(), "exec".to_string()),
+                ("/run/lock".to_string(), String::new()),
+                ("/tmp".to_string(), String::new()),
+            ])),
+            // cgroup mount (read-write for systemd)
+            binds: Some(vec!["/sys/fs/cgroup:/sys/fs/cgroup:rw".to_string()]),
+            // Use private cgroup namespace for systemd
+            cgroupns_mode: Some(bollard::models::HostConfigCgroupnsModeEnum::PRIVATE),
+            // Privileged mode often needed for systemd on Docker Desktop
+            privileged: Some(true),
+            ..Default::default()
+        }
+    } else {
+        // Simple config for tini mode (works on macOS and Linux)
+        HostConfig {
+            mounts: Some(mounts),
+            port_bindings: Some(port_bindings),
+            auto_remove: Some(false),
+            ..Default::default()
+        }
+    };
+
+    // Build environment variables
+    // Add USE_SYSTEMD=1 when Cockpit is enabled to tell entrypoint to use systemd
+    let final_env = if cockpit_enabled_val {
+        let mut env = env_vars.unwrap_or_default();
+        env.push("USE_SYSTEMD=1".to_string());
+        Some(env)
+    } else {
+        env_vars
     };
 
     // Create container config
@@ -162,7 +189,7 @@ pub async fn create_container(
         hostname: Some(CONTAINER_NAME.to_string()),
         working_dir: Some("/workspace".to_string()),
         exposed_ports: Some(exposed_ports),
-        env: env_vars,
+        env: final_env,
         host_config: Some(host_config),
         ..Default::default()
     };

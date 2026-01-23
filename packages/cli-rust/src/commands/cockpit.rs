@@ -27,9 +27,13 @@ pub async fn cmd_cockpit(_args: &CockpitArgs, quiet: bool) -> Result<()> {
         bail!(
             "{}\n\n\
              Cockpit is disabled in configuration.\n\n\
-             Enable it with: {}\n\
-             Then rebuild:   {}",
+             {}: Cockpit requires Linux host with native Docker.\n\
+             It does NOT work on macOS Docker Desktop.\n\n\
+             To enable (Linux only):\n\
+             1. {}\n\
+             2. {}",
             style("Cockpit is disabled").yellow().bold(),
+            style("Note").yellow(),
             style("occ config set cockpit_enabled true").cyan(),
             style("occ start --cached-rebuild").cyan()
         );

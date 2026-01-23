@@ -47,6 +47,8 @@ pub fn cmd_config_get(config: &Config, key: &str, _quiet: bool) -> Result<()> {
                 config.users.join(",")
             }
         }
+        "cockpit_enabled" | "cockpit" => config.cockpit_enabled.to_string(),
+        "cockpit_port" => config.cockpit_port.to_string(),
         _ => {
             bail!(
                 "Unknown configuration key: {key}\n\n\
@@ -66,7 +68,9 @@ pub fn cmd_config_get(config: &Config, key: &str, _quiet: bool) -> Result<()> {
                   allow_unauthenticated_network / allow_unauth\n  \
                   rate_limit_attempts / rate_attempts\n  \
                   rate_limit_window_seconds / rate_window\n  \
-                  users"
+                  users\n  \
+                  cockpit_enabled / cockpit\n  \
+                  cockpit_port"
             );
         }
     };
