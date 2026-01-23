@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 11 of 18 (Remote Host Management)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-23 - Completed 11-02-PLAN.md (Host CLI Commands)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-01-23 - Completed 11-03-PLAN.md (Container Commands Remote Host Integration)
 
-Progress: [##################] 68%
+Progress: [###################] 70%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30
+- Total plans completed: 31
 - Average duration: 6 min
-- Total execution time: 2.9 hours
+- Total execution time: 3.1 hours
 
 **By Phase:**
 
@@ -37,11 +37,11 @@ Progress: [##################] 68%
 | 08 | 1 | 2 min | 2 min |
 | 09 | 2 | 13 min | 7 min |
 | 10 | 3 | 15 min | 5 min |
-| 11 | 2 | 9 min | 5 min |
+| 11 | 3 | 19 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 4 min, 7 min, 5 min, 4 min
-- Trend: Stable (~5 min average)
+- Last 5 plans: 4 min, 7 min, 5 min, 4 min, 10 min
+- Trend: Stable (~6 min average)
 
 *Updated after each plan completion*
 
@@ -158,6 +158,11 @@ Recent decisions affecting current work:
 - [11-02]: Names-only mode on list for shell loops
 - [11-02]: JSON output on show for programmatic consumption
 - [11-02]: Partial updates on edit - only specified fields change
+- [11-03]: Global --host flag on Cli struct for all commands to inherit
+- [11-03]: resolve_docker_client helper centralizes host resolution logic
+- [11-03]: Host resolution order: explicit --host > default_host from hosts.json > local Docker
+- [11-03]: format_host_message helper ensures consistent [hostname] prefix formatting
+- [11-03]: User subcommands accept DockerClient reference instead of creating own
 
 ### Pending Todos
 
@@ -185,5 +190,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-23
-Stopped at: Completed 11-02-PLAN.md (Host CLI Commands)
+Stopped at: Completed 11-03-PLAN.md (Container Commands Remote Host Integration)
 Resume file: None
