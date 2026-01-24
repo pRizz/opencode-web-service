@@ -10,8 +10,8 @@ use futures_util::stream::StreamExt;
 use opencode_cloud_core::bollard::container::{LogOutput, LogsOptions};
 use opencode_cloud_core::docker::{
     CONTAINER_NAME, DockerClient, DockerError, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT,
-    ProgressReporter, build_image, container_exists, container_is_running, image_exists,
-    setup_and_start, stop_service,
+    ProgressReporter, build_image, container_exists, container_is_running, get_cli_version,
+    get_image_version, image_exists, setup_and_start, stop_service, versions_compatible,
 };
 use opencode_cloud_core::load_hosts;
 use std::net::{TcpListener, TcpStream};
@@ -40,6 +40,10 @@ pub struct StartArgs {
     /// Rebuild Docker image from scratch without cache (slow, for troubleshooting)
     #[arg(long)]
     pub full_rebuild: bool,
+
+    /// Skip version compatibility check between CLI and Docker image
+    #[arg(long)]
+    pub ignore_version: bool,
 }
 
 /// Start the opencode service
@@ -94,7 +98,40 @@ pub async fn cmd_start(
         }
     }
 
-    let any_rebuild = args.cached_rebuild || args.full_rebuild;
+    let mut any_rebuild = args.cached_rebuild || args.full_rebuild;
+
+    // Version compatibility check (skip if rebuilding or --ignore-version)
+    if !args.ignore_version && !any_rebuild && !quiet {
+        let cli_version = get_cli_version();
+        let image_tag = format!("{IMAGE_NAME_GHCR}:{IMAGE_TAG_DEFAULT}");
+
+        // Only check if image exists
+        if image_exists(&client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await? {
+            if let Ok(Some(image_version)) = get_image_version(&client, &image_tag).await {
+                if !versions_compatible(cli_version, Some(&image_version)) {
+                    println!();
+                    println!("{} Version mismatch detected", style("⚠").yellow());
+                    println!("  CLI version:   {}", style(cli_version).cyan());
+                    println!("  Image version: {}", style(&image_version).cyan());
+                    println!();
+
+                    let selection = dialoguer::Select::new()
+                        .with_prompt("What would you like to do?")
+                        .items(&[
+                            "Rebuild image from source (recommended)",
+                            "Continue with mismatched versions",
+                        ])
+                        .default(0)
+                        .interact()?;
+
+                    if selection == 0 {
+                        any_rebuild = true;
+                    }
+                    // selection == 1 means continue anyway
+                }
+            }
+        }
+    }
 
     // Security check: block first start without security configured
     let is_first_start = !container_exists(&client, CONTAINER_NAME).await?;

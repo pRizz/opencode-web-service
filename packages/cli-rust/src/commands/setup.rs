@@ -73,6 +73,7 @@ pub async fn cmd_setup(args: &SetupArgs, quiet: bool) -> Result<()> {
                 no_daemon: false,
                 cached_rebuild: false,
                 full_rebuild: false,
+                ignore_version: false,
             };
             cmd_start(&start_args, None, quiet, 0).await?;
         }
