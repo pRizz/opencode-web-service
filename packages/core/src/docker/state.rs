@@ -50,8 +50,7 @@ pub fn get_state_path() -> Option<PathBuf> {
 
 /// Save image state to disk
 pub fn save_state(state: &ImageState) -> anyhow::Result<()> {
-    let path = get_state_path()
-        .ok_or_else(|| anyhow::anyhow!("Could not determine state path"))?;
+    let path = get_state_path().ok_or_else(|| anyhow::anyhow!("Could not determine state path"))?;
 
     // Ensure parent directory exists
     if let Some(parent) = path.parent() {

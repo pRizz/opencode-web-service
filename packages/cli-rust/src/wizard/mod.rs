@@ -59,7 +59,12 @@ fn handle_interrupt() -> anyhow::Error {
 
 /// Prompt user to choose image source
 fn prompt_image_source(step: usize, total: usize) -> Result<String> {
-    println!("{}", style(format!("Step {step}/{total}: Image Source")).cyan().bold());
+    println!(
+        "{}",
+        style(format!("Step {step}/{total}: Image Source"))
+            .cyan()
+            .bold()
+    );
     println!();
     println!("How would you like to get the Docker image?");
     println!();
@@ -67,17 +72,20 @@ fn prompt_image_source(step: usize, total: usize) -> Result<String> {
     println!("      Download from GitHub Container Registry");
     println!("      Fast, verified builds published automatically");
     println!();
-    println!("  {} Build from source (30-60 minutes)", style("[2]").bold());
+    println!(
+        "  {} Build from source (30-60 minutes)",
+        style("[2]").bold()
+    );
     println!("      Compile everything locally");
     println!("      Full transparency, customizable Dockerfile");
     println!();
-    println!("{}", style("Build history: https://github.com/pRizz/opencode-cloud/actions").dim());
+    println!(
+        "{}",
+        style("Build history: https://github.com/pRizz/opencode-cloud/actions").dim()
+    );
     println!();
 
-    let options = vec![
-        "Pull prebuilt image (recommended)",
-        "Build from source",
-    ];
+    let options = vec!["Pull prebuilt image (recommended)", "Build from source"];
 
     let selection = dialoguer::Select::new()
         .with_prompt("Select image source")
