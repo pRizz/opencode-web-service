@@ -10,7 +10,8 @@ use console::style;
 use opencode_cloud_core::Config;
 use opencode_cloud_core::config;
 use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DockerError, HealthError, OPENCODE_WEB_PORT, check_health,
+    CONTAINER_NAME, DockerError, HealthError, OPENCODE_WEB_PORT, check_health, get_cli_version,
+    get_image_version,
 };
 use opencode_cloud_core::load_hosts;
 use opencode_cloud_core::platform::{get_service_manager, is_service_registration_supported};
@@ -187,6 +188,25 @@ pub async fn cmd_status(
         style(id_short).dim()
     );
     println!("Image:       {image}");
+
+    // Show CLI and image versions
+    let cli_version = get_cli_version();
+    println!("CLI:         v{cli_version}");
+
+    // Try to get image version from label
+    if let Ok(Some(img_version)) = get_image_version(&client, &image).await {
+        if img_version != "dev" {
+            if cli_version == img_version {
+                println!("Image ver:   v{img_version}");
+            } else {
+                println!(
+                    "Image ver:   v{} {}",
+                    img_version,
+                    style("(differs from CLI)").yellow().dim()
+                );
+            }
+        }
+    }
 
     // Load config early for reuse in multiple sections
     let config = config::load_config().ok();
