@@ -25,6 +25,16 @@ pub fn display_summary(state: &WizardState) {
     table.add_row(vec![Cell::new("Port:"), Cell::new(state.port)]);
     table.add_row(vec![Cell::new("Binding:"), Cell::new(&state.bind)]);
 
+    let image_time = if state.image_source == "prebuilt" {
+        "(~2 min download)"
+    } else {
+        "(30-60 min build)"
+    };
+    table.add_row(vec![
+        Cell::new("Image:"),
+        Cell::new(format!("{} {}", state.image_source, image_time)),
+    ]);
+
     println!("{table}");
 
     // Show config file location

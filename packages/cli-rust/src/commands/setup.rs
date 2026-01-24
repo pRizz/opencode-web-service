@@ -71,9 +71,11 @@ pub async fn cmd_setup(args: &SetupArgs, quiet: bool) -> Result<()> {
                 port: Some(new_config.opencode_web_port),
                 open: false,
                 no_daemon: false,
-                cached_rebuild: false,
-                full_rebuild: false,
+                pull_sandbox_image: false,
+                cached_rebuild_sandbox_image: false,
+                full_rebuild_sandbox_image: false,
                 ignore_version: false,
+                no_update_check: false,
             };
             cmd_start(&start_args, None, quiet, 0).await?;
         }

@@ -31,6 +31,8 @@ pub struct WizardState {
     pub port: u16,
     /// Bind address (localhost or 0.0.0.0)
     pub bind: String,
+    /// Image source preference: "prebuilt" or "build"
+    pub image_source: String,
 }
 
 impl WizardState {
@@ -44,6 +46,7 @@ impl WizardState {
         }
         config.opencode_web_port = self.port;
         config.bind = self.bind.clone();
+        config.image_source = self.image_source.clone();
     }
 }
 
@@ -52,6 +55,40 @@ fn handle_interrupt() -> anyhow::Error {
     // Restore cursor in case it was hidden
     let _ = Term::stdout().show_cursor();
     anyhow!("Setup cancelled")
+}
+
+/// Prompt user to choose image source
+fn prompt_image_source(step: usize, total: usize) -> Result<String> {
+    println!("{}", style(format!("Step {step}/{total}: Image Source")).cyan().bold());
+    println!();
+    println!("How would you like to get the Docker image?");
+    println!();
+    println!("  {} Pull prebuilt image (~2 minutes)", style("[1]").bold());
+    println!("      Download from GitHub Container Registry");
+    println!("      Fast, verified builds published automatically");
+    println!();
+    println!("  {} Build from source (30-60 minutes)", style("[2]").bold());
+    println!("      Compile everything locally");
+    println!("      Full transparency, customizable Dockerfile");
+    println!();
+    println!("{}", style("Build history: https://github.com/pRizz/opencode-cloud/actions").dim());
+    println!();
+
+    let options = vec![
+        "Pull prebuilt image (recommended)",
+        "Build from source",
+    ];
+
+    let selection = dialoguer::Select::new()
+        .with_prompt("Select image source")
+        .items(&options)
+        .default(0)
+        .interact()
+        .map_err(|_| handle_interrupt())?;
+
+    println!();
+
+    Ok(if selection == 0 { "prebuilt" } else { "build" }.to_string())
 }
 
 /// Run the interactive setup wizard
@@ -127,15 +164,16 @@ pub async fn run_wizard(existing_config: Option<&Config>) -> Result<Config> {
     println!();
 
     // 4. Collect values
-    let total_steps = if quick { 1 } else { 3 };
+    let total_steps = if quick { 2 } else { 4 };
 
     let (username, password) = prompt_auth(1, total_steps)?;
+    let image_source = prompt_image_source(2, total_steps)?;
 
     let (port, bind) = if quick {
         (3000, "localhost".to_string())
     } else {
-        let port = prompt_port(2, total_steps, 3000)?;
-        let bind = prompt_hostname(3, total_steps, "localhost")?;
+        let port = prompt_port(3, total_steps, 3000)?;
+        let bind = prompt_hostname(4, total_steps, "localhost")?;
         (port, bind)
     };
 
@@ -144,6 +182,7 @@ pub async fn run_wizard(existing_config: Option<&Config>) -> Result<Config> {
         auth_password: Some(password.clone()),
         port,
         bind,
+        image_source,
     };
 
     // 5. Summary
@@ -216,6 +255,7 @@ mod tests {
             auth_password: Some("testpass".to_string()),
             port: 8080,
             bind: "0.0.0.0".to_string(),
+            image_source: "prebuilt".to_string(),
         };
 
         let mut config = Config::default();
@@ -225,6 +265,7 @@ mod tests {
         assert_eq!(config.auth_password, Some("testpass".to_string()));
         assert_eq!(config.opencode_web_port, 8080);
         assert_eq!(config.bind, "0.0.0.0");
+        assert_eq!(config.image_source, "prebuilt");
     }
 
     #[test]
@@ -234,6 +275,7 @@ mod tests {
             auth_password: Some("secret".to_string()),
             port: 3000,
             bind: "localhost".to_string(),
+            image_source: "build".to_string(),
         };
 
         let mut config = Config {
@@ -249,5 +291,6 @@ mod tests {
 
         // Should update wizard fields
         assert_eq!(config.auth_username, Some("admin".to_string()));
+        assert_eq!(config.image_source, "build");
     }
 }

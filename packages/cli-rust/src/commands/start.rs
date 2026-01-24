@@ -33,17 +33,25 @@ pub struct StartArgs {
     #[arg(long)]
     pub no_daemon: bool,
 
-    /// Rebuild Docker image using cache (fast, picks up Dockerfile changes)
+    /// Pull prebuilt image from registry (fast, ~2 min)
     #[arg(long)]
-    pub cached_rebuild: bool,
+    pub pull_sandbox_image: bool,
 
-    /// Rebuild Docker image from scratch without cache (slow, for troubleshooting)
+    /// Rebuild Docker image using cache (picks up Dockerfile changes)
     #[arg(long)]
-    pub full_rebuild: bool,
+    pub cached_rebuild_sandbox_image: bool,
+
+    /// Rebuild Docker image from scratch without cache (slow, 30-60 min)
+    #[arg(long)]
+    pub full_rebuild_sandbox_image: bool,
 
     /// Skip version compatibility check between CLI and Docker image
     #[arg(long)]
     pub ignore_version: bool,
+
+    /// Skip checking for updates on start
+    #[arg(long)]
+    pub no_update_check: bool,
 }
 
 /// Start the opencode service
@@ -98,7 +106,7 @@ pub async fn cmd_start(
         }
     }
 
-    let mut any_rebuild = args.cached_rebuild || args.full_rebuild;
+    let mut any_rebuild = args.cached_rebuild_sandbox_image || args.full_rebuild_sandbox_image;
 
     // Version compatibility check (skip if rebuilding or --ignore-version)
     if !args.ignore_version && !any_rebuild && !quiet {
@@ -200,8 +208,8 @@ pub async fn cmd_start(
         any_rebuild || !image_exists(&client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await?;
 
     if needs_build {
-        // full_rebuild uses no_cache, cached_rebuild uses cache
-        build_docker_image(&client, args.full_rebuild, verbose).await?;
+        // full_rebuild_sandbox_image uses no_cache, cached_rebuild_sandbox_image uses cache
+        build_docker_image(&client, args.full_rebuild_sandbox_image, verbose).await?;
     }
 
     // Start container
