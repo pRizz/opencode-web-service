@@ -5,21 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 11 - Remote Host Management (In Progress)
+**Current focus:** Phase 14 - Versioning and Release Automation (Complete)
 
 ## Current Position
 
-Phase: 11 of 18 (Remote Host Management)
+Phase: 14 of 21 (Versioning and Release Automation)
 Plan: 3 of 3 in current phase
 Status: Phase complete
-Last activity: 2026-01-23 - Completed 11-03-PLAN.md (Container Commands Remote Host Integration)
+Last activity: 2026-01-23 - Completed Phase 14 (all 3 plans executed)
 
-Progress: [###################] 70%
+Progress: [#####################] 75%
+
+Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED. Phase 19 (CI/CD Automation) merged into Phase 14.
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 31
+- Total plans completed: 34
 - Average duration: 6 min
 - Total execution time: 3.1 hours
 
@@ -38,6 +40,7 @@ Progress: [###################] 70%
 | 09 | 2 | 13 min | 7 min |
 | 10 | 3 | 15 min | 5 min |
 | 11 | 3 | 19 min | 6 min |
+| 14 | 3 | 15 min | 5 min |
 
 **Recent Trend:**
 - Last 5 plans: 4 min, 7 min, 5 min, 4 min, 10 min
@@ -163,6 +166,15 @@ Recent decisions affecting current work:
 - [11-03]: Host resolution order: explicit --host > default_host from hosts.json > local Docker
 - [11-03]: format_host_message helper ensures consistent [hostname] prefix formatting
 - [11-03]: User subcommands accept DockerClient reference instead of creating own
+- [14-01]: GHCR as primary Docker registry: ghcr.io/prizz/opencode-cloud
+- [14-01]: Version label: org.opencode-cloud.version in Dockerfile
+- [14-01]: Multi-arch via QEMU: Simpler than ARM runners, acceptable for slow image builds
+- [14-01]: VERSION file at /etc/opencode-cloud-version for runtime access
+- [14-02]: Version check skipped during rebuilds: No point checking if we're rebuilding anyway
+- [14-02]: Dev version always compatible: Local builds treated as compatible
+- [14-02]: Prompt offers rebuild (not pull): Pull option deferred to Phase 15 (Prebuilt Image)
+- [14-03]: Two-tag strategy: Both v* and release/v* for backward compatibility
+- [14-03]: GitHub Actions bot for commits: Clear audit trail, avoids CI loops
 
 ### Pending Todos
 
@@ -174,15 +186,16 @@ Recent decisions affecting current work:
 - Phase 9 added: Dockerfile Version Pinning (pin explicit versions for GitHub-installed tools)
 - Phase 10 added: Remote Administration via Cockpit (integrate and expose remote admin of Docker container)
 - Phase 11 added: Remote Host Management (occ manages containers on different hosts)
-- Phase 12 added: Web Desktop UI Investigation (Friend OS, WDE, etc.)
-- Phase 13 added: Container Security Tools (trivy, gitleaks, hadolint, etc.)
-- Phase 14 added: Auto-rebuild Detection (CLI/image version mismatch detection)
-- Phase 15 added: Prebuilt Image Option (pull vs build from source)
-- Phase 16 added: Code Quality Audit (reduce nesting, eliminate duplication)
-- Phase 17 added: Custom Bind Mounts (mount local directories into container)
-- Phase 18 added: CLI Sync Strategy (keep Rust and Node CLIs in sync)
-- Phase 19 added: CI/CD Automation (automated Docker image uploads and version bumps via GitHub Actions)
-- Phase 20 added: One-Click Cloud Deploy (deploy buttons for AWS, GCP, Azure, DigitalOcean)
+- Phase 12 DEFERRED: Web Desktop UI Investigation (Friend OS, WDE, etc.)
+- Phase 13 DEFERRED: Container Security Tools (trivy, gitleaks, hadolint, etc.)
+- Phase 14 expanded: Versioning and Release Automation (merged with Phase 19 CI/CD Automation)
+- Phase 15: Prebuilt Image Option (pull vs build from source)
+- Phase 16: Code Quality Audit (reduce nesting, eliminate duplication)
+- Phase 17: Custom Bind Mounts (mount local directories into container)
+- Phase 18: CLI Sync Strategy (keep Rust and Node CLIs in sync)
+- Phase 19 MERGED: CI/CD Automation merged into Phase 14
+- Phase 20: One-Click Cloud Deploy (deploy buttons for AWS, GCP, Azure, DigitalOcean)
+- Phase 21: Use opencode Fork with PAM Authentication (switch to pRizz/opencode fork)
 
 ### Blockers/Concerns
 
@@ -191,5 +204,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-23
-Stopped at: Completed 11-03-PLAN.md (Container Commands Remote Host Integration)
+Stopped at: Completed Phase 14 (Versioning and Release Automation)
 Resume file: None
+Next step: Plan Phase 15 (Prebuilt Image Option)

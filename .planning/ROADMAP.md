@@ -23,15 +23,16 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 9: Dockerfile Version Pinning** - Pin explicit versions for GitHub-installed tools
 - [x] **Phase 10: Remote Administration via Cockpit** - Integrate and expose remote admin of Docker container via Cockpit
 - [x] **Phase 11: Remote Host Management** - Allow occ to remotely install and interact with Docker containers on different hosts
-- [ ] **Phase 12: Web Desktop UI Investigation** - Investigate integrating secure web-exposed desktop UI (Friend OS, WDE, etc.)
-- [ ] **Phase 13: Container Security Tools** - Add trivy, gitleaks, hadolint, age, sops, mkcert to container
-- [ ] **Phase 14: Auto-rebuild Detection** - Detect CLI/image version mismatch and prompt for rebuild
+- [~] **Phase 12: Web Desktop UI Investigation** - ~~Investigate integrating secure web-exposed desktop UI~~ (DEFERRED)
+- [~] **Phase 13: Container Security Tools** - ~~Add trivy, gitleaks, hadolint, age, sops, mkcert to container~~ (DEFERRED)
+- [x] **Phase 14: Versioning and Release Automation** - CI/CD for Docker images, version detection, auto-rebuild prompts
 - [ ] **Phase 15: Prebuilt Image Option** - Option to pull prebuilt images vs building from scratch
 - [ ] **Phase 16: Code Quality Audit** - Reduce nesting, eliminate duplication, improve readability
 - [ ] **Phase 17: Custom Bind Mounts** - Allow users to mount local directories into the container
 - [ ] **Phase 18: CLI Sync Strategy** - Strategy for keeping Rust and Node CLIs in sync
-- [ ] **Phase 19: CI/CD Automation** - Automated Docker image uploads and version management via GitHub Actions
+- [~] **Phase 19: CI/CD Automation** - ~~Automated Docker image uploads~~ (MERGED into Phase 14)
 - [ ] **Phase 20: One-Click Cloud Deploy** - Deploy buttons for AWS, GCP, Azure etc. that provision cloud instances with opencode-cloud pre-installed
+- [ ] **Phase 21: Use opencode Fork with PAM Authentication** - Switch to pRizz/opencode fork for proper PAM-based web authentication
 
 ## Phase Details
 
@@ -240,7 +241,7 @@ Plans:
 
 ### Phase 13: Container Security Tools
 **Goal**: Add security scanning and secrets management tools to the container image
-**Depends on**: Phase 12
+**Depends on**: Phase 11 (Remote Host Management)
 **Requirements**: None (enhancement)
 **Note**: Deferred from initial Dockerfile to reduce image size and build time. Adds trivy, gitleaks, hadolint, age, sops, mkcert.
 **Success Criteria** (what must be TRUE):
@@ -254,21 +255,27 @@ Plans:
 Plans:
 - [ ] 13-01: TBD (security tools installation)
 
-### Phase 14: Auto-rebuild Detection
-**Goal**: Automatically detect when CLI version doesn't match the built Docker image and prompt user to rebuild
-**Depends on**: Phase 7 (Update and Maintenance)
+### Phase 14: Versioning and Release Automation
+**Goal**: Automated CI/CD for Docker images with version tracking and mismatch detection in CLI
+**Depends on**: Phase 11 (Remote Host Management)
 **Requirements**: None (enhancement)
-**Note**: The Dockerfile is embedded in the CLI binary. When users update opencode-cloud, the embedded Dockerfile may have changed, but Docker won't know to rebuild. This phase adds version tracking to detect mismatches and prompt users to rebuild.
+**Note**: Combines version tracking with CI/CD automation. GitHub Actions build and push versioned Docker images to GHCR. CLI detects when local image version differs from CLI version and prompts to pull/rebuild. Includes version bump workflows for releases.
 **Success Criteria** (what must be TRUE):
-  1. Docker images are tagged with opencode-cloud version (e.g., `ghcr.io/prizz/opencode-cloud:0.1.4`)
-  2. On `occ start`, CLI detects if existing image version differs from current CLI version
-  3. User is prompted to rebuild when version mismatch detected
-  4. Option to auto-rebuild on version mismatch via config setting
-  5. `occ status` shows image version alongside CLI version
-**Plans**: TBD
+  1. GitHub Action workflow builds and pushes Docker images to GHCR on release
+  2. Multi-arch images (amd64, arm64) built via buildx
+  3. Images tagged with version (e.g., `ghcr.io/prizz/opencode-cloud:1.0.8`) and `:latest`
+  4. Docker images include version label (`org.opencode-cloud.version`)
+  5. On `occ start`, CLI detects if image version differs from CLI version
+  6. User is prompted to pull new image when version mismatch detected
+  7. `occ status` shows image version alongside CLI version
+  8. Workflow for version bumps with user input (major/minor/patch selection)
+  9. Version bump updates all relevant files (Cargo.toml, package.json, etc.) and creates git tag
+**Plans**: 3 plans
 
 Plans:
-- [ ] 14-01: TBD (version tagging and mismatch detection)
+- [x] 14-01-PLAN.md — GitHub Actions Docker build workflow (buildx multi-arch, GHCR push, version labels)
+- [x] 14-02-PLAN.md — Version detection in CLI (image version check, mismatch prompt, status display)
+- [x] 14-03-PLAN.md — Version bump workflow (workflow_dispatch, semver calculation, tag creation)
 
 ### Phase 15: Prebuilt Image Option
 **Goal**: Give users the choice between pulling a prebuilt Docker image (fast) or building from source (customizable)
@@ -385,10 +392,26 @@ Plans:
 - [ ] 20-02: TBD (AWS CloudFormation template and deploy button)
 - [ ] 20-03: TBD (GCP/Azure/DigitalOcean templates)
 
+### Phase 21: Use opencode Fork with PAM Authentication
+**Goal**: Switch from mainline opencode to the pRizz fork (https://github.com/pRizz/opencode) which implements proper PAM-based web authentication
+**Depends on**: Phase 6 (Security and Authentication)
+**Requirements**: None (enhancement)
+**Note**: The mainline opencode uses basic auth stored in config. The pRizz fork integrates with PAM for web authentication, allowing users created via `occ user add` to authenticate directly to the opencode web UI using the same container system users that Cockpit uses.
+**Success Criteria** (what must be TRUE):
+  1. Dockerfile updated to install opencode from https://github.com/pRizz/opencode
+  2. Users created via `occ user add` can log into opencode web UI
+  3. Authentication is consistent between Cockpit and opencode (same PAM users)
+  4. Legacy auth_username/auth_password config fields deprecated or removed
+  5. Documentation updated to reflect PAM-based authentication flow
+**Plans**: TBD
+
+Plans:
+- [ ] 21-01: TBD (Dockerfile update and PAM integration)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17 -> 18 -> 19 -> 20
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -403,16 +426,17 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 9. Dockerfile Version Pinning | 2/2 | ✓ Complete | 2026-01-22 |
 | 10. Remote Administration via Cockpit | 3/3 | ✓ Complete | 2026-01-22 |
 | 11. Remote Host Management | 3/3 | ✓ Complete | 2026-01-23 |
-| 12. Web Desktop UI Investigation | 0/1 | Not started | - |
-| 13. Container Security Tools | 0/1 | Not started | - |
-| 14. Auto-rebuild Detection | 0/1 | Not started | - |
+| 12. Web Desktop UI Investigation | - | Deferred | - |
+| 13. Container Security Tools | - | Deferred | - |
+| 14. Versioning and Release Automation | 0/3 | Not started | - |
 | 15. Prebuilt Image Option | 0/2 | Not started | - |
 | 16. Code Quality Audit | 0/3 | Not started | - |
 | 17. Custom Bind Mounts | 0/3 | Not started | - |
 | 18. CLI Sync Strategy | 0/3 | Not started | - |
 | 19. CI/CD Automation | 0/2 | Not started | - |
 | 20. One-Click Cloud Deploy | 0/3 | Not started | - |
+| 21. Use opencode Fork with PAM Auth | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-23 (Phase 20 added)*
+*Last updated: 2026-01-23 (Phase 21 added)*
