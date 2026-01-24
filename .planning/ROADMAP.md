@@ -284,23 +284,26 @@ Plans:
 - [x] 14-03-PLAN.md — Version bump workflow (workflow_dispatch, semver calculation, tag creation)
 
 ### Phase 15: Prebuilt Image Option
-**Goal**: Give users the choice between pulling a prebuilt Docker image (fast) or building from source (customizable)
-**Depends on**: Phase 5 (Interactive Setup Wizard)
+**Goal**: Give users the choice between pulling a prebuilt Docker image (fast, ~2 min) or building from source (customizable, 30-60 min)
+**Depends on**: Phase 5 (Interactive Setup Wizard), Phase 14 (CI/CD infrastructure)
 **Requirements**: None (enhancement)
-**Note**: Building the Docker image from the embedded Dockerfile takes 10-15 minutes due to compiling Rust tools, installing language runtimes, etc. Users who don't need customization can pull a prebuilt image in ~1-2 minutes. This phase adds CI/CD to publish images and prompts users during first run.
+**Note**: CI/CD for prebuilt images was completed in Phase 14. This phase adds user-facing choice, CLI flags, config options, and provenance tracking. Users who don't need customization can pull prebuilt; those who want transparency can build locally.
 **Success Criteria** (what must be TRUE):
-  1. CI/CD pipeline publishes prebuilt images to GHCR on release
-  2. On first run, user is prompted: "Pull prebuilt image (~2 min) or build from source (~15 min)?"
-  3. Clear explanation of trade-offs shown (prebuilt = faster, build = customizable/latest)
-  4. New config option `image_source` with values: `prebuilt`, `build`, `ask` (default)
-  5. `occ start --pull` forces pull of prebuilt image
-  6. `occ start --build` forces build from source (like current `--cached-rebuild` but for first run)
-  7. Prebuilt images are multi-arch (amd64, arm64) for cross-platform support
-**Plans**: TBD
+  1. On first run, user is prompted: "Pull prebuilt image (~2 min) or build from source (30-60 min)?"
+  2. Clear explanation of trade-offs shown (prebuilt = faster, build = customizable/auditable)
+  3. New config option `image_source` with values: `prebuilt`, `build` (default: prebuilt)
+  4. New config option `update_check` with values: `always`, `once`, `never` (default: always)
+  5. `occ start --pull-sandbox-image` forces pull of prebuilt image
+  6. `occ start --cached-rebuild-sandbox-image` rebuilds with cache
+  7. `occ start --full-rebuild-sandbox-image` rebuilds without cache
+  8. `occ update` respects image_source config (pulls if prebuilt, builds if build)
+  9. `occ status` shows image provenance (source and registry)
+**Plans**: 3 plans
 
 Plans:
-- [ ] 15-01: TBD (CI/CD for prebuilt images)
-- [ ] 15-02: TBD (first-run prompt and config option)
+- [ ] 15-01-PLAN.md — Config schema extension (image_source, update_check) and image state module for provenance
+- [ ] 15-02-PLAN.md — Start command enhancement (renamed flags, pull-or-build logic, first-run prompt)
+- [ ] 15-03-PLAN.md — Wizard integration, update command respects config, status shows provenance
 
 ### Phase 16: Code Quality Audit
 **Goal**: Improve code maintainability by reducing nesting, eliminating duplication, and applying consistent patterns
@@ -537,12 +540,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 | 11. Remote Host Management | 3/3 | ✓ Complete | 2026-01-23 |
 | 12. Web Desktop UI Investigation | - | Deferred | - |
 | 13. Container Security Tools | - | Deferred | - |
-| 14. Versioning and Release Automation | 0/3 | Not started | - |
-| 15. Prebuilt Image Option | 0/2 | Not started | - |
+| 14. Versioning and Release Automation | 3/3 | ✓ Complete | 2026-01-23 |
+| 15. Prebuilt Image Option | 0/3 | Not started | - |
 | 16. Code Quality Audit | 0/3 | Not started | - |
 | 17. Custom Bind Mounts | 0/3 | Not started | - |
 | 18. CLI Sync Strategy | 0/3 | Not started | - |
-| 19. CI/CD Automation | 0/2 | Not started | - |
+| 19. CI/CD Automation | - | MERGED | - |
 | 20. One-Click Cloud Deploy | 0/3 | Not started | - |
 | 21. Use opencode Fork with PAM Auth | 0/1 | Not started | - |
 | 22. Dedupe CLI Logic | 0/2 | Not started | - |
@@ -554,4 +557,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-24 (Phases 23-27 added)*
+*Last updated: 2026-01-24 (Phase 15 planned with 3 plans)*
