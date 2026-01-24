@@ -351,60 +351,66 @@ RUN mkdir -p /etc/cockpit && \
 USER opencode
 
 # -----------------------------------------------------------------------------
-# CI/CD Tools
+# CI/CD + tooling (disabled)
 # -----------------------------------------------------------------------------
-# act v0.2.84 (2026-01-01) - run GitHub Actions locally
-RUN curl -sL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /home/opencode/.local/bin v0.2.84
-
+# NOTE: Commented out because this section adds significant time in GitHub Actions
+# builds. We will reconsider re-adding these tools later, potentially in a more
+# templated/configured Docker image optimized for build tooling.
 # -----------------------------------------------------------------------------
-# Rust Tooling - pinned versions (2026-01-22)
-# -----------------------------------------------------------------------------
-# cargo-nextest 0.9.122 - fast test runner
-# cargo-audit 0.22.0 - security audit
-# cargo-deny 0.19.0 - dependency linter
-RUN . /home/opencode/.cargo/env \
-    && cargo install --locked cargo-nextest@0.9.122 cargo-audit@0.22.0 cargo-deny@0.19.0
-
-# Install mold fast linker (2026-01-22)
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends mold=2.30.* \
-    && rm -rf /var/lib/apt/lists/*
-USER opencode
-
-# -----------------------------------------------------------------------------
-# Code Quality Tools
-# -----------------------------------------------------------------------------
-# JavaScript/TypeScript tools
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && pnpm add -g \
-    prettier \
-    eslint \
-    @biomejs/biome
-
-# Python tools
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && pipx install black \
-    && pipx install ruff
-
-# Test runners (commonly needed)
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && pnpm add -g jest vitest
-
-# Python pytest via pipx
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && pipx install pytest
-
-# -----------------------------------------------------------------------------
-# Protocol Buffers / gRPC (2026-01-22)
-# -----------------------------------------------------------------------------
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler=3.21.* \
-    && rm -rf /var/lib/apt/lists/*
-USER opencode
-
-# grpcurl v1.9.3 (2025-03-11) - gRPC debugging tool
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.3
+# # CI/CD Tools
+# # -----------------------------------------------------------------------------
+# # act v0.2.84 (2026-01-01) - run GitHub Actions locally
+# RUN curl -sL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /home/opencode/.local/bin v0.2.84
+#
+# # -----------------------------------------------------------------------------
+# # Rust Tooling - pinned versions (2026-01-22)
+# # -----------------------------------------------------------------------------
+# # cargo-nextest 0.9.122 - fast test runner
+# # cargo-audit 0.22.0 - security audit
+# # cargo-deny 0.19.0 - dependency linter
+# RUN . /home/opencode/.cargo/env \
+#     && cargo install --locked cargo-nextest@0.9.122 cargo-audit@0.22.0 cargo-deny@0.19.0
+#
+# # Install mold fast linker (2026-01-22)
+# USER root
+# RUN apt-get update && apt-get install -y --no-install-recommends mold=2.30.* \
+#     && rm -rf /var/lib/apt/lists/*
+# USER opencode
+#
+# # -----------------------------------------------------------------------------
+# # Code Quality Tools
+# # -----------------------------------------------------------------------------
+# # JavaScript/TypeScript tools
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && pnpm add -g \
+#     prettier \
+#     eslint \
+#     @biomejs/biome
+#
+# # Python tools
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && pipx install black \
+#     && pipx install ruff
+#
+# # Test runners (commonly needed)
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && pnpm add -g jest vitest
+#
+# # Python pytest via pipx
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && pipx install pytest
+#
+# # -----------------------------------------------------------------------------
+# # Protocol Buffers / gRPC (2026-01-22)
+# # -----------------------------------------------------------------------------
+# USER root
+# RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler=3.21.* \
+#     && rm -rf /var/lib/apt/lists/*
+# USER opencode
+#
+# # grpcurl v1.9.3 (2025-03-11) - gRPC debugging tool
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.3
 
 # -----------------------------------------------------------------------------
 # opencode Installation
