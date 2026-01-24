@@ -6,7 +6,7 @@
 [![MSRV](https://img.shields.io/badge/MSRV-1.85-blue.svg)](https://blog.rust-lang.org/2025/02/20/Rust-1.85.0.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-ready toolkit for deploying [opencode](https://github.com/anomalyco/opencode) as a persistent cloud service.
+A production-ready toolkit for deploying and managing [opencode](https://github.com/anomalyco/opencode) as a persistent cloud service, **sandboxed inside a Docker container** for isolation and security.
 
 ## Quick install (cargo)
 
@@ -17,12 +17,24 @@ opencode-cloud --version
 
 ## Features
 
-- Cross-platform CLI (`opencode-cloud` / `occ`)
-- Docker container management
-- Service lifecycle commands (start, stop, status, logs)
-- Platform service integration (systemd/launchd)
-- XDG-compliant configuration
-- Singleton enforcement (one instance per host)
+- **Sandboxed execution** - opencode runs inside a Docker container, isolated from your host system
+- **Persistent environment** - Your projects, settings, and shell history persist across restarts
+- **Cross-platform CLI** (`opencode-cloud` / `occ`) - Works on Linux and macOS
+- **Service lifecycle commands** - start, stop, restart, status, logs
+- **Platform service integration** - systemd (Linux) / launchd (macOS) for auto-start on boot
+- **Remote host management** - Manage opencode containers on remote servers via SSH
+- **Web-based admin** - Cockpit integration for container administration
+
+## How it works
+
+opencode-cloud runs opencode inside a Docker container, providing:
+
+- **Isolation** - opencode and its AI-generated code run in a sandbox, separate from your host system
+- **Reproducibility** - The container includes a full development environment (languages, tools, runtimes)
+- **Persistence** - Docker volumes preserve your work across container restarts and updates
+- **Security** - Network exposure is opt-in; by default, the service only binds to localhost
+
+The CLI manages the container lifecycle, so you don't need to interact with Docker directly.
 
 ## Requirements
 
@@ -53,7 +65,7 @@ cargo run -p opencode-cloud -- --version
 # Show version
 occ --version
 
-# Start the service (builds image on first run)
+# Start the service (builds Docker container on first run, ~10-15 min)
 occ start
 
 # Start on a custom port
