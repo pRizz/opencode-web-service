@@ -154,13 +154,14 @@ jobs:
     secrets: inherit
 
   # Publish to npm (after checks pass)
-  publish-npm:
-    name: Publish to npm
-    needs: [bump-version, ci-pre-publish]
-    uses: ./.github/workflows/publish-npm.yml
-    with:
-      version: ${{ needs.bump-version.outputs.version }}
-    secrets: inherit
+  # DISABLED - npm is deprecated in favor of cargo install
+  # publish-npm:
+    # name: Publish to npm
+    # needs: [bump-version, ci-pre-publish]
+    # uses: ./.github/workflows/publish-npm.yml
+    # with:
+    #   version: ${{ needs.bump-version.outputs.version }}
+    # secrets: inherit
 
   # Publish Docker image (after checks pass)
   docker-publish:
