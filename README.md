@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/pRizz/opencode-cloud/actions/workflows/ci.yml/badge.svg)](https://github.com/pRizz/opencode-cloud/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/opencode-cloud.svg)](https://crates.io/crates/opencode-cloud)
+[![GHCR](https://img.shields.io/badge/ghcr.io-sandbox-blue?logo=github)](https://github.com/pRizz/opencode-cloud/pkgs/container/opencode-cloud-sandbox)
+[![Docker Hub](https://img.shields.io/docker/v/prizz/opencode-cloud-sandbox?label=docker&sort=semver)](https://hub.docker.com/r/prizz/opencode-cloud-sandbox)
 [![docs.rs](https://docs.rs/opencode-cloud/badge.svg)](https://docs.rs/opencode-cloud)
 [![MSRV](https://img.shields.io/badge/MSRV-1.85-blue.svg)](https://blog.rust-lang.org/2025/02/20/Rust-1.85.0.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -35,6 +37,31 @@ opencode-cloud runs opencode inside a Docker container, providing:
 - **Security** - Network exposure is opt-in; by default, the service only binds to localhost
 
 The CLI manages the container lifecycle, so you don't need to interact with Docker directly.
+
+## Docker Images
+
+The sandbox container image is named **`opencode-cloud-sandbox`** (not `opencode-cloud`) to clearly distinguish it from the CLI tool. The CLI (`opencode-cloud` / `occ`) deploys and manages this sandbox container.
+
+The image is published to both registries:
+
+| Registry | Image |
+|----------|-------|
+| GitHub Container Registry | `ghcr.io/prizz/opencode-cloud-sandbox` |
+| Docker Hub | `prizz/opencode-cloud-sandbox` |
+
+**For most users:** Just use the CLI - it handles image pulling/building automatically:
+```bash
+occ start  # Pulls or builds the image as needed
+```
+
+**For advanced users:** You can pull the image directly if needed:
+```bash
+# From Docker Hub
+docker pull prizz/opencode-cloud-sandbox:latest
+
+# From GitHub Container Registry
+docker pull ghcr.io/prizz/opencode-cloud-sandbox:latest
+```
 
 ## Requirements
 
