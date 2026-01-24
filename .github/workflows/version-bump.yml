@@ -14,12 +14,16 @@ on:
         default: patch
 
 permissions:
-  contents: write  # Required for pushing commits and tags
+  contents: write    # Required for pushing commits and tags
+  packages: write    # Required for GHCR push (docker-publish)
+  id-token: write    # Required for npm provenance (publish)
 
 jobs:
   bump-version:
     name: Bump Version
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.new.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -89,26 +93,24 @@ jobs:
           git add -A
           git commit -m "chore(release): v${{ steps.new.outputs.version }}"
 
-      - name: Create release tags
+      - name: Create release tag
         run: |
-          git tag "v${{ steps.new.outputs.version }}"
           git tag "release/v${{ steps.new.outputs.version }}"
 
-      - name: Push changes and tags
+      - name: Push changes and tag
         run: |
           git push
-          git push origin "v${{ steps.new.outputs.version }}"
           git push origin "release/v${{ steps.new.outputs.version }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ steps.new.outputs.version }}"
+          tag_name: "release/v${{ steps.new.outputs.version }}"
           name: "v${{ steps.new.outputs.version }}"
           body: |
             ## What's Changed
 
-            See [full changelog](https://github.com/pRizz/opencode-cloud/compare/v${{ steps.current.outputs.version }}...v${{ steps.new.outputs.version }})
+            See [full changelog](https://github.com/pRizz/opencode-cloud/compare/release/v${{ steps.current.outputs.version }}...release/v${{ steps.new.outputs.version }})
 
             ## Installation
 
@@ -135,6 +137,23 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Triggered Workflows" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The following workflows will now run automatically:" >> $GITHUB_STEP_SUMMARY
           echo "- **Publish:** Publishes to crates.io and npm" >> $GITHUB_STEP_SUMMARY
           echo "- **Docker Publish:** Builds and pushes Docker image to GHCR" >> $GITHUB_STEP_SUMMARY
+
+  # Call publish workflow after version bump
+  publish:
+    name: Publish to crates.io and npm
+    needs: bump-version
+    uses: ./.github/workflows/publish.yml
+    with:
+      version: ${{ needs.bump-version.outputs.version }}
+    secrets: inherit
+
+  # Call docker-publish workflow after version bump
+  docker-publish:
+    name: Publish Docker image to GHCR
+    needs: bump-version
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      version: ${{ needs.bump-version.outputs.version }}
+    secrets: inherit

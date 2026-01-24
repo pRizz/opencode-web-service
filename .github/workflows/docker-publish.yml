@@ -4,7 +4,12 @@ on:
   push:
     tags:
       - 'release/v*'
-      - 'v*'
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to publish (without v prefix)'
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -21,13 +26,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
         run: |
-          # Handle both release/vX.Y.Z and vX.Y.Z formats
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#release/}"  # Remove release/ prefix if present
-          VERSION="${VERSION#v}"     # Remove v prefix
+          # Use input if called via workflow_call, otherwise extract from tag
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#release/}"  # Remove release/ prefix if present
+            VERSION="${VERSION#v}"     # Remove v prefix
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Building version: ${VERSION}"
 

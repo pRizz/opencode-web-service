@@ -4,7 +4,12 @@ on:
   push:
     tags:
       - 'release/v*'
-      - 'v*'
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to publish (without v prefix)'
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
