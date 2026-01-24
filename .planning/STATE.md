@@ -10,20 +10,20 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 ## Current Position
 
 Phase: 15 of 21 (Prebuilt Image Option)
-Plan: 1 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-24 - Completed 15-01-PLAN.md
+Last activity: 2026-01-24 - Completed 15-03-PLAN.md
 
-Progress: [######################] 77%
+Progress: [#######################] 79%
 
 Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED. Phase 19 (CI/CD Automation) merged into Phase 14.
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 35
+- Total plans completed: 36
 - Average duration: 6 min
-- Total execution time: 3.2 hours
+- Total execution time: 3.3 hours
 
 **By Phase:**
 
@@ -41,10 +41,10 @@ Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED.
 | 10 | 3 | 15 min | 5 min |
 | 11 | 3 | 19 min | 6 min |
 | 14 | 3 | 15 min | 5 min |
-| 15 | 1 | 3 min | 3 min |
+| 15 | 2 | 9 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 7 min, 5 min, 4 min, 10 min, 3 min
+- Last 5 plans: 5 min, 4 min, 10 min, 3 min, 6 min
 - Trend: Stable (~6 min average)
 
 *Updated after each plan completion*
@@ -180,6 +180,9 @@ Recent decisions affecting current work:
 - [15-01]: Update check defaults to "always": Security patches should be discovered automatically
 - [15-01]: State file location in data directory: Image state is operational/ephemeral (which image is current)
 - [15-01]: ISO8601 timestamps via chrono::Utc: Standardized format, timezone-aware, sortable
+- [15-03]: Wizard always prompts for image source: Even in quick setup, choice between 2-min pull vs 60-min build warrants explicit user input
+- [15-03]: Update shows informational messages: Display which method (build/pull) is used and how to change it
+- [15-03]: Graceful provenance display: Status shows image provenance when state file exists, silently skips if missing
 
 ### Pending Todos
 
@@ -215,6 +218,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 15-01-PLAN.md
+Stopped at: Completed 15-03-PLAN.md
 Resume file: None
-Next step: Execute 15-02-PLAN.md (Pull Prebuilt Images)
+Next step: Execute 15-02-PLAN.md or move to Phase 16 (Code Quality Audit)
