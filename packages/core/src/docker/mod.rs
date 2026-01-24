@@ -22,6 +22,7 @@ pub mod image;
 pub mod progress;
 pub mod update;
 pub mod users;
+mod version;
 pub mod volume;
 
 // Core types
@@ -42,6 +43,9 @@ pub use image::{build_image, image_exists, pull_image};
 
 // Update operations
 pub use update::{UpdateResult, has_previous_image, rollback_image, update_image};
+
+// Version detection
+pub use version::{VERSION_LABEL, get_cli_version, get_image_version, versions_compatible};
 
 // Container exec operations
 pub use exec::{exec_command, exec_command_exit_code, exec_command_with_stdin};
