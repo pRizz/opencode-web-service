@@ -20,6 +20,7 @@ pub mod exec;
 mod health;
 pub mod image;
 pub mod progress;
+pub mod state;
 pub mod update;
 pub mod users;
 mod version;
@@ -67,6 +68,9 @@ pub use container::{
     CONTAINER_NAME, OPENCODE_WEB_PORT, container_exists, container_is_running, container_state,
     create_container, remove_container, start_container, stop_container,
 };
+
+// Image state tracking
+pub use state::{ImageState, clear_state, get_state_path, load_state, save_state};
 
 /// Full setup: ensure volumes exist, create container if needed, start it
 ///
