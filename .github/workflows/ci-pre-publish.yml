@@ -64,6 +64,5 @@ jobs:
           pnpm -C packages/cli-node build
 
       - name: Verify CLI works
-        run: |
-          cargo run -p opencode-cloud -- --version
-          node packages/cli-node/dist/index.js --version
+        run: cargo run -p opencode-cloud -- --version
+        # Node CLI is deprecated and exits with error, so we don't verify it
