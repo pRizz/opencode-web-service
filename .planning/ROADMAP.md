@@ -329,19 +329,19 @@ Plans:
 **Requirements**: None (enhancement)
 **Note**: Users often want to work with local project directories inside the container. This phase adds configuration and CLI options to specify bind mounts that map host paths to container paths.
 **Success Criteria** (what must be TRUE):
-  1. User can add bind mounts via `occ config set mounts "/path/on/host:/path/in/container"`
+  1. User can add bind mounts via `occ mount add /host/path:/container/path`
   2. User can add multiple mounts (array in config)
   3. Mounts are applied when container starts
   4. User can specify read-only mounts via `:ro` suffix
   5. Invalid paths (non-existent directories) are validated before container start
   6. `occ start --mount /path:/container/path` allows one-time mount without persisting to config
   7. `occ status` shows active bind mounts
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 17-01: TBD (config schema for mounts, validation)
-- [ ] 17-02: TBD (container creation with bind mounts)
-- [ ] 17-03: TBD (CLI commands and status display)
+- [ ] 17-01-PLAN.md — Core mount module (parsing, validation, error types) and config schema extension
+- [ ] 17-02-PLAN.md — CLI mount subcommand (add/remove/list) and start command flags (--mount, --no-mounts)
+- [ ] 17-03-PLAN.md — Container creation with bind mounts and status display of active mounts
 
 ### Phase 18: CLI Sync Strategy
 **Goal**: Develop and implement a strategy to ensure the Rust CLI and Node CLI remain feature-complete and behavior-consistent
@@ -559,7 +559,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 | 14. Versioning and Release Automation | 3/3 | ✓ Complete | 2026-01-23 |
 | 15. Prebuilt Image Option | 3/3 | ✓ Complete | 2026-01-24 |
 | 16. Code Quality Audit | 2/2 | ✓ Complete | 2026-01-25 |
-| 17. Custom Bind Mounts | 0/3 | Not started | - |
+| 17. Custom Bind Mounts | 0/3 | Planned | - |
 | 18. CLI Sync Strategy | 0/3 | Not started | - |
 | 19. CI/CD Automation | - | MERGED | - |
 | 20. One-Click Cloud Deploy | 0/3 | Not started | - |
@@ -574,4 +574,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-25 (Phase 16 complete)*
+*Last updated: 2026-01-25 (Phase 17 planned)*
