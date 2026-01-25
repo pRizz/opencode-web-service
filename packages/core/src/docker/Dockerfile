@@ -187,14 +187,17 @@ ENV PATH="/home/opencode/.local/bin:${PATH}"
 # Shell Setup: Zsh + Oh My Zsh + Starship
 # -----------------------------------------------------------------------------
 # Oh My Zsh - self-managing installer, trusted to handle versions
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+# Disabled temporarily to reduce Docker build time.
+# RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
 # Starship prompt - self-managing installer, trusted to handle versions
-RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir /home/opencode/.local/bin
+# Disabled temporarily to reduce Docker build time.
+# RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir /home/opencode/.local/bin
 
 # Configure zsh with starship
-RUN echo 'eval "$(starship init zsh)"' >> /home/opencode/.zshrc \
-    && echo 'export PATH="/home/opencode/.local/bin:$PATH"' >> /home/opencode/.zshrc
+# Disabled temporarily to reduce Docker build time.
+# RUN echo 'eval "$(starship init zsh)"' >> /home/opencode/.zshrc \
+#     && echo 'export PATH="/home/opencode/.local/bin:$PATH"' >> /home/opencode/.zshrc
 
 # -----------------------------------------------------------------------------
 # mise: Universal Version Manager
@@ -265,39 +268,46 @@ RUN . /home/opencode/.cargo/env \
     && cargo install --locked ripgrep@15.1.0 eza@0.23.4
 
 # lazygit v0.58.1 (2026-01-12) - terminal UI for git
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && go install github.com/jesseduffield/lazygit@v0.58.1
+# Disabled temporarily to reduce Docker build time.
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && go install github.com/jesseduffield/lazygit@v0.58.1
 
 # -----------------------------------------------------------------------------
 # Additional Development Tools
 # -----------------------------------------------------------------------------
 # fzf v0.67.0 (2025-11-16) - fuzzy finder
-RUN git clone --branch v0.67.0 --depth 1 https://github.com/junegunn/fzf.git /home/opencode/.fzf \
-    && /home/opencode/.fzf/install --all --no-bash --no-fish
+# Disabled temporarily to reduce Docker build time.
+# RUN git clone --branch v0.67.0 --depth 1 https://github.com/junegunn/fzf.git /home/opencode/.fzf \
+#     && /home/opencode/.fzf/install --all --no-bash --no-fish
 
 # yq v4.50.1 (2025-12-14) - YAML processor
-RUN curl -sL https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_$(dpkg --print-architecture) -o /home/opencode/.local/bin/yq \
-    && chmod +x /home/opencode/.local/bin/yq
+# Disabled temporarily to reduce Docker build time.
+# RUN curl -sL https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_$(dpkg --print-architecture) -o /home/opencode/.local/bin/yq \
+#     && chmod +x /home/opencode/.local/bin/yq
 
 # Install direnv (2026-01-22)
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends direnv=2.32.* \
-    && rm -rf /var/lib/apt/lists/*
-USER opencode
-RUN echo 'eval "$(direnv hook zsh)"' >> /home/opencode/.zshrc
+# Disabled temporarily to reduce Docker build time.
+# USER root
+# RUN apt-get update && apt-get install -y --no-install-recommends direnv=2.32.* \
+#     && rm -rf /var/lib/apt/lists/*
+# USER opencode
+# RUN echo 'eval "$(direnv hook zsh)"' >> /home/opencode/.zshrc
 
 # Install HTTPie
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && pipx install httpie
+# Disabled temporarily to reduce Docker build time.
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && pipx install httpie
 
 # Install shellcheck (2026-01-22)
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends shellcheck=0.9.* \
-    && rm -rf /var/lib/apt/lists/*
-USER opencode
+# Disabled temporarily to reduce Docker build time.
+# USER root
+# RUN apt-get update && apt-get install -y --no-install-recommends shellcheck=0.9.* \
+#     && rm -rf /var/lib/apt/lists/*
+# USER opencode
 # shfmt v3.12.0 (2025-07-06) - shell formatter
-RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
-    && go install mvdan.cc/sh/v3/cmd/shfmt@v3.12.0
+# Disabled temporarily to reduce Docker build time.
+# RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
+#     && go install mvdan.cc/sh/v3/cmd/shfmt@v3.12.0
 
 # Install btop system monitor (2026-01-22)
 USER root
