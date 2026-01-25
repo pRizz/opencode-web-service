@@ -19,6 +19,7 @@ mod error;
 pub mod exec;
 mod health;
 pub mod image;
+pub mod mount;
 pub mod progress;
 pub mod state;
 pub mod update;
@@ -62,6 +63,9 @@ pub use volume::{
     MOUNT_CONFIG, MOUNT_PROJECTS, MOUNT_SESSION, VOLUME_CONFIG, VOLUME_NAMES, VOLUME_PROJECTS,
     VOLUME_SESSION, ensure_volumes_exist, remove_all_volumes, remove_volume, volume_exists,
 };
+
+// Bind mount parsing and validation
+pub use mount::{MountError, ParsedMount, check_container_path_warning, validate_mount_path};
 
 // Container lifecycle
 pub use container::{
