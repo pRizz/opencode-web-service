@@ -2,6 +2,12 @@
 //!
 //! This module provides centralized URL formatting helpers to ensure
 //! consistent URL display across all CLI commands.
+//!
+//! Note: These functions are provided for future integration but not yet
+//! used by command implementations. The allow(dead_code) permits this
+//! until commands are refactored to use these shared utilities.
+
+#![allow(dead_code)]
 
 use opencode_cloud_core::load_hosts;
 

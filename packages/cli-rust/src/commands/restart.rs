@@ -2,13 +2,13 @@
 //!
 //! Restarts the opencode service (stop + start).
 
-use crate::output::CommandSpinner;
+use crate::output::{CommandSpinner, format_docker_error, show_docker_error};
 use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
 use opencode_cloud_core::config::load_config;
 use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DockerError, container_is_running, setup_and_start, stop_service,
+    CONTAINER_NAME, container_is_running, setup_and_start, stop_service,
 };
 
 /// Arguments for the restart command
@@ -114,35 +114,4 @@ pub async fn cmd_restart(
     }
 
     Ok(())
-}
-
-/// Format Docker errors with actionable guidance
-fn format_docker_error(e: &DockerError) -> String {
-    match e {
-        DockerError::NotRunning => {
-            format!(
-                "{}\n\n  {}\n  {}",
-                style("Docker is not running").red().bold(),
-                "Start Docker Desktop or the Docker daemon:",
-                style("  sudo systemctl start docker").cyan()
-            )
-        }
-        DockerError::PermissionDenied => {
-            format!(
-                "{}\n\n  {}\n  {}\n  {}",
-                style("Permission denied accessing Docker").red().bold(),
-                "Add your user to the docker group:",
-                style("  sudo usermod -aG docker $USER").cyan(),
-                "Then log out and back in."
-            )
-        }
-        _ => e.to_string(),
-    }
-}
-
-/// Show Docker error in a rich format
-fn show_docker_error(e: &DockerError) {
-    let msg = format_docker_error(e);
-    eprintln!();
-    eprintln!("{msg}");
 }

@@ -3,8 +3,8 @@
 //! Starts the opencode service, building the image if needed.
 
 use crate::output::{
-    format_cockpit_url, format_docker_error, normalize_bind_addr, resolve_remote_addr,
-    show_docker_error, CommandSpinner,
+    CommandSpinner, format_cockpit_url, format_docker_error, normalize_bind_addr,
+    resolve_remote_addr, show_docker_error,
 };
 use anyhow::{Result, anyhow};
 use clap::Args;
@@ -427,7 +427,7 @@ fn show_already_running(
         if config.cockpit_enabled {
             let cockpit_url =
                 format_cockpit_url(maybe_remote_addr.as_deref(), bind_addr, config.cockpit_port);
-            println!("Cockpit:    {} (web admin)", cockpit_url);
+            println!("Cockpit:    {cockpit_url} (web admin)");
         }
     }
 
@@ -643,7 +643,7 @@ fn show_start_result(
         if config.cockpit_enabled {
             let cockpit_url =
                 format_cockpit_url(maybe_remote_addr.as_deref(), bind_addr, config.cockpit_port);
-            println!("Cockpit:    {} (web admin)", cockpit_url);
+            println!("Cockpit:    {cockpit_url} (web admin)");
         }
     }
 

@@ -2,13 +2,13 @@
 //!
 //! Streams container logs with optional filtering, timestamps, and follow mode.
 
-use crate::output::log_level_style;
+use crate::output::{format_docker_error_anyhow, log_level_style};
 use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
 use futures_util::StreamExt;
 use opencode_cloud_core::bollard::container::{LogOutput, LogsOptions};
-use opencode_cloud_core::docker::{CONTAINER_NAME, DockerError, container_is_running};
+use opencode_cloud_core::docker::{CONTAINER_NAME, container_is_running};
 
 /// Arguments for the logs command
 #[derive(Args)]
@@ -51,7 +51,7 @@ pub async fn cmd_logs(args: &LogsArgs, maybe_host: Option<&str>, quiet: bool) ->
     client
         .verify_connection()
         .await
-        .map_err(|e| format_docker_error(&e))?;
+        .map_err(|e| format_docker_error_anyhow(&e))?;
 
     // Check if container exists
     let inspect_result = client.inner().inspect_container(CONTAINER_NAME, None).await;
@@ -167,30 +167,6 @@ fn print_styled_line(line: &str, prefix: Option<&str>) {
         print!("{output}");
     } else {
         println!("{output}");
-    }
-}
-
-/// Format Docker errors with actionable guidance
-fn format_docker_error(e: &DockerError) -> anyhow::Error {
-    match e {
-        DockerError::NotRunning => {
-            anyhow!(
-                "{}\n\n  {}\n  {}",
-                "Docker is not running",
-                "Start Docker Desktop or the Docker daemon:",
-                "  sudo systemctl start docker"
-            )
-        }
-        DockerError::PermissionDenied => {
-            anyhow!(
-                "{}\n\n  {}\n  {}\n  {}",
-                "Permission denied accessing Docker",
-                "Add your user to the docker group:",
-                "  sudo usermod -aG docker $USER",
-                "Then log out and back in."
-            )
-        }
-        _ => anyhow!("{e}"),
     }
 }
 

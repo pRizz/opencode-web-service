@@ -2,12 +2,12 @@
 //!
 //! Stops the opencode service with a graceful 30-second timeout.
 
-use crate::output::CommandSpinner;
+use crate::output::{CommandSpinner, format_docker_error, show_docker_error};
 use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
 use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DEFAULT_STOP_TIMEOUT_SECS, DockerError, container_is_running, stop_service,
+    CONTAINER_NAME, DEFAULT_STOP_TIMEOUT_SECS, container_is_running, stop_service,
 };
 
 /// Arguments for the stop command
@@ -71,35 +71,4 @@ pub async fn cmd_stop(args: &StopArgs, maybe_host: Option<&str>, quiet: bool) ->
     }
 
     Ok(())
-}
-
-/// Format Docker errors with actionable guidance
-fn format_docker_error(e: &DockerError) -> String {
-    match e {
-        DockerError::NotRunning => {
-            format!(
-                "{}\n\n  {}\n  {}",
-                style("Docker is not running").red().bold(),
-                "Start Docker Desktop or the Docker daemon:",
-                style("  sudo systemctl start docker").cyan()
-            )
-        }
-        DockerError::PermissionDenied => {
-            format!(
-                "{}\n\n  {}\n  {}\n  {}",
-                style("Permission denied accessing Docker").red().bold(),
-                "Add your user to the docker group:",
-                style("  sudo usermod -aG docker $USER").cyan(),
-                "Then log out and back in."
-            )
-        }
-        _ => e.to_string(),
-    }
-}
-
-/// Show Docker error in a rich format
-fn show_docker_error(e: &DockerError) {
-    let msg = format_docker_error(e);
-    eprintln!();
-    eprintln!("{msg}");
 }
