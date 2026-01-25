@@ -568,6 +568,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # Version File
 # -----------------------------------------------------------------------------
 # Store version in file for runtime access (debugging, scripts)
+# Keep this near the end: changing the version invalidates the cache
+# and significantly slows down docker builds if placed earlier.
 USER root
 ARG OPENCODE_CLOUD_VERSION=dev
 LABEL org.opencode-cloud.version="${OPENCODE_CLOUD_VERSION}"
