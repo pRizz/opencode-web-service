@@ -5,25 +5,25 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 16 - Code Quality Audit (Complete)
+**Current focus:** Phase 17 - Custom Bind Mounts (In Progress)
 
 ## Current Position
 
-Phase: 16 of 21 (Code Quality Audit)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-24 - Completed 16-01-PLAN.md and 16-02-PLAN.md
+Phase: 17 of 21 (Custom Bind Mounts)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-25 - Completed 17-01-PLAN.md
 
-Progress: [#########################] 84%
+Progress: [##########################] 87%
 
 Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED. Phase 19 (CI/CD Automation) merged into Phase 14.
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 39
+- Total plans completed: 40
 - Average duration: 6 min
-- Total execution time: 3.7 hours
+- Total execution time: 3.8 hours
 
 **By Phase:**
 
@@ -43,10 +43,11 @@ Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED.
 | 14 | 3 | 15 min | 5 min |
 | 15 | 3 | 19 min | 6 min |
 | 16 | 2 | 12 min | 6 min |
+| 17 | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 10 min, 3 min, 6 min, 6 min, 6 min
-- Trend: Stable (~6 min average)
+- Last 5 plans: 3 min, 6 min, 6 min, 6 min, 3 min
+- Trend: Stable (~5 min average)
 
 *Updated after each plan completion*
 
@@ -186,6 +187,9 @@ Recent decisions affecting current work:
 - [15-03]: Graceful provenance display: Status shows image provenance when state file exists, silently skips if missing
 - [16-01]: Docker error formatting centralized: output/errors.rs module with format_docker_error, show_docker_error
 - [16-02]: URL helper location: output/urls.rs module consistent with output module pattern
+- [17-01]: Mount format: /host:/container[:ro|rw] with rw as default
+- [17-01]: System paths warning: /etc, /usr, /bin, /sbin, /lib, /var
+- [17-01]: Validation uses canonicalize() to resolve symlinks and verify existence
 
 ### Pending Todos
 
@@ -214,6 +218,7 @@ Recent decisions affecting current work:
 - Phase 26: Secrets Management (secure API key injection)
 - Phase 27: Windows Support (full Windows compatibility)
 - Phase 28: Remote Host Setup Wizard (run setup wizard for remote hosts)
+- Phase 29 added: DockerHub README Elaboration (improve README.dockerhub.md for discoverability)
 
 ### Blockers/Concerns
 
@@ -222,6 +227,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed Phase 16 (Code Quality Audit)
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None
-Next step: Plan Phase 17 (Custom Bind Mounts)
+Next step: Execute 17-02-PLAN.md (Container Integration)
