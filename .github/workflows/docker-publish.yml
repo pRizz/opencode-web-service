@@ -46,6 +46,61 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Extract Dockerfile from embedded location
+        run: |
+          # The Dockerfile is embedded in the Rust source
+          cp packages/core/src/docker/Dockerfile .
+
+      # Build and test BEFORE authenticating to registries
+      # If smoke test fails, we don't waste time on login steps
+
+      - name: Build test image (amd64 only)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          platforms: linux/amd64
+          build-args: |
+            OPENCODE_CLOUD_VERSION=${{ steps.version.outputs.version }}
+          tags: |
+            ${{ env.IMAGE_NAME_GHCR }}:test
+
+      - name: Smoke test - verify container starts and becomes healthy
+        run: |
+          echo "Starting container for smoke test..."
+          docker run -d \
+            --name smoke-test \
+            --privileged \
+            --cap-add SYS_ADMIN \
+            --tmpfs /run \
+            --tmpfs /tmp \
+            -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+            -p 3000:3000 \
+            -e USE_SYSTEMD=1 \
+            ${{ env.IMAGE_NAME_GHCR }}:test
+
+          echo "Waiting for container to become healthy (max 60 seconds)..."
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✓ Container is healthy after ${i} seconds"
+              docker logs smoke-test --tail 20
+              docker stop smoke-test
+              docker rm smoke-test
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "✗ Container failed to become healthy within 60 seconds"
+          echo "Container logs:"
+          docker logs smoke-test
+          docker stop smoke-test || true
+          docker rm smoke-test || true
+          exit 1
+
+      # Only authenticate after smoke test passes
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -58,11 +113,6 @@ jobs:
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Extract Dockerfile from embedded location
-        run: |
-          # The Dockerfile is embedded in the Rust source
-          cp packages/core/src/docker/Dockerfile .
 
       - name: Build and push
         uses: docker/build-push-action@v6
