@@ -1240,6 +1240,8 @@ async fn show_recent_logs(client: &DockerClient, lines: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opencode_cloud_core::docker::ContainerBindMount;
+    use std::path::PathBuf;
 
     #[test]
     fn port_check_returns_false_for_privileged_ports() {
@@ -1254,5 +1256,174 @@ mod tests {
         // This should find something in the 49152-49252 range (dynamic ports)
         let result = find_next_available_port(49152);
         assert!(result.is_some());
+    }
+
+    // ==================== host_paths_match tests ====================
+
+    #[test]
+    fn host_paths_match_direct_match() {
+        assert!(host_paths_match("/tmp", "/tmp"));
+        assert!(host_paths_match("/home/user/data", "/home/user/data"));
+    }
+
+    #[test]
+    fn host_paths_match_no_match() {
+        assert!(!host_paths_match("/tmp", "/var"));
+        assert!(!host_paths_match("/foo", "/bar"));
+    }
+
+    #[test]
+    fn host_paths_match_host_mnt_prefix() {
+        // Docker Desktop on macOS adds /host_mnt prefix
+        assert!(host_paths_match("/host_mnt/tmp", "/tmp"));
+        assert!(host_paths_match("/host_mnt/home/user", "/home/user"));
+    }
+
+    #[test]
+    fn host_paths_match_host_mnt_private_prefix() {
+        // macOS /tmp -> /private/tmp -> /host_mnt/private/tmp
+        assert!(host_paths_match("/host_mnt/private/tmp", "/tmp"));
+        assert!(host_paths_match("/host_mnt/private/var", "/var"));
+    }
+
+    #[test]
+    fn host_paths_match_private_prefix_in_config() {
+        // Config specifies /private/tmp, container has /host_mnt/private/tmp
+        assert!(host_paths_match("/host_mnt/private/tmp", "/private/tmp"));
+    }
+
+    #[test]
+    fn host_paths_match_no_false_positives() {
+        // Ensure partial matches don't trigger false positives
+        assert!(!host_paths_match("/host_mnt/tmpdir", "/tmp"));
+        assert!(!host_paths_match("/tmp2", "/tmp"));
+    }
+
+    // ==================== mount_has_match tests ====================
+
+    fn make_container_mount(source: &str, target: &str, read_only: bool) -> ContainerBindMount {
+        ContainerBindMount {
+            source: source.to_string(),
+            target: target.to_string(),
+            read_only,
+        }
+    }
+
+    fn make_parsed_mount(host: &str, container: &str, read_only: bool) -> ParsedMount {
+        ParsedMount {
+            host_path: PathBuf::from(host),
+            container_path: container.to_string(),
+            read_only,
+        }
+    }
+
+    #[test]
+    fn mount_has_match_exact_match() {
+        let current = vec![make_container_mount("/tmp", "/mnt/tmp", false)];
+        let conf = make_parsed_mount("/tmp", "/mnt/tmp", false);
+        assert!(mount_has_match(&conf, &current));
+    }
+
+    #[test]
+    fn mount_has_match_macos_translation() {
+        let current = vec![make_container_mount(
+            "/host_mnt/private/tmp",
+            "/mnt/tmp",
+            false,
+        )];
+        let conf = make_parsed_mount("/tmp", "/mnt/tmp", false);
+        assert!(mount_has_match(&conf, &current));
+    }
+
+    #[test]
+    fn mount_has_match_read_only_mismatch() {
+        let current = vec![make_container_mount("/tmp", "/mnt/tmp", true)];
+        let conf = make_parsed_mount("/tmp", "/mnt/tmp", false); // rw vs ro
+        assert!(!mount_has_match(&conf, &current));
+    }
+
+    #[test]
+    fn mount_has_match_target_mismatch() {
+        let current = vec![make_container_mount("/tmp", "/mnt/other", false)];
+        let conf = make_parsed_mount("/tmp", "/mnt/tmp", false);
+        assert!(!mount_has_match(&conf, &current));
+    }
+
+    #[test]
+    fn mount_has_match_source_mismatch() {
+        let current = vec![make_container_mount("/var", "/mnt/tmp", false)];
+        let conf = make_parsed_mount("/tmp", "/mnt/tmp", false);
+        assert!(!mount_has_match(&conf, &current));
+    }
+
+    #[test]
+    fn mount_has_match_finds_in_multiple() {
+        let current = vec![
+            make_container_mount("/var", "/mnt/var", false),
+            make_container_mount("/host_mnt/private/tmp", "/mnt/tmp", true),
+            make_container_mount("/home", "/mnt/home", false),
+        ];
+        let conf = make_parsed_mount("/tmp", "/mnt/tmp", true);
+        assert!(mount_has_match(&conf, &current));
+    }
+
+    // ==================== mounts_equal tests ====================
+
+    #[test]
+    fn mounts_equal_empty_lists() {
+        let current: Vec<ContainerBindMount> = vec![];
+        let configured: Vec<ParsedMount> = vec![];
+        assert!(mounts_equal(&current, &configured));
+    }
+
+    #[test]
+    fn mounts_equal_single_match() {
+        let current = vec![make_container_mount("/tmp", "/mnt/tmp", false)];
+        let configured = vec![make_parsed_mount("/tmp", "/mnt/tmp", false)];
+        assert!(mounts_equal(&current, &configured));
+    }
+
+    #[test]
+    fn mounts_equal_multiple_match() {
+        let current = vec![
+            make_container_mount("/host_mnt/private/tmp", "/mnt/tmp", false),
+            make_container_mount("/home/user", "/mnt/home", true),
+        ];
+        let configured = vec![
+            make_parsed_mount("/tmp", "/mnt/tmp", false),
+            make_parsed_mount("/home/user", "/mnt/home", true),
+        ];
+        assert!(mounts_equal(&current, &configured));
+    }
+
+    #[test]
+    fn mounts_equal_different_order() {
+        // Order shouldn't matter
+        let current = vec![
+            make_container_mount("/home/user", "/mnt/home", true),
+            make_container_mount("/tmp", "/mnt/tmp", false),
+        ];
+        let configured = vec![
+            make_parsed_mount("/tmp", "/mnt/tmp", false),
+            make_parsed_mount("/home/user", "/mnt/home", true),
+        ];
+        assert!(mounts_equal(&current, &configured));
+    }
+
+    #[test]
+    fn mounts_equal_length_mismatch() {
+        let current = vec![make_container_mount("/tmp", "/mnt/tmp", false)];
+        let configured = vec![
+            make_parsed_mount("/tmp", "/mnt/tmp", false),
+            make_parsed_mount("/var", "/mnt/var", false),
+        ];
+        assert!(!mounts_equal(&current, &configured));
+    }
+
+    #[test]
+    fn mounts_equal_content_mismatch() {
+        let current = vec![make_container_mount("/tmp", "/mnt/tmp", false)];
+        let configured = vec![make_parsed_mount("/var", "/mnt/var", false)];
+        assert!(!mounts_equal(&current, &configured));
     }
 }
