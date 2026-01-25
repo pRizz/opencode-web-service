@@ -55,6 +55,24 @@ pub fn prompt_auth(step: usize, total: usize) -> Result<(String, String)> {
         style("Authentication").bold()
     );
     println!();
+    println!(
+        "{}",
+        style("These are Linux system credentials created inside the container. The web").dim()
+    );
+    println!(
+        "{}",
+        style("interface uses PAM to authenticate against them, and they also work for SSH").dim()
+    );
+    println!(
+        "{}",
+        style("or any PAM-enabled service. Passwords are SHA-512 hashed via chpasswd and").dim()
+    );
+    println!(
+        "{}",
+        style("stored in /etc/shadow. Your config file only stores usernames, never passwords.")
+            .dim()
+    );
+    println!();
 
     loop {
         // Ask how user wants to set credentials
