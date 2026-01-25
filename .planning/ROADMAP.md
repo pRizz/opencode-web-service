@@ -27,7 +27,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [~] **Phase 13: Container Security Tools** - ~~Add trivy, gitleaks, hadolint, age, sops, mkcert to container~~ (DEFERRED)
 - [x] **Phase 14: Versioning and Release Automation** - CI/CD for Docker images, version detection, auto-rebuild prompts
 - [x] **Phase 15: Prebuilt Image Option** - Option to pull prebuilt images vs building from scratch
-- [ ] **Phase 16: Code Quality Audit** - Reduce nesting, eliminate duplication, improve readability
+- [x] **Phase 16: Code Quality Audit** - Reduce nesting, eliminate duplication, improve readability
 - [ ] **Phase 17: Custom Bind Mounts** - Allow users to mount local directories into the container
 - [ ] **Phase 18: CLI Sync Strategy** - Strategy for keeping Rust and Node CLIs in sync
 - [~] **Phase 19: CI/CD Automation** - ~~Automated Docker image uploads~~ (MERGED into Phase 14)
@@ -320,8 +320,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — Extract duplicated format_docker_error into shared output/errors.rs module
-- [ ] 16-02-PLAN.md — Extract duplicated URL formatting (Cockpit URL, remote address) into output/urls.rs
+- [x] 16-01-PLAN.md — Extract duplicated format_docker_error into shared output/errors.rs module
+- [x] 16-02-PLAN.md — Extract duplicated URL formatting (Cockpit URL, remote address) into output/urls.rs
 
 ### Phase 17: Custom Bind Mounts
 **Goal**: Allow users to specify local filesystem directories to mount into the Docker container
@@ -558,7 +558,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 | 13. Container Security Tools | - | Deferred | - |
 | 14. Versioning and Release Automation | 3/3 | ✓ Complete | 2026-01-23 |
 | 15. Prebuilt Image Option | 3/3 | ✓ Complete | 2026-01-24 |
-| 16. Code Quality Audit | 0/2 | Not started | - |
+| 16. Code Quality Audit | 2/2 | ✓ Complete | 2026-01-25 |
 | 17. Custom Bind Mounts | 0/3 | Not started | - |
 | 18. CLI Sync Strategy | 0/3 | Not started | - |
 | 19. CI/CD Automation | - | MERGED | - |
@@ -574,4 +574,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-24 (Phase 16 planned)*
+*Last updated: 2026-01-25 (Phase 16 complete)*
