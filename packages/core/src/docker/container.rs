@@ -366,6 +366,58 @@ pub async fn container_state(client: &DockerClient, name: &str) -> Result<String
     }
 }
 
+/// Container port configuration
+#[derive(Debug, Clone)]
+pub struct ContainerPorts {
+    /// Host port for opencode web UI (mapped from container port 3000)
+    pub opencode_port: Option<u16>,
+    /// Host port for Cockpit (mapped from container port 9090)
+    pub cockpit_port: Option<u16>,
+}
+
+/// Get the port bindings from an existing container
+///
+/// Returns the host ports that the container's internal ports are mapped to.
+/// Returns None for ports that aren't mapped.
+pub async fn get_container_ports(
+    client: &DockerClient,
+    name: &str,
+) -> Result<ContainerPorts, DockerError> {
+    debug!("Getting container ports: {}", name);
+
+    let info = client
+        .inner()
+        .inspect_container(name, None)
+        .await
+        .map_err(|e| DockerError::Container(format!("Failed to inspect container {name}: {e}")))?;
+
+    let port_bindings = info
+        .host_config
+        .and_then(|hc| hc.port_bindings)
+        .unwrap_or_default();
+
+    // Extract opencode port (3000/tcp -> host port)
+    let opencode_port = port_bindings
+        .get("3000/tcp")
+        .and_then(|bindings| bindings.as_ref())
+        .and_then(|bindings| bindings.first())
+        .and_then(|binding| binding.host_port.as_ref())
+        .and_then(|port_str| port_str.parse::<u16>().ok());
+
+    // Extract cockpit port (9090/tcp -> host port)
+    let cockpit_port = port_bindings
+        .get("9090/tcp")
+        .and_then(|bindings| bindings.as_ref())
+        .and_then(|bindings| bindings.first())
+        .and_then(|binding| binding.host_port.as_ref())
+        .and_then(|port_str| port_str.parse::<u16>().ok());
+
+    Ok(ContainerPorts {
+        opencode_port,
+        cockpit_port,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

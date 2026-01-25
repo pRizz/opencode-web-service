@@ -15,8 +15,9 @@ use opencode_cloud_core::config::save_config;
 use opencode_cloud_core::docker::{
     CONTAINER_NAME, DockerClient, DockerError, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT, ImageState,
     ParsedMount, ProgressReporter, build_image, check_container_path_warning, container_exists,
-    container_is_running, get_cli_version, get_image_version, image_exists, pull_image, save_state,
-    setup_and_start, stop_service, validate_mount_path, versions_compatible,
+    container_is_running, get_cli_version, get_container_ports, get_image_version, image_exists,
+    pull_image, save_state, setup_and_start, stop_service, validate_mount_path,
+    versions_compatible,
 };
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
@@ -273,6 +274,69 @@ pub async fn cmd_start(
             style("occ setup").cyan(),
             style("occ config set allow_unauthenticated_network true").dim()
         ));
+    }
+
+    // Check for port mismatch on existing container
+    if !is_first_start && !any_rebuild {
+        let current_ports = get_container_ports(&client, CONTAINER_NAME).await?;
+        let current_opencode_port = current_ports.opencode_port.unwrap_or(3000);
+        let current_cockpit_port = current_ports.cockpit_port.unwrap_or(9090);
+
+        let port_mismatch = current_opencode_port != port;
+        let cockpit_mismatch = current_cockpit_port != config.cockpit_port;
+
+        if port_mismatch || cockpit_mismatch {
+            if quiet {
+                // In quiet mode, fail with clear error
+                return Err(anyhow!(
+                    "Port mismatch: container uses port {current_opencode_port} but requested port {port}.\n\
+                     Container must be recreated to change ports.\n\
+                     Run without --quiet to be prompted, or manually remove with:\n  \
+                     occ stop && docker rm {CONTAINER_NAME}"
+                ));
+            }
+
+            eprintln!();
+            eprintln!(
+                "{} {}",
+                style("Port mismatch detected:").yellow().bold(),
+                style("Container must be recreated to change ports.").yellow()
+            );
+            if port_mismatch {
+                eprintln!(
+                    "  opencode port: {} (current) → {} (requested)",
+                    style(current_opencode_port).red(),
+                    style(port).green()
+                );
+            }
+            if cockpit_mismatch {
+                eprintln!(
+                    "  cockpit port: {} (current) → {} (requested)",
+                    style(current_cockpit_port).red(),
+                    style(config.cockpit_port).green()
+                );
+            }
+            eprintln!();
+            eprintln!(
+                "{}",
+                style("This will stop and recreate the container from the existing image.").dim()
+            );
+            eprintln!("{}", style("Your data volumes will be preserved.").dim());
+            eprintln!();
+
+            let confirm = dialoguer::Confirm::new()
+                .with_prompt("Recreate container with new port(s)?")
+                .default(true)
+                .interact()?;
+
+            if confirm {
+                any_rebuild = true;
+            } else {
+                return Err(anyhow!(
+                    "Container not recreated. To use port {port}, run:\n  occ stop && docker rm {CONTAINER_NAME} && occ start --port {port}"
+                ));
+            }
+        }
     }
 
     // Handle rebuild: remove existing container so a new one is created from the new image
