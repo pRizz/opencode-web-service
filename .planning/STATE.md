@@ -9,21 +9,21 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 ## Current Position
 
-Phase: 17 of 21 (Custom Bind Mounts)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-25 - Completed 17-03-PLAN.md
+Phase: 18 of 21 (CLI Sync Strategy)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-25 - Completed 18-01-PLAN.md
 
-Progress: [############################] 91%
+Progress: [############################] 92%
 
 Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED. Phase 19 (CI/CD Automation) merged into Phase 14.
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 42
+- Total plans completed: 43
 - Average duration: 6 min
-- Total execution time: 4.0 hours
+- Total execution time: 4.1 hours
 
 **By Phase:**
 
@@ -44,10 +44,11 @@ Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED.
 | 15 | 3 | 19 min | 6 min |
 | 16 | 2 | 12 min | 6 min |
 | 17 | 3 | 11 min | 4 min |
+| 18 | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 6 min, 6 min, 3 min, 3 min, 5 min
-- Trend: Stable (~5 min average)
+- Last 5 plans: 6 min, 3 min, 3 min, 5 min, 3 min
+- Trend: Stable (~4 min average)
 
 *Updated after each plan completion*
 
@@ -195,6 +196,8 @@ Recent decisions affecting current work:
 - [17-02]: Restart note in output: CLI reminds users to restart container for changes to take effect
 - [17-03]: Restart/update commands pass None for bind_mounts: User can restart with mounts after if needed
 - [17-03]: Status displays bind mounts with source indicator (config vs cli)
+- [18-01]: stdio: inherit for passthrough: Preserves TTY detection, colors, interactive prompts
+- [18-01]: Git hook excludes cli-node README: Allow package-specific wrapper documentation
 
 ### Pending Todos
 
@@ -233,6 +236,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 17-03-PLAN.md (Phase 17 complete)
+Stopped at: Completed 18-01-PLAN.md
 Resume file: None
-Next step: Phase 18 - CLI Sync Strategy
+Next step: Plan 18-02 or 18-03 in Phase 18
