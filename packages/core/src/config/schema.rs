@@ -108,6 +108,11 @@ pub struct Config {
     /// When to check for updates: 'always' (every start), 'once' (once per version), 'never'
     #[serde(default = "default_update_check")]
     pub update_check: String,
+
+    /// Bind mounts to apply when starting the container
+    /// Format: ["/host/path:/container/path", "/host:/mnt:ro"]
+    #[serde(default)]
+    pub mounts: Vec<String>,
 }
 
 fn default_opencode_web_port() -> u16 {
@@ -214,6 +219,7 @@ impl Default for Config {
             cockpit_enabled: default_cockpit_enabled(),
             image_source: default_image_source(),
             update_check: default_update_check(),
+            mounts: Vec::new(),
         }
     }
 }
@@ -294,6 +300,7 @@ mod tests {
         assert_eq!(config.rate_limit_attempts, 5);
         assert_eq!(config.rate_limit_window_seconds, 60);
         assert!(config.users.is_empty());
+        assert!(config.mounts.is_empty());
     }
 
     #[test]
@@ -350,6 +357,7 @@ mod tests {
             cockpit_enabled: true,
             image_source: default_image_source(),
             update_check: default_update_check(),
+            mounts: Vec::new(),
         };
         let json = serde_json::to_string(&config).unwrap();
         let parsed: Config = serde_json::from_str(&json).unwrap();
@@ -669,5 +677,37 @@ mod tests {
         let config: Config = serde_json::from_str(json).unwrap();
         assert_eq!(config.image_source, "prebuilt");
         assert_eq!(config.update_check, "always");
+    }
+
+    // Tests for mounts field
+
+    #[test]
+    fn test_default_config_mounts_field() {
+        let config = Config::default();
+        assert!(config.mounts.is_empty());
+    }
+
+    #[test]
+    fn test_serialize_deserialize_with_mounts() {
+        let config = Config {
+            mounts: vec![
+                "/home/user/data:/workspace/data".to_string(),
+                "/home/user/config:/etc/app:ro".to_string(),
+            ],
+            ..Config::default()
+        };
+        let json = serde_json::to_string(&config).unwrap();
+        let parsed: Config = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.mounts.len(), 2);
+        assert_eq!(parsed.mounts[0], "/home/user/data:/workspace/data");
+        assert_eq!(parsed.mounts[1], "/home/user/config:/etc/app:ro");
+    }
+
+    #[test]
+    fn test_mounts_field_default_on_missing() {
+        // Old configs without mounts field should get empty vec
+        let json = r#"{"version": 1}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert!(config.mounts.is_empty());
     }
 }
