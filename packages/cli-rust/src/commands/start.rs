@@ -2,7 +2,10 @@
 //!
 //! Starts the opencode service, building the image if needed.
 
-use crate::output::CommandSpinner;
+use crate::output::{
+    format_cockpit_url, format_docker_error, normalize_bind_addr, resolve_remote_addr,
+    show_docker_error, CommandSpinner,
+};
 use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
@@ -15,7 +18,6 @@ use opencode_cloud_core::docker::{
     get_image_version, image_exists, pull_image, save_state, setup_and_start, stop_service,
     versions_compatible,
 };
-use opencode_cloud_core::load_hosts;
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
 
@@ -405,11 +407,7 @@ fn show_already_running(
     }
 
     // Get remote host address if using --host
-    let maybe_remote_addr = host_name.and_then(|name| {
-        load_hosts()
-            .ok()
-            .and_then(|h| h.get_host(name).map(|cfg| cfg.hostname.clone()))
-    });
+    let maybe_remote_addr = resolve_remote_addr(host_name);
 
     let msg = crate::format_host_message(host_name, "Service is already running");
     println!("{}", style(msg).dim());
@@ -427,22 +425,9 @@ fn show_already_running(
     // Show Cockpit URL if enabled
     if let Ok(config) = opencode_cloud_core::config::load_config() {
         if config.cockpit_enabled {
-            if let Some(ref remote_addr) = maybe_remote_addr {
-                println!(
-                    "Cockpit:    http://{}:{} (web admin)",
-                    remote_addr, config.cockpit_port
-                );
-            } else {
-                let cockpit_addr = if bind_addr == "0.0.0.0" || bind_addr == "::" {
-                    "127.0.0.1"
-                } else {
-                    bind_addr
-                };
-                println!(
-                    "Cockpit:    http://{}:{} (web admin)",
-                    cockpit_addr, config.cockpit_port
-                );
-            }
+            let cockpit_url =
+                format_cockpit_url(maybe_remote_addr.as_deref(), bind_addr, config.cockpit_port);
+            println!("Cockpit:    {} (web admin)", cockpit_url);
         }
     }
 
@@ -625,11 +610,7 @@ fn show_start_result(
     host_name: Option<&str>,
 ) {
     // Get remote host address if using --host
-    let maybe_remote_addr = host_name.and_then(|name| {
-        load_hosts()
-            .ok()
-            .and_then(|h| h.get_host(name).map(|cfg| cfg.hostname.clone()))
-    });
+    let maybe_remote_addr = resolve_remote_addr(host_name);
 
     if quiet {
         if let Some(ref remote_addr) = maybe_remote_addr {
@@ -660,22 +641,9 @@ fn show_start_result(
     // Show Cockpit availability if enabled
     if let Ok(config) = opencode_cloud_core::config::load_config() {
         if config.cockpit_enabled {
-            if let Some(ref remote_addr) = maybe_remote_addr {
-                println!(
-                    "Cockpit:    http://{}:{} (web admin)",
-                    remote_addr, config.cockpit_port
-                );
-            } else {
-                let cockpit_addr = if bind_addr == "0.0.0.0" || bind_addr == "::" {
-                    "127.0.0.1"
-                } else {
-                    bind_addr
-                };
-                println!(
-                    "Cockpit:    http://{}:{} (web admin)",
-                    cockpit_addr, config.cockpit_port
-                );
-            }
+            let cockpit_url =
+                format_cockpit_url(maybe_remote_addr.as_deref(), bind_addr, config.cockpit_port);
+            println!("Cockpit:    {} (web admin)", cockpit_url);
         }
     }
 
@@ -703,11 +671,7 @@ fn open_browser_if_requested(should_open: bool, port: u16, bind_addr: &str) {
     }
 
     // For network-exposed addresses like 0.0.0.0, use localhost for browser
-    let browser_addr = if bind_addr == "0.0.0.0" || bind_addr == "::" {
-        "127.0.0.1"
-    } else {
-        bind_addr
-    };
+    let browser_addr = normalize_bind_addr(bind_addr);
     let url = format!("http://{browser_addr}:{port}");
     if let Err(e) = webbrowser::open(&url) {
         eprintln!(
@@ -716,60 +680,6 @@ fn open_browser_if_requested(should_open: bool, port: u16, bind_addr: &str) {
             e
         );
     }
-}
-
-/// Format Docker errors with actionable guidance
-fn format_docker_error(e: &DockerError) -> String {
-    match e {
-        DockerError::NotRunning => {
-            format!(
-                "{}\n\n  {}\n  {}\n\n  {}: {}",
-                style("Docker is not running").red().bold(),
-                "Start Docker Desktop or the Docker daemon:",
-                style("  sudo systemctl start docker").cyan(),
-                style("Docs").dim(),
-                style("https://github.com/pRizz/opencode-cloud#troubleshooting").dim()
-            )
-        }
-        DockerError::PermissionDenied => {
-            format!(
-                "{}\n\n  {}\n  {}\n  {}\n\n  {}: {}",
-                style("Permission denied accessing Docker").red().bold(),
-                "Add your user to the docker group:",
-                style("  sudo usermod -aG docker $USER").cyan(),
-                "Then log out and back in.",
-                style("Docs").dim(),
-                style("https://github.com/pRizz/opencode-cloud#troubleshooting").dim()
-            )
-        }
-        DockerError::Connection(msg) => {
-            format!(
-                "{}\n\n  {}\n\n  {}: {}",
-                style("Cannot connect to Docker").red().bold(),
-                msg,
-                style("Docs").dim(),
-                style("https://github.com/pRizz/opencode-cloud#troubleshooting").dim()
-            )
-        }
-        DockerError::Container(msg) if msg.contains("port") => {
-            format!(
-                "{}\n\n  {}\n  {}\n\n  {}: {}",
-                style("Port conflict").red().bold(),
-                msg,
-                style("  Try: occ start --port <different-port>").cyan(),
-                style("Docs").dim(),
-                style("https://github.com/pRizz/opencode-cloud#troubleshooting").dim()
-            )
-        }
-        _ => e.to_string(),
-    }
-}
-
-/// Show Docker error in a rich format
-fn show_docker_error(e: &DockerError) {
-    let msg = format_docker_error(e);
-    eprintln!();
-    eprintln!("{msg}");
 }
 
 /// Check if a port is available for binding
