@@ -1,108 +1,51 @@
 //! Config show subcommand
 //!
 //! Displays current configuration in table or JSON format.
+//! Uses serde serialization to automatically include all Config fields.
 
 use anyhow::Result;
 use comfy_table::{Cell, Color, Table};
 use opencode_cloud_core::{Config, config};
+use serde_json::Value;
+
+/// Fields that should have their values masked in output
+const SENSITIVE_FIELDS: &[&str] = &["auth_password"];
+
+/// Fields that should be highlighted when they indicate security concerns
+const SECURITY_FIELDS: &[(&str, &str)] = &[
+    ("bind_address", "0.0.0.0"),               // Network exposed
+    ("bind_address", "::"),                    // Network exposed (IPv6)
+    ("allow_unauthenticated_network", "true"), // No auth required
+];
 
 /// Show current configuration
 ///
 /// Displays all configuration values in a formatted table.
+/// Uses serde serialization to automatically include all fields.
 /// Passwords are masked for security.
 pub fn cmd_config_show(config: &Config, json: bool, _quiet: bool) -> Result<()> {
     if json {
         // Output as JSON with password masked
-        let masked_config = MaskedConfig::from(config);
-        let output = serde_json::to_string_pretty(&masked_config)?;
+        let mut value = serde_json::to_value(config)?;
+        mask_sensitive_fields(&mut value);
+        let output = serde_json::to_string_pretty(&value)?;
         println!("{output}");
     } else {
-        // Output as table
+        // Serialize config to JSON Value to get all fields automatically
+        let value = serde_json::to_value(config)?;
+        let obj = value
+            .as_object()
+            .expect("Config should serialize to object");
+
         let mut table = Table::new();
         table.set_header(vec!["Key", "Value"]);
 
-        // Add each configuration value
-        table.add_row(vec![
-            Cell::new("version"),
-            Cell::new(config.version.to_string()),
-        ]);
-        table.add_row(vec![
-            Cell::new("opencode_web_port"),
-            Cell::new(config.opencode_web_port.to_string()),
-        ]);
-        table.add_row(vec![Cell::new("bind"), Cell::new(&config.bind)]);
-        table.add_row(vec![
-            Cell::new("bind_address"),
-            format_bind_address(&config.bind_address, config.is_network_exposed()),
-        ]);
-        table.add_row(vec![
-            Cell::new("auto_restart"),
-            Cell::new(config.auto_restart.to_string()),
-        ]);
-        table.add_row(vec![Cell::new("boot_mode"), Cell::new(&config.boot_mode)]);
-        table.add_row(vec![
-            Cell::new("restart_retries"),
-            Cell::new(config.restart_retries.to_string()),
-        ]);
-        table.add_row(vec![
-            Cell::new("restart_delay"),
-            Cell::new(config.restart_delay.to_string()),
-        ]);
-        table.add_row(vec![
-            Cell::new("auth_username"),
-            Cell::new(format_optional(&config.auth_username)),
-        ]);
-        table.add_row(vec![
-            Cell::new("auth_password"),
-            Cell::new(format_password(&config.auth_password)),
-        ]);
-        table.add_row(vec![
-            Cell::new("container_env"),
-            Cell::new(format_env_vars(&config.container_env)),
-        ]);
-
-        // Security fields
-        table.add_row(vec![
-            Cell::new("trust_proxy"),
-            Cell::new(if config.trust_proxy { "true" } else { "false" }),
-        ]);
-        table.add_row(vec![
-            Cell::new("allow_unauthenticated_network"),
-            Cell::new(if config.allow_unauthenticated_network {
-                "true"
-            } else {
-                "false"
-            })
-            .fg(if config.allow_unauthenticated_network {
-                Color::Yellow
-            } else {
-                Color::Reset
-            }),
-        ]);
-        table.add_row(vec![
-            Cell::new("rate_limit_attempts"),
-            Cell::new(config.rate_limit_attempts.to_string()),
-        ]);
-        table.add_row(vec![
-            Cell::new("rate_limit_window_seconds"),
-            Cell::new(config.rate_limit_window_seconds.to_string()),
-        ]);
-        table.add_row(vec![
-            Cell::new("users"),
-            Cell::new(if config.users.is_empty() {
-                "(none)".to_string()
-            } else {
-                config.users.join(", ")
-            }),
-        ]);
-        table.add_row(vec![
-            Cell::new("cockpit_enabled"),
-            Cell::new(config.cockpit_enabled.to_string()),
-        ]);
-        table.add_row(vec![
-            Cell::new("cockpit_port"),
-            Cell::new(config.cockpit_port.to_string()),
-        ]);
+        // Iterate over all fields in serialization order
+        for (key, val) in obj {
+            let display_value = format_value(key, val);
+            let cell = apply_cell_styling(key, val, display_value);
+            table.add_row(vec![Cell::new(key), cell]);
+        }
 
         println!("{table}");
 
@@ -116,91 +59,91 @@ pub fn cmd_config_show(config: &Config, json: bool, _quiet: bool) -> Result<()> 
     Ok(())
 }
 
-/// Format an optional string for display
-fn format_optional(value: &Option<String>) -> String {
+/// Format a JSON value for display
+fn format_value(key: &str, value: &Value) -> String {
+    // Mask sensitive fields
+    if SENSITIVE_FIELDS.contains(&key) {
+        return match value {
+            Value::String(s) if !s.is_empty() => "********".to_string(),
+            Value::Null => "(not set)".to_string(),
+            _ => "(not set)".to_string(),
+        };
+    }
+
     match value {
-        Some(s) if !s.is_empty() => s.clone(),
-        _ => "(not set)".to_string(),
-    }
-}
-
-/// Format bind_address with color coding based on security status
-fn format_bind_address(value: &str, is_exposed: bool) -> Cell {
-    if is_exposed {
-        Cell::new(value).fg(Color::Yellow)
-    } else {
-        Cell::new(value).fg(Color::Green)
-    }
-}
-
-/// Format a password for display (masked)
-fn format_password(value: &Option<String>) -> String {
-    match value {
-        Some(s) if !s.is_empty() => "********".to_string(),
-        _ => "(not set)".to_string(),
-    }
-}
-
-/// Format environment variables for display
-fn format_env_vars(vars: &[String]) -> String {
-    if vars.is_empty() {
-        "(none)".to_string()
-    } else {
-        vars.join(", ")
-    }
-}
-
-/// Config struct with password masked for JSON output
-#[derive(serde::Serialize)]
-struct MaskedConfig {
-    version: u32,
-    opencode_web_port: u16,
-    bind: String,
-    bind_address: String,
-    auto_restart: bool,
-    boot_mode: String,
-    restart_retries: u32,
-    restart_delay: u32,
-    auth_username: Option<String>,
-    auth_password: Option<String>,
-    container_env: Vec<String>,
-    trust_proxy: bool,
-    allow_unauthenticated_network: bool,
-    rate_limit_attempts: u32,
-    rate_limit_window_seconds: u32,
-    users: Vec<String>,
-    cockpit_enabled: bool,
-    cockpit_port: u16,
-}
-
-impl From<&Config> for MaskedConfig {
-    fn from(config: &Config) -> Self {
-        Self {
-            version: config.version,
-            opencode_web_port: config.opencode_web_port,
-            bind: config.bind.clone(),
-            bind_address: config.bind_address.clone(),
-            auto_restart: config.auto_restart,
-            boot_mode: config.boot_mode.clone(),
-            restart_retries: config.restart_retries,
-            restart_delay: config.restart_delay,
-            auth_username: config.auth_username.clone(),
-            // Mask password in JSON output too
-            auth_password: config.auth_password.as_ref().map(|s| {
-                if s.is_empty() {
-                    String::new()
+        Value::Null => "(not set)".to_string(),
+        Value::Bool(b) => b.to_string(),
+        Value::Number(n) => n.to_string(),
+        Value::String(s) => {
+            if s.is_empty() {
+                // Special case: Optional<String> that serialized as empty string
+                if key == "auth_username" || key == "auth_password" {
+                    "(not set)".to_string()
                 } else {
-                    "********".to_string()
+                    s.clone()
                 }
-            }),
-            container_env: config.container_env.clone(),
-            trust_proxy: config.trust_proxy,
-            allow_unauthenticated_network: config.allow_unauthenticated_network,
-            rate_limit_attempts: config.rate_limit_attempts,
-            rate_limit_window_seconds: config.rate_limit_window_seconds,
-            users: config.users.clone(),
-            cockpit_enabled: config.cockpit_enabled,
-            cockpit_port: config.cockpit_port,
+            } else {
+                s.clone()
+            }
+        }
+        Value::Array(arr) => {
+            if arr.is_empty() {
+                "(none)".to_string()
+            } else {
+                arr.iter()
+                    .filter_map(|v| v.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            }
+        }
+        Value::Object(_) => serde_json::to_string(value).unwrap_or_default(),
+    }
+}
+
+/// Apply color styling to cells based on security implications
+fn apply_cell_styling(key: &str, value: &Value, display_value: String) -> Cell {
+    // Check if this field+value combination has security implications
+    let value_str = match value {
+        Value::String(s) => s.as_str(),
+        Value::Bool(b) => {
+            if *b {
+                "true"
+            } else {
+                "false"
+            }
+        }
+        _ => "",
+    };
+
+    for (field, dangerous_value) in SECURITY_FIELDS {
+        if key == *field && value_str == *dangerous_value {
+            return Cell::new(display_value).fg(Color::Yellow);
+        }
+    }
+
+    // Green for secure bind_address values
+    if key == "bind_address" {
+        let is_localhost =
+            value_str == "127.0.0.1" || value_str == "::1" || value_str == "localhost";
+        if is_localhost {
+            return Cell::new(display_value).fg(Color::Green);
+        }
+    }
+
+    Cell::new(display_value)
+}
+
+/// Mask sensitive fields in a JSON Value (for JSON output)
+fn mask_sensitive_fields(value: &mut Value) {
+    if let Value::Object(obj) = value {
+        for (key, val) in obj.iter_mut() {
+            if SENSITIVE_FIELDS.contains(&key.as_str()) {
+                if let Value::String(s) = val {
+                    if !s.is_empty() {
+                        *val = Value::String("********".to_string());
+                    }
+                }
+            }
         }
     }
 }
@@ -210,64 +153,65 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_format_optional_with_value() {
-        assert_eq!(format_optional(&Some("admin".to_string())), "admin");
+    fn test_format_value_masks_password() {
+        let val = Value::String("secret".to_string());
+        assert_eq!(format_value("auth_password", &val), "********");
     }
 
     #[test]
-    fn test_format_optional_with_empty() {
-        assert_eq!(format_optional(&Some(String::new())), "(not set)");
+    fn test_format_value_shows_not_set_for_empty_password() {
+        let val = Value::String(String::new());
+        assert_eq!(format_value("auth_password", &val), "(not set)");
     }
 
     #[test]
-    fn test_format_optional_with_none() {
-        assert_eq!(format_optional(&None), "(not set)");
+    fn test_format_value_preserves_normal_strings() {
+        let val = Value::String("localhost".to_string());
+        assert_eq!(format_value("bind", &val), "localhost");
     }
 
     #[test]
-    fn test_format_password_masks_value() {
-        assert_eq!(format_password(&Some("secret123".to_string())), "********");
+    fn test_format_value_formats_arrays() {
+        let val = Value::Array(vec![
+            Value::String("FOO=bar".to_string()),
+            Value::String("BAZ=qux".to_string()),
+        ]);
+        assert_eq!(format_value("container_env", &val), "FOO=bar, BAZ=qux");
     }
 
     #[test]
-    fn test_format_password_shows_not_set_when_empty() {
-        assert_eq!(format_password(&Some(String::new())), "(not set)");
+    fn test_format_value_shows_none_for_empty_array() {
+        let val = Value::Array(vec![]);
+        assert_eq!(format_value("container_env", &val), "(none)");
     }
 
     #[test]
-    fn test_format_password_shows_not_set_when_none() {
-        assert_eq!(format_password(&None), "(not set)");
+    fn test_all_config_fields_serialize() {
+        // This test ensures that Config can be serialized to JSON
+        // If a field is added that can't be serialized, this will fail
+        let config = Config::default();
+        let value = serde_json::to_value(&config).expect("Config should serialize");
+        let obj = value.as_object().expect("Should be an object");
+
+        // Verify some expected fields exist
+        assert!(obj.contains_key("version"));
+        assert!(obj.contains_key("opencode_web_port"));
+        assert!(obj.contains_key("image_source"));
+        assert!(obj.contains_key("update_check"));
     }
 
     #[test]
-    fn test_format_env_vars_with_values() {
-        let vars = vec!["FOO=bar".to_string(), "BAZ=qux".to_string()];
-        assert_eq!(format_env_vars(&vars), "FOO=bar, BAZ=qux");
-    }
+    fn test_mask_sensitive_fields() {
+        let mut value = serde_json::json!({
+            "auth_username": "admin",
+            "auth_password": "secret123",
+            "bind": "localhost"
+        });
+        mask_sensitive_fields(&mut value);
 
-    #[test]
-    fn test_format_env_vars_empty() {
-        let vars: Vec<String> = vec![];
-        assert_eq!(format_env_vars(&vars), "(none)");
-    }
-
-    #[test]
-    fn test_masked_config_hides_password() {
-        let config = Config {
-            auth_password: Some("secret".to_string()),
-            ..Config::default()
-        };
-        let masked = MaskedConfig::from(&config);
-        assert_eq!(masked.auth_password, Some("********".to_string()));
-    }
-
-    #[test]
-    fn test_masked_config_preserves_username() {
-        let config = Config {
-            auth_username: Some("admin".to_string()),
-            ..Config::default()
-        };
-        let masked = MaskedConfig::from(&config);
-        assert_eq!(masked.auth_username, Some("admin".to_string()));
+        let obj = value.as_object().unwrap();
+        assert_eq!(obj["auth_username"], "admin"); // Not masked
+        assert_eq!(obj["auth_password"], "********"); // Masked
+        assert_eq!(obj["bind"], "localhost"); // Not masked
     }
 }
