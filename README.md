@@ -66,15 +66,6 @@ docker pull ghcr.io/prizz/opencode-cloud-sandbox:latest
 occ start  # Pulls or builds the image as needed
 ```
 
-**For advanced users:** You can pull the image directly if needed:
-```bash
-# From Docker Hub
-docker pull prizz/opencode-cloud-sandbox:latest
-
-# From GitHub Container Registry
-docker pull ghcr.io/prizz/opencode-cloud-sandbox:latest
-```
-
 ## Requirements
 
 - **Rust 1.85+** - Install via [rustup](https://rustup.rs): `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
