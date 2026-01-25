@@ -115,74 +115,145 @@ fn collect_bind_mounts(
     Ok(all_mounts)
 }
 
+/// Check if two host paths match, accounting for macOS path translation
+///
+/// Docker on macOS translates paths: /tmp -> /private/tmp -> /host_mnt/private/tmp
+fn host_paths_match(container_path: &str, configured_path: &str) -> bool {
+    // Direct match
+    if container_path == configured_path {
+        return true;
+    }
+
+    // Handle /host_mnt prefix from Docker Desktop
+    if let Some(stripped) = container_path.strip_prefix("/host_mnt") {
+        if stripped == configured_path {
+            return true;
+        }
+        // /host_mnt/private/tmp matches /tmp
+        if let Some(private_stripped) = stripped.strip_prefix("/private") {
+            if private_stripped == configured_path {
+                return true;
+            }
+        }
+    }
+
+    // Handle /private prefix (macOS symlink: /tmp -> /private/tmp)
+    if let Some(private_path) = configured_path.strip_prefix("/private") {
+        if container_path.ends_with(private_path) {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Check if a configured mount has a matching container mount
+fn mount_has_match(
+    conf: &ParsedMount,
+    current: &[opencode_cloud_core::docker::ContainerBindMount],
+) -> bool {
+    let conf_host = conf.host_path.to_string_lossy();
+
+    current.iter().any(|cur| {
+        cur.target == conf.container_path
+            && cur.read_only == conf.read_only
+            && host_paths_match(&cur.source, &conf_host)
+    })
+}
+
 /// Compare container bind mounts with configured mounts
 ///
 /// Returns true if the mounts match (ignoring order).
-/// Handles macOS path translation (/tmp -> /private/tmp -> /host_mnt/private/tmp).
 fn mounts_equal(
     current: &[opencode_cloud_core::docker::ContainerBindMount],
     configured: &[ParsedMount],
 ) -> bool {
-    // Different count means definitely not equal
-    if current.len() != configured.len() {
-        return false;
+    current.len() == configured.len()
+        && configured.iter().all(|conf| mount_has_match(conf, current))
+}
+
+/// Check if container mounts differ from configured mounts
+///
+/// Returns `Some(true)` to rebuild, `Some(false)` on user decline (error), `None` if no mismatch.
+async fn check_mount_mismatch(
+    client: &DockerClient,
+    configured_mounts: Option<&[ParsedMount]>,
+    quiet: bool,
+) -> Result<Option<bool>> {
+    let current_mounts = get_container_bind_mounts(client, CONTAINER_NAME).await?;
+    let configured = configured_mounts.unwrap_or(&[]);
+
+    if mounts_equal(&current_mounts, configured) {
+        return Ok(None);
     }
 
-    // For each configured mount, check if there's a matching current mount
-    for conf in configured {
-        let conf_host = conf.host_path.to_string_lossy();
-        let conf_container = &conf.container_path;
+    if quiet {
+        return Err(anyhow!(
+            "Mount configuration changed. Container must be recreated to apply mount changes.\n\
+             Run without --quiet to be prompted, or manually remove with:\n  \
+             occ stop && docker rm {CONTAINER_NAME}"
+        ));
+    }
 
-        let found = current.iter().any(|cur| {
-            // Check container path matches
-            if cur.target != *conf_container {
-                return false;
-            }
+    display_mount_mismatch(&current_mounts, configured);
 
-            // Check read-only flag matches
-            if cur.read_only != conf.read_only {
-                return false;
-            }
+    let confirm = dialoguer::Confirm::new()
+        .with_prompt("Recreate container with new mount configuration?")
+        .default(true)
+        .interact()?;
 
-            // Check host path matches (handling macOS path translation)
-            // Docker on macOS translates paths: /tmp -> /private/tmp -> /host_mnt/private/tmp
-            let cur_source = &cur.source;
-            let conf_host_str = conf_host.as_ref();
+    if !confirm {
+        return Err(anyhow!(
+            "Container not recreated. To apply mount changes, run:\n  \
+             occ stop && docker rm {CONTAINER_NAME} && occ start"
+        ));
+    }
 
-            // Direct match
-            if cur_source == conf_host_str {
-                return true;
-            }
+    Ok(Some(true))
+}
 
-            // Handle /host_mnt prefix from Docker Desktop
-            if let Some(stripped) = cur_source.strip_prefix("/host_mnt") {
-                if stripped == conf_host_str {
-                    return true;
-                }
-                // Also check /private prefix for /tmp -> /private/tmp
-                if let Some(private_stripped) = stripped.strip_prefix("/private") {
-                    if private_stripped == conf_host_str {
-                        return true;
-                    }
-                }
-            }
+/// Display mount mismatch information to user
+fn display_mount_mismatch(
+    current: &[opencode_cloud_core::docker::ContainerBindMount],
+    configured: &[ParsedMount],
+) {
+    eprintln!();
+    eprintln!(
+        "{} {}",
+        style("Mount configuration changed:").yellow().bold(),
+        style("Container must be recreated to apply mount changes.").yellow()
+    );
+    eprintln!();
 
-            // Handle /private prefix (macOS symlink: /tmp -> /private/tmp)
-            if let Some(private_path) = conf_host_str.strip_prefix("/private") {
-                if cur_source.ends_with(private_path) {
-                    return true;
-                }
-            }
-
-            false
-        });
-
-        if !found {
-            return false;
+    // Show current mounts
+    if current.is_empty() {
+        eprintln!("  Current mounts: {}", style("(none)").dim());
+    } else {
+        eprintln!("  Current mounts:");
+        for m in current {
+            let ro = if m.read_only { ":ro" } else { "" };
+            eprintln!("    - {}:{}{}", m.source, m.target, ro);
         }
     }
 
-    true
+    // Show configured mounts
+    if configured.is_empty() {
+        eprintln!("  Configured mounts: {}", style("(none)").dim());
+    } else {
+        eprintln!("  Configured mounts:");
+        for m in configured {
+            let ro = if m.read_only { ":ro" } else { "" };
+            eprintln!("    - {}:{}{}", m.host_path.display(), m.container_path, ro);
+        }
+    }
+
+    eprintln!();
+    eprintln!(
+        "{}",
+        style("This will stop and recreate the container from the existing image.").dim()
+    );
+    eprintln!("{}", style("Your data volumes will be preserved.").dim());
+    eprintln!();
 }
 
 /// Start the opencode service
@@ -411,73 +482,10 @@ pub async fn cmd_start(
 
     // Check for mount mismatch on existing container (only if not already rebuilding)
     if !is_first_start && !any_rebuild {
-        let current_mounts = get_container_bind_mounts(&client, CONTAINER_NAME).await?;
-
-        // Get configured mounts for comparison
-        let configured_mounts = bind_mounts_option.as_deref().unwrap_or(&[]);
-
-        // Compare mounts: check if they match (order doesn't matter)
-        let mounts_match = mounts_equal(&current_mounts, configured_mounts);
-
-        if !mounts_match {
-            if quiet {
-                return Err(anyhow!(
-                    "Mount configuration changed. Container must be recreated to apply mount changes.\n\
-                     Run without --quiet to be prompted, or manually remove with:\n  \
-                     occ stop && docker rm {CONTAINER_NAME}"
-                ));
-            }
-
-            eprintln!();
-            eprintln!(
-                "{} {}",
-                style("Mount configuration changed:").yellow().bold(),
-                style("Container must be recreated to apply mount changes.").yellow()
-            );
-            eprintln!();
-
-            // Show current mounts
-            if current_mounts.is_empty() {
-                eprintln!("  Current mounts: {}", style("(none)").dim());
-            } else {
-                eprintln!("  Current mounts:");
-                for m in &current_mounts {
-                    let ro = if m.read_only { ":ro" } else { "" };
-                    eprintln!("    - {}:{}{}", m.source, m.target, ro);
-                }
-            }
-
-            // Show configured mounts
-            if configured_mounts.is_empty() {
-                eprintln!("  Configured mounts: {}", style("(none)").dim());
-            } else {
-                eprintln!("  Configured mounts:");
-                for m in configured_mounts {
-                    let ro = if m.read_only { ":ro" } else { "" };
-                    eprintln!("    - {}:{}{}", m.host_path.display(), m.container_path, ro);
-                }
-            }
-
-            eprintln!();
-            eprintln!(
-                "{}",
-                style("This will stop and recreate the container from the existing image.").dim()
-            );
-            eprintln!("{}", style("Your data volumes will be preserved.").dim());
-            eprintln!();
-
-            let confirm = dialoguer::Confirm::new()
-                .with_prompt("Recreate container with new mount configuration?")
-                .default(true)
-                .interact()?;
-
-            if confirm {
-                any_rebuild = true;
-            } else {
-                return Err(anyhow!(
-                    "Container not recreated. To apply mount changes, run:\n  occ stop && docker rm {CONTAINER_NAME} && occ start"
-                ));
-            }
+        if let Some(rebuild) =
+            check_mount_mismatch(&client, bind_mounts_option.as_deref(), quiet).await?
+        {
+            any_rebuild = rebuild;
         }
     }
 
