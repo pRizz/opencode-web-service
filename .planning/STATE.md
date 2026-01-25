@@ -5,25 +5,25 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 15 - Prebuilt Image Option (Complete)
+**Current focus:** Phase 16 - Code Quality Audit (Complete)
 
 ## Current Position
 
-Phase: 15 of 21 (Prebuilt Image Option)
-Plan: 3 of 3 in current phase
+Phase: 16 of 21 (Code Quality Audit)
+Plan: 2 of 2 in current phase
 Status: Phase complete
-Last activity: 2026-01-24 - Completed Phase 15 (all 3 plans executed, verified)
+Last activity: 2026-01-24 - Completed 16-01-PLAN.md and 16-02-PLAN.md
 
-Progress: [#######################] 80%
+Progress: [#########################] 84%
 
 Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED. Phase 19 (CI/CD Automation) merged into Phase 14.
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 37
+- Total plans completed: 39
 - Average duration: 6 min
-- Total execution time: 3.5 hours
+- Total execution time: 3.7 hours
 
 **By Phase:**
 
@@ -42,9 +42,10 @@ Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED.
 | 11 | 3 | 19 min | 6 min |
 | 14 | 3 | 15 min | 5 min |
 | 15 | 3 | 19 min | 6 min |
+| 16 | 2 | 12 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 4 min, 10 min, 3 min, 6 min
+- Last 5 plans: 10 min, 3 min, 6 min, 6 min, 6 min
 - Trend: Stable (~6 min average)
 
 *Updated after each plan completion*
@@ -183,6 +184,8 @@ Recent decisions affecting current work:
 - [15-03]: Wizard always prompts for image source: Even in quick setup, choice between 2-min pull vs 60-min build warrants explicit user input
 - [15-03]: Update shows informational messages: Display which method (build/pull) is used and how to change it
 - [15-03]: Graceful provenance display: Status shows image provenance when state file exists, silently skips if missing
+- [16-01]: Docker error formatting centralized: output/errors.rs module with format_docker_error, show_docker_error
+- [16-02]: URL helper location: output/urls.rs module consistent with output module pattern
 
 ### Pending Todos
 
@@ -219,6 +222,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed Phase 15 (Prebuilt Image Option)
+Stopped at: Completed 16-02-PLAN.md (URL formatting deduplication)
 Resume file: None
-Next step: Plan Phase 16 (Code Quality Audit)
+Next step: Verify Phase 16 complete or continue with additional refactoring
