@@ -3,17 +3,18 @@
 //! Shows the current state of the opencode service including container info,
 //! port bindings, uptime, health status, and security configuration.
 
-use crate::output::state_style;
+use crate::output::{
+    format_cockpit_url, format_docker_error_anyhow, resolve_remote_addr, state_style,
+};
 use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
 use opencode_cloud_core::Config;
 use opencode_cloud_core::config;
 use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DockerError, HealthError, OPENCODE_WEB_PORT, check_health, get_cli_version,
+    CONTAINER_NAME, HealthError, OPENCODE_WEB_PORT, check_health, get_cli_version,
     get_image_version, load_state,
 };
-use opencode_cloud_core::load_hosts;
 use opencode_cloud_core::platform::{get_service_manager, is_service_registration_supported};
 use std::time::Duration;
 
@@ -50,7 +51,7 @@ pub async fn cmd_status(
     client
         .verify_connection()
         .await
-        .map_err(|e| format_docker_error(&e))?;
+        .map_err(|e| format_docker_error_anyhow(&e))?;
 
     // Show host header if remote
     if !quiet && host_name.is_some() {
@@ -133,12 +134,7 @@ pub async fn cmd_status(
         .unwrap_or_else(|| "unknown".to_string());
 
     // Get remote host address if using --host
-    let maybe_remote_addr = if let Some(ref name) = host_name {
-        let hosts = load_hosts().ok();
-        hosts.and_then(|h| h.get_host(name).map(|cfg| cfg.hostname.clone()))
-    } else {
-        None
-    };
+    let maybe_remote_addr = resolve_remote_addr(host_name.as_deref());
 
     // Normal mode: print formatted status
     println!("State:       {}", state_style(&status));
@@ -242,27 +238,15 @@ pub async fn cmd_status(
         // Show Cockpit info if enabled
         if let Some(ref cfg) = config {
             if cfg.cockpit_enabled {
-                if let Some(ref remote_addr) = maybe_remote_addr {
-                    // Remote host - show remote URL
-                    let remote_cockpit_url = format!("http://{}:{}", remote_addr, cfg.cockpit_port);
-                    println!(
-                        "Cockpit:     {} -> container:9090",
-                        style(&remote_cockpit_url).cyan()
-                    );
-                } else {
-                    // Local - use configured bind address
-                    let cockpit_addr = if cfg.bind_address == "0.0.0.0" || cfg.bind_address == "::"
-                    {
-                        "127.0.0.1"
-                    } else {
-                        &cfg.bind_address
-                    };
-                    let cockpit_url = format!("http://{}:{}", cockpit_addr, cfg.cockpit_port);
-                    println!(
-                        "Cockpit:     {} -> container:9090",
-                        style(&cockpit_url).cyan()
-                    );
-                }
+                let cockpit_url = format_cockpit_url(
+                    maybe_remote_addr.as_deref(),
+                    &cfg.bind_address,
+                    cfg.cockpit_port,
+                );
+                println!(
+                    "Cockpit:     {} -> container:9090",
+                    style(&cockpit_url).cyan()
+                );
                 // Show tip about creating users for Cockpit login
                 let user_cmd = if let Some(ref name) = host_name {
                     format!("occ user add <username> --host {name}")
@@ -416,30 +400,6 @@ fn format_duration(duration: Duration) -> String {
         return format!("{days}d {remaining_hours}h");
     }
     format!("{days}d")
-}
-
-/// Format Docker errors with actionable guidance
-fn format_docker_error(e: &DockerError) -> anyhow::Error {
-    match e {
-        DockerError::NotRunning => {
-            anyhow!(
-                "{}\n\n  {}\n  {}",
-                "Docker is not running",
-                "Start Docker Desktop or the Docker daemon:",
-                "  sudo systemctl start docker"
-            )
-        }
-        DockerError::PermissionDenied => {
-            anyhow!(
-                "{}\n\n  {}\n  {}\n  {}",
-                "Permission denied accessing Docker",
-                "Add your user to the docker group:",
-                "  sudo usermod -aG docker $USER",
-                "Then log out and back in."
-            )
-        }
-        _ => anyhow!("{e}"),
-    }
 }
 
 /// Display the Security section of status output
