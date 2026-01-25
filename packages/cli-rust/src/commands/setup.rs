@@ -102,9 +102,9 @@ pub async fn cmd_setup(args: &SetupArgs, quiet: bool) -> Result<()> {
 
     println!();
 
-    // Stop first if restarting
+    // Stop first if restarting (use longer timeout for graceful shutdown)
     if action == Action::Restart {
-        let stop_args = crate::commands::StopArgs {};
+        let stop_args = crate::commands::StopArgs { timeout: 60 };
         cmd_stop(&stop_args, args.host.as_deref(), quiet).await?;
         println!();
     }

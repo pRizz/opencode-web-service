@@ -62,7 +62,7 @@ pub async fn cmd_restart(
             host_name.as_deref(),
             "Stopping service...",
         ));
-        if let Err(e) = stop_service(&client, false).await {
+        if let Err(e) = stop_service(&client, false, None).await {
             spinner.fail(&crate::format_host_message(
                 host_name.as_deref(),
                 "Failed to stop",

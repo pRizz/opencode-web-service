@@ -130,13 +130,22 @@ pub async fn setup_and_start(
     Ok(container_id)
 }
 
+/// Default graceful shutdown timeout in seconds
+pub const DEFAULT_STOP_TIMEOUT_SECS: i64 = 30;
+
 /// Stop and optionally remove the opencode container
 ///
 /// # Arguments
 /// * `client` - Docker client
 /// * `remove` - Also remove the container after stopping
-pub async fn stop_service(client: &DockerClient, remove: bool) -> Result<(), DockerError> {
+/// * `timeout_secs` - Graceful shutdown timeout (default: 30 seconds)
+pub async fn stop_service(
+    client: &DockerClient,
+    remove: bool,
+    timeout_secs: Option<i64>,
+) -> Result<(), DockerError> {
     let name = container::CONTAINER_NAME;
+    let timeout = timeout_secs.unwrap_or(DEFAULT_STOP_TIMEOUT_SECS);
 
     // Check if container exists
     if !container::container_exists(client, name).await? {
@@ -147,7 +156,7 @@ pub async fn stop_service(client: &DockerClient, remove: bool) -> Result<(), Doc
 
     // Stop if running
     if container::container_is_running(client, name).await? {
-        container::stop_container(client, name, None).await?;
+        container::stop_container(client, name, Some(timeout)).await?;
     }
 
     // Remove if requested

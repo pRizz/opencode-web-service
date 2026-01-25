@@ -7,13 +7,15 @@ use anyhow::{Result, anyhow};
 use clap::Args;
 use console::style;
 use opencode_cloud_core::docker::{
-    CONTAINER_NAME, DockerError, container_is_running, stop_service,
+    CONTAINER_NAME, DEFAULT_STOP_TIMEOUT_SECS, DockerError, container_is_running, stop_service,
 };
 
 /// Arguments for the stop command
-#[derive(Args)]
+#[derive(Args, Default)]
 pub struct StopArgs {
-    // Future: --remove flag to also remove container
+    /// Graceful shutdown timeout in seconds (default: 30)
+    #[arg(long, short, default_value_t = DEFAULT_STOP_TIMEOUT_SECS)]
+    pub timeout: i64,
 }
 
 /// Stop the opencode service
@@ -21,8 +23,8 @@ pub struct StopArgs {
 /// This command:
 /// 1. Connects to Docker
 /// 2. Checks if service is running (idempotent - exits 0 if already stopped)
-/// 3. Stops the container with 30s graceful timeout
-pub async fn cmd_stop(_args: &StopArgs, maybe_host: Option<&str>, quiet: bool) -> Result<()> {
+/// 3. Stops the container with graceful timeout (default 30s)
+pub async fn cmd_stop(args: &StopArgs, maybe_host: Option<&str>, quiet: bool) -> Result<()> {
     // Resolve Docker client (local or remote)
     let (client, host_name) = crate::resolve_docker_client(maybe_host).await?;
 
@@ -47,11 +49,11 @@ pub async fn cmd_stop(_args: &StopArgs, maybe_host: Option<&str>, quiet: bool) -
     let spinner = CommandSpinner::new_maybe(&msg, quiet);
     spinner.update(&crate::format_host_message(
         host_name.as_deref(),
-        "Stopping service (30s timeout)...",
+        &format!("Stopping service ({}s timeout)...", args.timeout),
     ));
 
-    // Stop with 30 second graceful timeout (passed via stop_container)
-    match stop_service(&client, false).await {
+    // Stop with graceful timeout
+    match stop_service(&client, false, Some(args.timeout)).await {
         Ok(()) => {
             spinner.success(&crate::format_host_message(
                 host_name.as_deref(),

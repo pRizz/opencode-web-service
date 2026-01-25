@@ -136,7 +136,7 @@ async fn handle_update(
         eprintln!("{} Stopping service...", style("[1/5]").cyan());
     }
     let spinner = CommandSpinner::new_maybe("Stopping service...", quiet);
-    if let Err(e) = stop_service(client, true).await {
+    if let Err(e) = stop_service(client, true, None).await {
         spinner.fail("Failed to stop service");
         return Err(anyhow!("Failed to stop service: {e}"));
     }
@@ -328,7 +328,7 @@ async fn handle_rollback(
         eprintln!("{} Stopping service...", style("[1/4]").cyan());
     }
     let spinner = CommandSpinner::new_maybe("Stopping service...", quiet);
-    if let Err(e) = stop_service(client, true).await {
+    if let Err(e) = stop_service(client, true, None).await {
         spinner.fail("Failed to stop service");
         return Err(anyhow!("Failed to stop service: {e}"));
     }

@@ -140,7 +140,7 @@ pub async fn cmd_start(
             return Err(anyhow!("Aborted. Stop container first with: occ stop"));
         }
         // Stop the container
-        stop_service(&client, true).await.ok();
+        stop_service(&client, true, None).await.ok();
     }
 
     let mut any_rebuild = args.cached_rebuild_sandbox_image || args.full_rebuild_sandbox_image;
@@ -388,7 +388,7 @@ async fn handle_rebuild(client: &DockerClient, verbose: u8) -> Result<()> {
     }
 
     // Ignore errors if container doesn't exist
-    stop_service(client, true).await.ok();
+    stop_service(client, true, None).await.ok();
     Ok(())
 }
 
