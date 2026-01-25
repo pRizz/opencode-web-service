@@ -30,10 +30,13 @@
   "cpu": ["x64", "arm64"],
   "scripts": {
     "build": "tsc || (echo \"Error: TypeScript compiler (tsc) not found. Install dev dependencies or run npm i -D typescript before building.\" && exit 1)",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "typescript": "^5.7.3",
-    "@types/node": "^22.10.7"
+    "@types/node": "^22.10.7",
+    "vitest": "^3.0.0"
   }
 }
