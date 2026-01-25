@@ -2,25 +2,39 @@
 /**
  * opencode-cloud Node.js CLI
  *
- * DEPRECATED: This package is deprecated. Please install via cargo instead.
+ * This is a transparent wrapper that spawns the Rust binary.
+ * All arguments are passed through directly.
  */
 
-const RED = "\x1b[31m";
-const YELLOW = "\x1b[33m";
-const CYAN = "\x1b[36m";
-const RESET = "\x1b[0m";
-const BOLD = "\x1b[1m";
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-console.error(`
-${YELLOW}${BOLD}Notice:${RESET} The npm package for opencode-cloud is deprecated.
+// Resolve binary path relative to this script
+// When running from dist/index.js, binary should be at ../bin/occ
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const binaryPath = join(scriptDir, '..', 'bin', 'occ');
 
-Please install via cargo instead:
+// Spawn the Rust binary with all arguments passed through
+const child = spawn(binaryPath, process.argv.slice(2), {
+  stdio: 'inherit', // Pass through stdin/stdout/stderr for colors, TTY detection
+});
 
-  ${CYAN}cargo install opencode-cloud${RESET}
+// Handle process exit
+child.on('close', (code) => {
+  process.exit(code ?? 1);
+});
 
-This provides a native binary with better performance and full feature support.
-
-${RED}Requires:${RESET} Rust 1.85+ (install from https://rustup.rs)
-`);
-
-process.exit(1);
+// Handle binary not found or other spawn errors
+child.on('error', (err) => {
+  console.error('Error: Failed to spawn opencode-cloud binary\n');
+  console.error(`Binary path: ${binaryPath}`);
+  console.error(`Error: ${err.message}\n`);
+  console.error('The Rust binary is not available. You have two options:\n');
+  console.error('1. Install the Rust CLI directly:');
+  console.error('   cargo install opencode-cloud\n');
+  console.error('2. For development, copy the binary to packages/cli-node/bin/:');
+  console.error('   cp target/release/occ packages/cli-node/bin/\n');
+  console.error(`Platform: ${process.platform} (${process.arch})`);
+  process.exit(1);
+});
