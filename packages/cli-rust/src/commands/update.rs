@@ -232,6 +232,7 @@ async fn handle_update(
         Some(bind_addr),
         Some(config.cockpit_port),
         Some(config.cockpit_enabled),
+        None, // bind_mounts: update recreates without bind mounts (user can restart with mounts)
     )
     .await
     {
@@ -357,6 +358,7 @@ async fn handle_rollback(
         Some(bind_addr),
         Some(config.cockpit_port),
         Some(config.cockpit_enabled),
+        None, // bind_mounts: rollback recreates without bind mounts (user can restart with mounts)
     )
     .await
     {

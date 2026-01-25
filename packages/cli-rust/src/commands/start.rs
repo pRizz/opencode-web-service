@@ -14,9 +14,9 @@ use opencode_cloud_core::bollard::container::{LogOutput, LogsOptions};
 use opencode_cloud_core::config::save_config;
 use opencode_cloud_core::docker::{
     CONTAINER_NAME, DockerClient, DockerError, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT, ImageState,
-    ProgressReporter, build_image, container_exists, container_is_running, get_cli_version,
-    get_image_version, image_exists, pull_image, save_state, setup_and_start, stop_service,
-    versions_compatible,
+    ParsedMount, ProgressReporter, build_image, check_container_path_warning, container_exists,
+    container_is_running, get_cli_version, get_image_version, image_exists, pull_image, save_state,
+    setup_and_start, stop_service, validate_mount_path, versions_compatible,
 };
 use std::net::{TcpListener, TcpStream};
 use std::time::{Duration, Instant};
@@ -65,6 +65,53 @@ pub struct StartArgs {
     /// Skip configured mounts (only use --mount flags if specified)
     #[arg(long)]
     pub no_mounts: bool,
+}
+
+/// Collect and validate bind mounts from config and CLI flags
+fn collect_bind_mounts(
+    config: &opencode_cloud_core::Config,
+    cli_mounts: &[String],
+    no_mounts: bool,
+    quiet: bool,
+) -> Result<Vec<ParsedMount>> {
+    let mut all_mounts = Vec::new();
+
+    // Add config mounts unless --no-mounts
+    if !no_mounts {
+        for mount_str in &config.mounts {
+            let parsed = ParsedMount::parse(mount_str)
+                .map_err(|e| anyhow!("Invalid config mount '{}': {}", mount_str, e))?;
+            all_mounts.push(parsed);
+        }
+    }
+
+    // Add CLI mounts (always, even with --no-mounts)
+    for mount_str in cli_mounts {
+        let parsed = ParsedMount::parse(mount_str)
+            .map_err(|e| anyhow!("Invalid mount '{}': {}", mount_str, e))?;
+        all_mounts.push(parsed);
+    }
+
+    // Validate all mount paths exist
+    for parsed in &all_mounts {
+        if let Err(e) = validate_mount_path(&parsed.host_path) {
+            return Err(anyhow!(
+                "Mount path validation failed for '{}':\n  {}\n\nDid the directory move? Run: occ mount remove {}",
+                parsed.host_path.display(),
+                e,
+                parsed.host_path.display()
+            ));
+        }
+
+        // Show warnings for system paths (non-blocking)
+        if !quiet {
+            if let Some(warning) = check_container_path_warning(&parsed.container_path) {
+                eprintln!("{}", style(&warning).yellow());
+            }
+        }
+    }
+
+    Ok(all_mounts)
 }
 
 /// Start the opencode service
@@ -118,6 +165,14 @@ pub async fn cmd_start(
             ));
         }
     }
+
+    // Collect and validate bind mounts
+    let bind_mounts = collect_bind_mounts(&config, &args.mounts, args.no_mounts, quiet)?;
+    let bind_mounts_option = if bind_mounts.is_empty() {
+        None
+    } else {
+        Some(bind_mounts)
+    };
 
     // Check mutual exclusivity of image flags
     let image_flags = [
@@ -336,6 +391,7 @@ pub async fn cmd_start(
         bind_addr,
         config.cockpit_port,
         config.cockpit_enabled,
+        bind_mounts_option,
     )
     .await
     {
@@ -584,6 +640,7 @@ async fn start_container(
     bind_address: &str,
     cockpit_port: u16,
     cockpit_enabled: bool,
+    bind_mounts: Option<Vec<ParsedMount>>,
 ) -> Result<String, DockerError> {
     setup_and_start(
         client,
@@ -592,6 +649,7 @@ async fn start_container(
         Some(bind_address),
         Some(cockpit_port),
         Some(cockpit_enabled),
+        bind_mounts,
     )
     .await
 }

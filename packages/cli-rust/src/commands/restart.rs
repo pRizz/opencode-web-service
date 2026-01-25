@@ -84,6 +84,7 @@ pub async fn cmd_restart(
         Some(bind_addr),
         Some(config.cockpit_port),
         Some(config.cockpit_enabled),
+        None, // bind_mounts: restart preserves existing container mounts
     )
     .await
     {
