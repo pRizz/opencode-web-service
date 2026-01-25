@@ -40,6 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 26: Secrets Management** - Secure injection of API keys and credentials into container
 - [ ] **Phase 27: Windows Support** - Full Windows compatibility for the CLI and Docker integration
 - [ ] **Phase 28: Remote Host Setup Wizard** - Run setup wizard for remote hosts via --host flag
+- [ ] **Phase 29: DockerHub README Elaboration** - Elaborate README.dockerhub.md for better discoverability
 
 ## Phase Details
 
@@ -536,6 +537,23 @@ Plans:
 Plans:
 - [ ] 28-01: TBD (remote wizard implementation)
 
+### Phase 29: DockerHub README Elaboration
+**Goal**: Elaborate and improve the opencode-cloud-sandbox README.dockerhub.md content for better discoverability and user onboarding
+**Depends on**: Phase 14 (Versioning and Release Automation - for GHCR/DockerHub publishing)
+**Requirements**: None (documentation)
+**Note**: The Docker image is published to registries but the README.dockerhub.md may need more detailed content including usage examples, configuration options, environment variables, volume mounts, and integration guides to help users get started quickly.
+**Success Criteria** (what must be TRUE):
+  1. README.dockerhub.md contains clear getting started instructions
+  2. All environment variables are documented with examples
+  3. Volume mount paths are explained
+  4. Port mappings are documented
+  5. Example docker-compose.yml included
+  6. Links to full documentation and CLI tool
+**Plans**: TBD
+
+Plans:
+- [ ] 29-01: TBD (README.dockerhub.md content elaboration)
+
 ## Progress
 
 **Execution Order:**
@@ -571,6 +589,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 | 26. Secrets Management | 0/2 | Not started | - |
 | 27. Windows Support | 0/3 | Not started | - |
 | 28. Remote Host Setup Wizard | 0/1 | Not started | - |
+| 29. DockerHub README Elaboration | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
