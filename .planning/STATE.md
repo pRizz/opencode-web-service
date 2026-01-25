@@ -210,6 +210,7 @@ Recent decisions affecting current work:
 - Phase 25: Container Templates (pre-configured stacks: Python ML, Node.js, Rust)
 - Phase 26: Secrets Management (secure API key injection)
 - Phase 27: Windows Support (full Windows compatibility)
+- Phase 28: Remote Host Setup Wizard (run setup wizard for remote hosts)
 
 ### Blockers/Concerns
 

@@ -39,6 +39,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 25: Container Templates** - Pre-configured environment templates (Python ML, Node.js, Rust, etc.)
 - [ ] **Phase 26: Secrets Management** - Secure injection of API keys and credentials into container
 - [ ] **Phase 27: Windows Support** - Full Windows compatibility for the CLI and Docker integration
+- [ ] **Phase 28: Remote Host Setup Wizard** - Run setup wizard for remote hosts via --host flag
 
 ## Phase Details
 
@@ -520,6 +521,22 @@ Plans:
 - [ ] 27-02: TBD (Windows service integration)
 - [ ] 27-03: TBD (CI and testing)
 
+### Phase 28: Remote Host Setup Wizard
+**Goal**: Run the interactive setup wizard for remote hosts via `occ setup --host <name>`
+**Depends on**: Phase 11 (Remote Host Management), Phase 5 (Interactive Setup Wizard)
+**Requirements**: None (enhancement)
+**Note**: Currently setup wizard only works locally. This phase extends it to configure remote hosts, creating users in remote containers and managing remote config. Builds on the --host flag added to setup in Phase 15.
+**Success Criteria** (what must be TRUE):
+  1. `occ setup --host <name>` runs wizard targeting remote host
+  2. User creation happens in remote container
+  3. Config changes apply to remote host's container
+  4. Restart prompt respects remote host context
+  5. Clear messaging indicates remote vs local operation
+**Plans**: TBD
+
+Plans:
+- [ ] 28-01: TBD (remote wizard implementation)
+
 ## Progress
 
 **Execution Order:**
@@ -554,6 +571,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 | 25. Container Templates | 0/2 | Not started | - |
 | 26. Secrets Management | 0/2 | Not started | - |
 | 27. Windows Support | 0/3 | Not started | - |
+| 28. Remote Host Setup Wizard | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
