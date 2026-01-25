@@ -317,12 +317,11 @@ Plans:
   3. Early returns and guard clauses used consistently
   4. All files pass `cargo clippy` with no warnings
   5. No regression in test coverage or functionality
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: TBD (audit and identify problem areas)
-- [ ] 16-02: TBD (refactor CLI commands)
-- [ ] 16-03: TBD (refactor core library)
+- [ ] 16-01-PLAN.md — Extract duplicated format_docker_error into shared output/errors.rs module
+- [ ] 16-02-PLAN.md — Extract duplicated URL formatting (Cockpit URL, remote address) into output/urls.rs
 
 ### Phase 17: Custom Bind Mounts
 **Goal**: Allow users to specify local filesystem directories to mount into the Docker container
@@ -559,7 +558,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 | 13. Container Security Tools | - | Deferred | - |
 | 14. Versioning and Release Automation | 3/3 | ✓ Complete | 2026-01-23 |
 | 15. Prebuilt Image Option | 3/3 | ✓ Complete | 2026-01-24 |
-| 16. Code Quality Audit | 0/3 | Not started | - |
+| 16. Code Quality Audit | 0/2 | Not started | - |
 | 17. Custom Bind Mounts | 0/3 | Not started | - |
 | 18. CLI Sync Strategy | 0/3 | Not started | - |
 | 19. CI/CD Automation | - | MERGED | - |
@@ -575,4 +574,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 22 -> 23 -> 24 -> 25 -> 2
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-24 (Phase 15 complete)*
+*Last updated: 2026-01-24 (Phase 16 planned)*
