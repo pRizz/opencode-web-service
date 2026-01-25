@@ -225,26 +225,225 @@ fn display_mount_mismatch(
     );
     eprintln!();
 
-    // Show current mounts
-    if current.is_empty() {
+    display_current_mounts(current);
+    display_configured_mounts(configured);
+
+    eprintln!();
+    eprintln!(
+        "{}",
+        style("This will stop and recreate the container from the existing image.").dim()
+    );
+    eprintln!("{}", style("Your data volumes will be preserved.").dim());
+    eprintln!();
+}
+
+/// Display current container mounts
+fn display_current_mounts(mounts: &[opencode_cloud_core::docker::ContainerBindMount]) {
+    if mounts.is_empty() {
         eprintln!("  Current mounts: {}", style("(none)").dim());
-    } else {
-        eprintln!("  Current mounts:");
-        for m in current {
-            let ro = if m.read_only { ":ro" } else { "" };
-            eprintln!("    - {}:{}{}", m.source, m.target, ro);
-        }
+        return;
     }
 
-    // Show configured mounts
-    if configured.is_empty() {
+    eprintln!("  Current mounts:");
+    for m in mounts {
+        let ro = if m.read_only { ":ro" } else { "" };
+        eprintln!("    - {}:{}{}", m.source, m.target, ro);
+    }
+}
+
+/// Display configured mounts
+fn display_configured_mounts(mounts: &[ParsedMount]) {
+    if mounts.is_empty() {
         eprintln!("  Configured mounts: {}", style("(none)").dim());
-    } else {
-        eprintln!("  Configured mounts:");
-        for m in configured {
-            let ro = if m.read_only { ":ro" } else { "" };
-            eprintln!("    - {}:{}{}", m.host_path.display(), m.container_path, ro);
-        }
+        return;
+    }
+
+    eprintln!("  Configured mounts:");
+    for m in mounts {
+        let ro = if m.read_only { ":ro" } else { "" };
+        eprintln!("    - {}:{}{}", m.host_path.display(), m.container_path, ro);
+    }
+}
+
+/// Check if image flag is used while container is running, prompt to stop
+async fn ensure_container_stopped_for_image_flag(
+    client: &DockerClient,
+    has_image_flag: bool,
+    quiet: bool,
+) -> Result<()> {
+    if !has_image_flag {
+        return Ok(());
+    }
+
+    if !container_is_running(client, CONTAINER_NAME).await? {
+        return Ok(());
+    }
+
+    if quiet {
+        return Err(anyhow!(
+            "Container is running. Stop it first with: occ stop"
+        ));
+    }
+
+    let confirm = dialoguer::Confirm::new()
+        .with_prompt("Container is running. Stop and apply image change?")
+        .default(false)
+        .interact()?;
+
+    if !confirm {
+        return Err(anyhow!("Aborted. Stop container first with: occ stop"));
+    }
+
+    stop_service(client, true, None).await.ok();
+    Ok(())
+}
+
+/// Check version compatibility and prompt user if mismatch detected
+/// Returns true if rebuild was requested
+async fn check_version_compatibility(
+    client: &DockerClient,
+    config: &opencode_cloud_core::Config,
+    args: &StartArgs,
+    quiet: bool,
+) -> Result<bool> {
+    let should_check = !args.ignore_version
+        && !args.cached_rebuild_sandbox_image
+        && !args.full_rebuild_sandbox_image
+        && !args.no_update_check
+        && config.update_check != "never"
+        && !quiet;
+
+    if !should_check {
+        return Ok(false);
+    }
+
+    if !image_exists(client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await? {
+        return Ok(false);
+    }
+
+    let cli_version = get_cli_version();
+    let image_tag = format!("{IMAGE_NAME_GHCR}:{IMAGE_TAG_DEFAULT}");
+
+    let Ok(Some(image_version)) = get_image_version(client, &image_tag).await else {
+        return Ok(false);
+    };
+
+    if versions_compatible(cli_version, Some(&image_version)) {
+        return Ok(false);
+    }
+
+    println!();
+    println!("{} Version mismatch detected", style("⚠").yellow());
+    println!("  CLI version:   {}", style(cli_version).cyan());
+    println!("  Image version: {}", style(&image_version).cyan());
+    println!();
+
+    let selection = dialoguer::Select::new()
+        .with_prompt("What would you like to do?")
+        .items(&[
+            "Rebuild image from source (recommended)",
+            "Continue with mismatched versions",
+        ])
+        .default(0)
+        .interact()?;
+
+    Ok(selection == 0)
+}
+
+/// Check for port mismatch and prompt user to recreate container
+/// Returns Some(true) if rebuild requested, None if no mismatch
+async fn check_port_mismatch(
+    client: &DockerClient,
+    config: &opencode_cloud_core::Config,
+    port: u16,
+    quiet: bool,
+) -> Result<Option<bool>> {
+    let current_ports = get_container_ports(client, CONTAINER_NAME).await?;
+    let current_opencode_port = current_ports.opencode_port.unwrap_or(3000);
+    let current_cockpit_port = current_ports.cockpit_port.unwrap_or(9090);
+
+    let port_mismatch = current_opencode_port != port;
+    let cockpit_mismatch = current_cockpit_port != config.cockpit_port;
+
+    if !port_mismatch && !cockpit_mismatch {
+        return Ok(None);
+    }
+
+    // Check port availability BEFORE prompting - fail fast if new port isn't available
+    if port_mismatch && !check_port_available(port) {
+        return Err(anyhow!(
+            "Port mismatch: container uses port {current_opencode_port} but requested port {port}.\n\
+             Cannot switch to port {port} - it's already in use.\n\n\
+             Options:\n  \
+             1. Stop the process using port {port}\n  \
+             2. Use a different port: occ start --port <available-port>\n  \
+             3. Keep current port: occ start --port {current_opencode_port}"
+        ));
+    }
+
+    if quiet {
+        return Err(anyhow!(
+            "Port mismatch: container uses port {current_opencode_port} but requested port {port}.\n\
+             Container must be recreated to change ports.\n\
+             Run without --quiet to be prompted, or manually remove with:\n  \
+             occ stop && docker rm {CONTAINER_NAME}"
+        ));
+    }
+
+    display_port_mismatch(
+        port_mismatch,
+        cockpit_mismatch,
+        current_opencode_port,
+        port,
+        current_cockpit_port,
+        config.cockpit_port,
+    );
+
+    let confirm = dialoguer::Confirm::new()
+        .with_prompt("Recreate container with new port(s)?")
+        .default(true)
+        .interact()?;
+
+    if !confirm {
+        return Err(anyhow!(
+            "Container not recreated. To use port {port}, run:\n  \
+             occ stop && docker rm {CONTAINER_NAME} && occ start --port {port}"
+        ));
+    }
+
+    Ok(Some(true))
+}
+
+/// Display port mismatch information
+fn display_port_mismatch(
+    port_mismatch: bool,
+    cockpit_mismatch: bool,
+    current_opencode: u16,
+    requested_opencode: u16,
+    current_cockpit: u16,
+    requested_cockpit: u16,
+) {
+    eprintln!();
+    eprintln!(
+        "{} {}",
+        style("Port mismatch detected:").yellow().bold(),
+        style("Container must be recreated to change ports.").yellow()
+    );
+
+    if port_mismatch {
+        eprintln!(
+            "  opencode port: {} (current) → {} (requested)",
+            style(current_opencode).red(),
+            style(requested_opencode).green()
+        );
+    }
+
+    if cockpit_mismatch {
+        eprintln!(
+            "  cockpit port: {} (current) → {} (requested)",
+            style(current_cockpit).red(),
+            style(requested_cockpit).green()
+        );
     }
 
     eprintln!();
@@ -253,6 +452,87 @@ fn display_mount_mismatch(
         style("This will stop and recreate the container from the existing image.").dim()
     );
     eprintln!("{}", style("Your data volumes will be preserved.").dim());
+    eprintln!();
+}
+
+/// Acquire Docker image (build or pull) based on configuration
+async fn acquire_image(
+    client: &DockerClient,
+    use_prebuilt: bool,
+    full_rebuild: bool,
+    quiet: bool,
+    verbose: u8,
+) -> Result<()> {
+    if !use_prebuilt {
+        build_docker_image(client, full_rebuild, verbose).await?;
+        save_state(&ImageState::built(get_cli_version())).ok();
+        return Ok(());
+    }
+
+    // Try pulling prebuilt image
+    match pull_docker_image(client, verbose).await {
+        Ok(registry) => {
+            save_state(&ImageState::prebuilt(get_cli_version(), &registry)).ok();
+            Ok(())
+        }
+        Err(e) => handle_pull_failure(client, e, quiet, verbose).await,
+    }
+}
+
+/// Handle pull failure by offering to build from source
+async fn handle_pull_failure(
+    client: &DockerClient,
+    error: anyhow::Error,
+    quiet: bool,
+    verbose: u8,
+) -> Result<()> {
+    if quiet {
+        return Err(error);
+    }
+
+    eprintln!();
+    eprintln!(
+        "{} Failed to pull prebuilt image: {error}",
+        style("Error:").red().bold()
+    );
+    eprintln!();
+
+    let build_instead = dialoguer::Confirm::new()
+        .with_prompt("Build from source instead? (This takes 30-60 minutes)")
+        .default(true)
+        .interact()?;
+
+    if !build_instead {
+        return Err(anyhow!(
+            "Cannot proceed without image. Run 'occ start --full-rebuild-sandbox-image' to build from source."
+        ));
+    }
+
+    build_docker_image(client, false, verbose).await?;
+    save_state(&ImageState::built(get_cli_version())).ok();
+    Ok(())
+}
+
+/// Display network exposure warning
+fn display_network_exposure_warning(bind_addr: &str) {
+    eprintln!();
+    eprintln!(
+        "{} {}",
+        style("WARNING:").yellow().bold(),
+        style("Network exposed without authentication!").yellow()
+    );
+    eprintln!();
+    eprintln!(
+        "The service is bound to {} but no users are configured.",
+        style(bind_addr).cyan()
+    );
+    eprintln!("Anyone on your network can access the web UI without authentication.");
+    eprintln!();
+    eprintln!("To add a user: {}", style("occ user add").cyan());
+    eprintln!(
+        "To suppress this warning: {}",
+        style("occ config set allow_unauthenticated_network true").cyan()
+    );
     eprintln!();
 }
 
@@ -334,22 +614,7 @@ pub async fn cmd_start(
         || args.full_rebuild_sandbox_image;
 
     // If any image flag is used while container is running, prompt to stop
-    if has_image_flag && container_is_running(&client, CONTAINER_NAME).await? {
-        if quiet {
-            return Err(anyhow!(
-                "Container is running. Stop it first with: occ stop"
-            ));
-        }
-        let confirm = dialoguer::Confirm::new()
-            .with_prompt("Container is running. Stop and apply image change?")
-            .default(false)
-            .interact()?;
-        if !confirm {
-            return Err(anyhow!("Aborted. Stop container first with: occ stop"));
-        }
-        // Stop the container
-        stop_service(&client, true, None).await.ok();
-    }
+    ensure_container_stopped_for_image_flag(&client, has_image_flag, quiet).await?;
 
     let mut any_rebuild = args.cached_rebuild_sandbox_image || args.full_rebuild_sandbox_image;
 
@@ -362,43 +627,9 @@ pub async fn cmd_start(
         config.image_source == "prebuilt"
     };
 
-    // Version compatibility check (skip if rebuilding, --ignore-version, or --no-update-check)
-    let should_check_version = !args.ignore_version
-        && !any_rebuild
-        && !args.no_update_check
-        && config.update_check != "never"
-        && !quiet;
-
-    if should_check_version {
-        let cli_version = get_cli_version();
-        let image_tag = format!("{IMAGE_NAME_GHCR}:{IMAGE_TAG_DEFAULT}");
-
-        // Only check if image exists
-        if image_exists(&client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await? {
-            if let Ok(Some(image_version)) = get_image_version(&client, &image_tag).await {
-                if !versions_compatible(cli_version, Some(&image_version)) {
-                    println!();
-                    println!("{} Version mismatch detected", style("⚠").yellow());
-                    println!("  CLI version:   {}", style(cli_version).cyan());
-                    println!("  Image version: {}", style(&image_version).cyan());
-                    println!();
-
-                    let selection = dialoguer::Select::new()
-                        .with_prompt("What would you like to do?")
-                        .items(&[
-                            "Rebuild image from source (recommended)",
-                            "Continue with mismatched versions",
-                        ])
-                        .default(0)
-                        .interact()?;
-
-                    if selection == 0 {
-                        any_rebuild = true;
-                    }
-                    // selection == 1 means continue anyway
-                }
-            }
-        }
+    // Version compatibility check
+    if check_version_compatibility(&client, &config, args, quiet).await? {
+        any_rebuild = true;
     }
 
     // Security check: block first start without security configured
@@ -419,76 +650,8 @@ pub async fn cmd_start(
 
     // Check for port mismatch on existing container
     if !is_first_start && !any_rebuild {
-        let current_ports = get_container_ports(&client, CONTAINER_NAME).await?;
-        let current_opencode_port = current_ports.opencode_port.unwrap_or(3000);
-        let current_cockpit_port = current_ports.cockpit_port.unwrap_or(9090);
-
-        let port_mismatch = current_opencode_port != port;
-        let cockpit_mismatch = current_cockpit_port != config.cockpit_port;
-
-        if port_mismatch || cockpit_mismatch {
-            // Check port availability BEFORE prompting - fail fast if new port isn't available
-            if port_mismatch && !check_port_available(port) {
-                return Err(anyhow!(
-                    "Port mismatch: container uses port {current_opencode_port} but requested port {port}.\n\
-                     Cannot switch to port {port} - it's already in use.\n\n\
-                     Options:\n  \
-                     1. Stop the process using port {port}\n  \
-                     2. Use a different port: occ start --port <available-port>\n  \
-                     3. Keep current port: occ start --port {current_opencode_port}"
-                ));
-            }
-
-            if quiet {
-                // In quiet mode, fail with clear error
-                return Err(anyhow!(
-                    "Port mismatch: container uses port {current_opencode_port} but requested port {port}.\n\
-                     Container must be recreated to change ports.\n\
-                     Run without --quiet to be prompted, or manually remove with:\n  \
-                     occ stop && docker rm {CONTAINER_NAME}"
-                ));
-            }
-
-            eprintln!();
-            eprintln!(
-                "{} {}",
-                style("Port mismatch detected:").yellow().bold(),
-                style("Container must be recreated to change ports.").yellow()
-            );
-            if port_mismatch {
-                eprintln!(
-                    "  opencode port: {} (current) → {} (requested)",
-                    style(current_opencode_port).red(),
-                    style(port).green()
-                );
-            }
-            if cockpit_mismatch {
-                eprintln!(
-                    "  cockpit port: {} (current) → {} (requested)",
-                    style(current_cockpit_port).red(),
-                    style(config.cockpit_port).green()
-                );
-            }
-            eprintln!();
-            eprintln!(
-                "{}",
-                style("This will stop and recreate the container from the existing image.").dim()
-            );
-            eprintln!("{}", style("Your data volumes will be preserved.").dim());
-            eprintln!();
-
-            let confirm = dialoguer::Confirm::new()
-                .with_prompt("Recreate container with new port(s)?")
-                .default(true)
-                .interact()?;
-
-            if confirm {
-                any_rebuild = true;
-            } else {
-                return Err(anyhow!(
-                    "Container not recreated. To use port {port}, run:\n  occ stop && docker rm {CONTAINER_NAME} && occ start --port {port}"
-                ));
-            }
+        if let Some(rebuild) = check_port_mismatch(&client, &config, port, quiet).await? {
+            any_rebuild = rebuild;
         }
     }
 
@@ -516,30 +679,13 @@ pub async fn cmd_start(
     }
 
     // Security check: warn if network exposed without authentication
-    if !quiet
+    let should_warn_exposure = !quiet
         && config.is_network_exposed()
         && config.users.is_empty()
-        && !config.allow_unauthenticated_network
-    {
-        eprintln!();
-        eprintln!(
-            "{} {}",
-            style("WARNING:").yellow().bold(),
-            style("Network exposed without authentication!").yellow()
-        );
-        eprintln!();
-        eprintln!(
-            "The service is bound to {} but no users are configured.",
-            style(bind_addr).cyan()
-        );
-        eprintln!("Anyone on your network can access the web UI without authentication.");
-        eprintln!();
-        eprintln!("To add a user: {}", style("occ user add").cyan());
-        eprintln!(
-            "To suppress this warning: {}",
-            style("occ config set allow_unauthenticated_network true").cyan()
-        );
-        eprintln!();
+        && !config.allow_unauthenticated_network;
+
+    if should_warn_exposure {
+        display_network_exposure_warning(bind_addr);
     }
 
     // Pre-check port availability
@@ -565,47 +711,14 @@ pub async fn cmd_start(
         || !image_exists(&client, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT).await?;
 
     if needs_image {
-        if any_rebuild {
-            // Build from source
-            build_docker_image(&client, args.full_rebuild_sandbox_image, verbose).await?;
-            save_state(&ImageState::built(get_cli_version())).ok();
-        } else if use_prebuilt {
-            // Pull prebuilt image
-            match pull_docker_image(&client, verbose).await {
-                Ok(registry) => {
-                    save_state(&ImageState::prebuilt(get_cli_version(), &registry)).ok();
-                }
-                Err(e) => {
-                    // Pull failed - offer to build instead
-                    if !quiet {
-                        eprintln!();
-                        eprintln!(
-                            "{} Failed to pull prebuilt image: {e}",
-                            style("Error:").red().bold()
-                        );
-                        eprintln!();
-                        let build_instead = dialoguer::Confirm::new()
-                            .with_prompt("Build from source instead? (This takes 30-60 minutes)")
-                            .default(true)
-                            .interact()?;
-                        if build_instead {
-                            build_docker_image(&client, false, verbose).await?;
-                            save_state(&ImageState::built(get_cli_version())).ok();
-                        } else {
-                            return Err(anyhow!(
-                                "Cannot proceed without image. Run 'occ start --full-rebuild-sandbox-image' to build from source."
-                            ));
-                        }
-                    } else {
-                        return Err(e);
-                    }
-                }
-            }
-        } else {
-            // Build from source (config.image_source == "build")
-            build_docker_image(&client, false, verbose).await?;
-            save_state(&ImageState::built(get_cli_version())).ok();
-        }
+        acquire_image(
+            &client,
+            use_prebuilt && !any_rebuild,
+            args.full_rebuild_sandbox_image,
+            quiet,
+            verbose,
+        )
+        .await?;
     }
 
     // Start container
