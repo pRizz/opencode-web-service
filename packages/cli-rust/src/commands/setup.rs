@@ -2,13 +2,14 @@
 //!
 //! Runs the interactive setup wizard.
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use clap::Args;
 use console::style;
 use dialoguer::Confirm;
-use opencode_cloud_core::{load_config, save_config};
+use opencode_cloud_core::docker::{CONTAINER_NAME, container_is_running};
+use opencode_cloud_core::{Config, load_config, save_config};
 
-use crate::commands::cmd_start;
+use crate::commands::{cmd_start, cmd_stop};
 use crate::wizard::run_wizard;
 
 /// Arguments for the setup command
@@ -17,6 +18,10 @@ pub struct SetupArgs {
     /// Skip wizard if auth credentials are already configured
     #[arg(long, short)]
     pub yes: bool,
+
+    /// Run setup for a remote host instead of local Docker
+    #[arg(long)]
+    pub host: Option<String>,
 }
 
 /// Run the setup command
@@ -35,7 +40,7 @@ pub async fn cmd_setup(args: &SetupArgs, quiet: bool) -> Result<()> {
             }
         }
 
-        bail!(
+        anyhow::bail!(
             "Non-interactive mode requires auth credentials to be pre-set.\n\n\
             Use:\n  \
             occ config set username <user>\n  \
@@ -49,37 +54,112 @@ pub async fn cmd_setup(args: &SetupArgs, quiet: bool) -> Result<()> {
     // Save the config
     save_config(&new_config)?;
 
-    if !quiet {
-        println!();
-        println!(
-            "{} Configuration saved successfully!",
-            style("Success:").green().bold()
-        );
-        println!();
-
-        // Offer to start the service
-        let start_now = Confirm::new()
-            .with_prompt("Start opencode-cloud now?")
-            .default(true)
-            .interact()
-            .unwrap_or(false);
-
-        if start_now {
-            println!();
-            // Create minimal start args
-            let start_args = crate::commands::StartArgs {
-                port: Some(new_config.opencode_web_port),
-                open: false,
-                no_daemon: false,
-                pull_sandbox_image: false,
-                cached_rebuild_sandbox_image: false,
-                full_rebuild_sandbox_image: false,
-                ignore_version: false,
-                no_update_check: false,
-            };
-            cmd_start(&start_args, None, quiet, 0).await?;
-        }
+    if quiet {
+        return Ok(());
     }
 
+    println!();
+    println!(
+        "{} Configuration saved successfully!",
+        style("Success:").green().bold()
+    );
+    println!();
+
+    // Check if container is already running
+    let (client, host_name) = crate::resolve_docker_client(args.host.as_deref()).await?;
+    let is_running = container_is_running(&client, CONTAINER_NAME)
+        .await
+        .unwrap_or(false);
+
+    // Determine if restart-relevant config changed
+    let config_changed = existing_config
+        .as_ref()
+        .is_some_and(|old| requires_restart(old, &new_config));
+
+    // Choose appropriate prompt based on state
+    let (prompt, action) = match (is_running, config_changed) {
+        (true, true) => (
+            "Config changed. Restart opencode-cloud to apply?",
+            Action::Restart,
+        ),
+        (true, false) => {
+            // Running but no restart-relevant changes - just show status
+            show_running_status(&new_config, host_name.as_deref());
+            return Ok(());
+        }
+        (false, _) => ("Start opencode-cloud now?", Action::Start),
+    };
+
+    let confirmed = Confirm::new()
+        .with_prompt(prompt)
+        .default(true)
+        .interact()
+        .unwrap_or(false);
+
+    if !confirmed {
+        return Ok(());
+    }
+
+    println!();
+
+    // Stop first if restarting
+    if action == Action::Restart {
+        let stop_args = crate::commands::StopArgs {};
+        cmd_stop(&stop_args, args.host.as_deref(), quiet).await?;
+        println!();
+    }
+
+    // Start the service
+    let start_args = crate::commands::StartArgs {
+        port: Some(new_config.opencode_web_port),
+        open: false,
+        no_daemon: false,
+        pull_sandbox_image: false,
+        cached_rebuild_sandbox_image: false,
+        full_rebuild_sandbox_image: false,
+        ignore_version: false,
+        no_update_check: false,
+    };
+    cmd_start(&start_args, args.host.as_deref(), quiet, 0).await?;
+
     Ok(())
+}
+
+#[derive(PartialEq)]
+enum Action {
+    Start,
+    Restart,
+}
+
+/// Check if config changes require a container restart
+fn requires_restart(old: &Config, new: &Config) -> bool {
+    old.opencode_web_port != new.opencode_web_port
+        || old.bind != new.bind
+        || old.cockpit_port != new.cockpit_port
+        || old.cockpit_enabled != new.cockpit_enabled
+}
+
+/// Show status when service is running and no restart needed
+fn show_running_status(config: &Config, host: Option<&str>) {
+    let msg = crate::format_host_message(host, "Service is already running");
+    println!("{}", style(msg).dim());
+    println!();
+
+    let bind_addr = if config.bind == "0.0.0.0" || config.bind == "::" {
+        "127.0.0.1"
+    } else {
+        &config.bind
+    };
+
+    println!(
+        "URL: {}",
+        style(format!("http://{}:{}", bind_addr, config.opencode_web_port)).cyan()
+    );
+
+    if config.cockpit_enabled {
+        println!(
+            "Cockpit: {} (web admin)",
+            style(format!("http://{}:{}", bind_addr, config.cockpit_port)).cyan()
+        );
+    }
 }
