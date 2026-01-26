@@ -40,6 +40,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install build dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libssl-dev
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
