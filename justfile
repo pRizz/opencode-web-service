@@ -25,6 +25,21 @@ run *args:
 build-rust:
     cargo build --workspace
 
+# --- Node CLI (Mac / local dev) ---
+# Build Node CLI for Mac: compile Rust occ, copy to cli-node/bin/, then build the wrapper.
+# Use this when developing or testing the npm CLI locally (resolves binary from bin/ fallback).
+build-node-cli-mac:
+    cargo build -p opencode-cloud --bin occ
+    @mkdir -p packages/cli-node/bin
+    @cp target/debug/occ packages/cli-node/bin/occ
+    pnpm -C packages/cli-node build
+    @echo "✓ Node CLI built for Mac (binary in packages/cli-node/bin/)"
+
+# Run Node CLI on Mac. Pass args through (e.g. just run-node-cli-mac --version).
+# Requires build-node-cli-mac first; uses bin/occ as fallback.
+run-node-cli-mac *args:
+    node packages/cli-node/dist/index.js {{args}}
+
 # Build Node packages (including NAPI bindings)
 build-node:
     pnpm install
