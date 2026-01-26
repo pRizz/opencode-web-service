@@ -59,10 +59,6 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Build binary
-        env:
-          # Set OPENSSL_DIR for musl targets (Alpine installs to /usr)
-          # Cross passes through environment variables to the container
-          OPENSSL_DIR: ${{ contains(matrix.target, 'musl') && '/usr' || '' }}
         run: |
           if [ "${{ matrix.use-cross }}" = "true" ]; then
             cross build --release --target ${{ matrix.target }} -p opencode-cloud --bin occ
