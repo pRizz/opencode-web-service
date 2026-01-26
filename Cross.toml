@@ -1,0 +1,21 @@
+# Cross configuration for OpenSSL support in cross-compilation containers
+# Musl targets typically use Alpine-based images (apk), but fallback to apt-get if needed
+
+[target.x86_64-unknown-linux-musl]
+pre-build = [
+  # Alpine-based musl images use apk
+  "apk add --no-cache openssl-dev pkgconfig || (apt-get update && apt-get install -y libssl-dev pkg-config)"
+]
+
+[target.aarch64-unknown-linux-musl]
+pre-build = [
+  # Alpine-based musl images use apk
+  "apk add --no-cache openssl-dev pkgconfig || (apt-get update && apt-get install -y libssl-dev pkg-config)"
+]
+
+[target.aarch64-unknown-linux-gnu]
+pre-build = [
+  # Debian-based images use apt-get
+  "dpkg --add-architecture arm64",
+  "apt-get update && apt-get install --assume-yes -y libssl-dev:arm64 pkg-config"
+]
