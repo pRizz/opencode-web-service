@@ -26,14 +26,14 @@ jobs:
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
             package: cli-node-linux-arm64
-            use-cross: true
+            use-cross: "true"
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
             package: cli-node-linux-x64-musl
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
             package: cli-node-linux-arm64-musl
-            use-cross: true
+            use-cross: "true"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -44,8 +44,12 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Install cross (for ARM targets)
-        if: matrix.use-cross == 'true'
+      - name: Add Rust target
+        if: ${{ matrix.use-cross != 'true' }}
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install cross (for ARM Linux targets)
+        if: ${{ matrix.use-cross == 'true' }}
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Install musl-tools (for musl x64)
