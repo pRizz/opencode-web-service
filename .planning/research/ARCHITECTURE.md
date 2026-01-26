@@ -1,40 +1,45 @@
 # Architecture Patterns
 
-**Project:** opencode-cloud-service
-**Domain:** Cross-platform CLI installer for containerized AI coding agent service
+**Project:** opencode-cloud
+**CLI:** `occ` / `opencode-cloud`
+**Domain:** Cross-platform CLI for deploying opencode as a persistent cloud service
 **Researched:** 2026-01-18
-**Confidence:** MEDIUM-HIGH
+**Updated:** 2026-01-25 (layout, platform packages, Node passthrough, distribution)
+**Confidence:** HIGH
 
 ## Executive Summary
 
-This architecture document describes a monorepo structure for a cross-platform CLI installer that deploys opencode as a persistent cloud service. The system consists of five major components: CLI entry points (npm/npx and cargo), Docker management, service installation, configuration management, and shared Docker assets. The design follows the cloudflared pattern for cross-platform service installation while leveraging Bollard (Rust) and Dockerode (TypeScript) for programmatic Docker control.
+opencode-cloud is a polyglot monorepo providing a cross-platform CLI to run opencode as a persistent, containerized service. The **Rust CLI is the single source of truth**. The Node CLI is a thin wrapper that spawns the Rust binary and passes all arguments through. Shared logic lives in a Rust core library with NAPI-RS bindings (used by the core npm package). Docker operations use **Bollard** only; there is no Dockerode. Configuration is JSONC at XDG-compliant paths. Prebuilt binaries are distributed via npm **optionalDependencies** (platform-specific packages `@opencode-cloud/cli-node-*`), so `npm install opencode-cloud` works without a Rust toolchain.
 
 ---
 
 ## Recommended Architecture
 
 ```
-opencode-cloud-service/
+opencode-cloud/
 |
 |-- packages/
-|   |-- cli-node/              # npm/npx entry point (TypeScript)
-|   |-- cli-rust/              # cargo entry point (Rust)
-|   |-- shared-types/          # Shared TypeScript types
-|   |
-|-- docker/
-|   |-- Dockerfile             # Main opencode container
-|   |-- docker-compose.yml     # Orchestration template
-|   |-- templates/             # Platform-specific compose overrides
-|   |
-|-- services/
-|   |-- linux/                 # systemd unit files
-|   |-- macos/                 # launchd plist templates
-|   |-- windows/               # Windows Service definitions
-|   |
-|-- turbo.json                 # Turborepo configuration
-|-- pnpm-workspace.yaml        # pnpm workspaces config
-|-- Cargo.toml                 # Rust workspace root
-|-- package.json               # Root package.json
+|   |-- core/                    # Rust library + NAPI-RS (npm: @opencode-cloud/core)
+|   |   |-- src/                 # config, docker, host, platform, singleton
+|   |   |-- Dockerfile           # embedded via include_str! in dockerfile.rs
+|   |-- cli-rust/                # Rust CLI (cargo: opencode-cloud, bin: occ)
+|   |   |-- src/commands/        # start, stop, config, user, mount, host, etc.
+|   |-- cli-node/                # Node CLI wrapper (npm: opencode-cloud)
+|   |   |-- src/index.ts         # spawns occ, stdio inherit, platform binary resolution
+|   |-- cli-node-darwin-arm64/   # Platform package: macOS Apple Silicon binary
+|   |-- cli-node-darwin-x64/     # Platform package: macOS Intel binary
+|   |-- cli-node-linux-x64/      # Platform package: Linux x64 glibc
+|   |-- cli-node-linux-arm64/    # Platform package: Linux ARM64 glibc
+|   |-- cli-node-linux-x64-musl/ # Platform package: Linux x64 musl (Alpine)
+|   |-- cli-node-linux-arm64-musl/ # Platform package: Linux ARM64 musl (Alpine)
+|
+|-- schemas/                     # config.schema.json, config.example.jsonc
+|-- scripts/                     # set-all-versions, release, check-dockerfile-updates
+|-- .github/workflows/           # ci, build-cli-binaries, publish-npm, docker-publish, version-bump
+|-- justfile                     # build, test, fmt, lint, run, build-node-cli-mac, etc.
+|-- pnpm-workspace.yaml          # pnpm workspaces (core, cli-node, cli-rust, cli-node-*)
+|-- Cargo.toml                   # Rust workspace (core, cli-rust)
+|-- package.json                 # Root (optional scripts, devDeps)
 ```
 
 ### High-Level Component Diagram
@@ -42,25 +47,27 @@ opencode-cloud-service/
 ```
 +-------------------+     +-------------------+
 |   npm/npx CLI     |     |    cargo CLI      |
-|   (TypeScript)    |     |      (Rust)       |
+|   (cli-node)      |     |   (cli-rust/occ)  |
+|   passthrough     |     |   source of truth |
 +--------+----------+     +--------+----------+
-         |                         |
-         |   Shared Interface      |
+         | spawn(occ)              |
+         +-------------------------+
+                      |
+         +------------v------------+
+         |   packages/core         |
+         |   (Rust lib + NAPI-RS)  |
+         |   Docker (Bollard),     |
+         |   config, platform      |
          +------------+------------+
                       |
          +------------v------------+
-         |   Docker Management     |
-         |  Dockerode / Bollard    |
+         |   Docker daemon         |
+         |   (socket / remote)     |
          +------------+------------+
                       |
          +------------v------------+
-         |   Service Installation  |
-         | systemd/launchd/SCM     |
-         +------------+------------+
-                      |
-         +------------v------------+
-         |   Config Management     |
-         |   JSON persistence      |
+         |   opencode container    |
+         |   (ghcr.io/.../sandbox) |
          +-------------------------+
 ```
 
@@ -70,327 +77,169 @@ opencode-cloud-service/
 
 | Component | Responsibility | Technology | Communicates With |
 |-----------|---------------|------------|-------------------|
-| **CLI Node** | npm/npx entry point, user interaction, command parsing | TypeScript, Commander.js or yargs | Docker Management, Config Management, Service Installation |
-| **CLI Rust** | cargo entry point, same features as Node CLI | Rust, clap | Docker Management, Config Management, Service Installation |
-| **Docker Management** | Container lifecycle, image building, compose orchestration | Dockerode (Node), Bollard (Rust) | Docker daemon via socket/API |
-| **Service Installation** | Register/unregister as system service | Platform-specific APIs | OS service managers (systemd, launchd, SCM) |
-| **Config Management** | Persist user configuration, secrets handling | JSON files in XDG-compliant paths | File system |
-| **Docker Assets** | Dockerfile, compose files, templates | Docker, docker-compose | Used by Docker Management |
+| **cli-node** | npm/npx entry point, spawn Rust binary, resolve platform binary from optionalDependencies | TypeScript, Node spawn | Rust binary (occ), platform packages |
+| **cli-rust** | CLI parsing, all business logic, Docker, config, service lifecycle | Rust, clap | core library, Docker daemon, filesystem |
+| **core** | Config paths, schema, Docker client (Bollard), container lifecycle, platform (systemd/launchd), host/tunnel | Rust, NAPI-RS | Published as @opencode-cloud/core for npm |
+| **Platform packages** | Ship prebuilt `occ` binary per platform; `main` exports `binaryPath` | JSON + index.js | Consumed by cli-node via optionalDependencies |
+| **Docker** | Image build/pull, container create/start/stop, logs, exec | Bollard | Docker daemon (socket or remote via SSH tunnel) |
+| **Config** | JSONC at XDG paths, validation, migration | Rust (config module) | ~/.config/opencode-cloud/, ~/.local/share/opencode-cloud/ |
 
 ### Component Detail
 
 #### 1. CLI Entry Points
 
-Both CLIs expose identical commands with consistent behavior:
+**Rust CLI (occ / opencode-cloud):** Single source of truth. All commands implemented in `packages/cli-rust`. Uses `opencode-cloud-core` library. Entry points: `src/bin/occ.rs`, `src/bin/opencode-cloud.rs`.
+
+**Node CLI (opencode-cloud):** Thin wrapper. Resolves binary from (1) platform optionalDependency, or (2) `packages/cli-node/bin/occ` (dev fallback). Spawns binary with `stdio: 'inherit'`, passes `argv.slice(2)`. No parsing, no Docker logic.
+
+**Commands (identical for both):**
 
 ```
-opencode-cloud-service install    # Install as system service
-opencode-cloud-service uninstall  # Remove system service
-opencode-cloud-service start      # Start the service
-opencode-cloud-service stop       # Stop the service
-opencode-cloud-service status     # Show service status
-opencode-cloud-service config     # Manage configuration
-opencode-cloud-service logs       # View service logs
-opencode-cloud-service update     # Update container image
+occ start | stop | restart | status | logs
+occ config show | get | set | reset | env ...
+occ setup
+occ user add | remove | list | passwd | enable | disable
+occ mount add | remove | list
+occ update
+occ install | uninstall
+occ cockpit
+occ host add | remove | list | show | edit | test | default
+occ --help | --version
 ```
-
-**Boundary:** CLIs are thin wrappers that delegate to shared logic modules. They handle:
-- Argument parsing
-- User prompts and output formatting
-- Error presentation
-- Platform detection
-
-**Does NOT handle:** Docker operations, service registration, config I/O.
 
 #### 2. Docker Management
 
-Manages all Docker interactions programmatically.
+Implemented in `packages/core` (Rust). Uses **Bollard** only.
 
-| Operation | Description | Library Method |
-|-----------|-------------|----------------|
-| Check Docker | Verify Docker daemon is running | `docker.ping()` |
-| Pull Image | Download opencode image | `docker.pull()` |
-| Create Container | Instantiate from image | `docker.createContainer()` |
-| Start/Stop | Lifecycle management | `container.start()` / `container.stop()` |
-| Logs | Stream container output | `container.logs()` |
-| Health Check | Monitor container status | `container.inspect()` |
+| Operation | Description | Location |
+|-----------|-------------|----------|
+| Connection | Verify Docker daemon, categorize errors | `docker/client.rs` |
+| Image | Build (embedded Dockerfile), pull, tag | `docker/image.rs` |
+| Container | Create, start, stop, remove, inspect | `docker/container.rs` |
+| Logs | Stream container output | `docker/` + CLI |
+| Exec | Run commands in container (e.g. user management) | `docker/exec.rs` |
+| Health | `/health` check | `docker/health.rs` |
 
-**Connection Methods:**
-- **Linux/macOS:** Unix socket (`/var/run/docker.sock`)
-- **Windows:** Named pipe (`//./pipe/docker_engine`)
-- **Remote:** TCP with optional TLS (via `DOCKER_HOST`)
-
-**Boundary:** This component owns ALL Docker interactions. No other component directly calls Docker APIs.
+**Connection:** Unix socket (`/var/run/docker.sock`), or remote via SSH tunnel (`host/tunnel.rs`). No Dockerode; no Node Docker client.
 
 #### 3. Service Installation
 
-Platform-specific service registration following the [cloudflared pattern](https://deepwiki.com/cloudflare/cloudflared/2.3-service-management-commands).
+User-mode **systemd** (Linux) and **launchd** (macOS). No Windows. Implemented in `packages/core` (`platform/systemd.rs`, `platform/launchd.rs`).
 
-| Platform | Service Manager | Config Location | Implementation |
-|----------|-----------------|-----------------|----------------|
-| Linux | systemd | `/etc/systemd/system/` | `.service` unit file |
-| Linux (legacy) | SysV | `/etc/init.d/` | init script |
-| macOS | launchd | `/Library/LaunchDaemons/` | `.plist` file |
-| Windows | SCM | Registry + service binary | Windows Service API |
+| Platform | Manager | Config Location |
+|----------|---------|-----------------|
+| Linux | systemd (user) | `~/.config/systemd/user/` |
+| macOS | launchd (user) | `~/Library/LaunchAgents/` |
 
-**Service Lifecycle:**
-
-```
-install:
-  1. Detect platform and service manager
-  2. Generate service definition from template
-  3. Write to appropriate system location
-  4. Register with service manager
-  5. Optionally enable auto-start
-
-uninstall:
-  1. Stop running service
-  2. Disable auto-start
-  3. Unregister from service manager
-  4. Remove service definition file
-```
-
-**Boundary:** This component handles OS service manager interactions ONLY. It does not manage Docker directly; it configures the service to invoke the Docker management component.
+`occ install` / `occ uninstall` register the service; the unit invokes `docker` (or `occ start` as appropriate). See cloudflared-style service management.
 
 #### 4. Configuration Management
 
-Cross-platform JSON configuration persistence using XDG-compliant paths.
+**Paths (XDG-style):**
 
-**Path Resolution:**
+| Platform | Config | Data |
+|----------|--------|------|
+| Linux | `~/.config/opencode-cloud/` | `~/.local/share/opencode-cloud/` |
+| macOS | `~/.config/opencode-cloud/` | `~/.local/share/opencode-cloud/` |
+| Windows | `%APPDATA%\opencode-cloud\` | `%LOCALAPPDATA%\opencode-cloud\` |
 
-| Platform | Config Directory | Data Directory |
-|----------|------------------|----------------|
-| Linux | `~/.config/opencode-cloud-service/` | `~/.local/share/opencode-cloud-service/` |
-| macOS | `~/Library/Preferences/opencode-cloud-service/` | `~/Library/Application Support/opencode-cloud-service/` |
-| Windows | `%APPDATA%\opencode-cloud-service\Config\` | `%LOCALAPPDATA%\opencode-cloud-service\Data\` |
+**Config file:** `config.json` (JSONC). Schema: `schemas/config.schema.json`. Example: `schemas/config.example.jsonc`. Validation and paths in `packages/core` config module; paths use `directories` (Rust) for XDG-style resolution.
 
-**Libraries:**
-- **TypeScript:** [env-paths](https://github.com/sindresorhus/env-paths) (sindresorhus)
-- **Rust:** [directories](https://crates.io/crates/directories) or [cross-xdg](https://crates.io/crates/cross-xdg)
+**Other files:** `hosts.json` (remote hosts), `opencode-cloud.pid` (singleton lock), plus state under data dir.
 
-**Config Schema (example):**
+#### 5. Platform Packages (Node prebuilt binaries)
 
-```json
-{
-  "version": "1.0.0",
-  "container": {
-    "image": "opencode:latest",
-    "port": 8080,
-    "volumes": ["/path/to/workspace:/workspace"]
-  },
-  "service": {
-    "autoStart": true,
-    "restartPolicy": "always"
-  },
-  "auth": {
-    "apiKeyRef": "env:OPENCODE_API_KEY"
-  }
-}
-```
+Six npm packages, one per platform:
 
-**Boundary:** Config management handles file I/O, schema validation, and migration. It does NOT interpret config values; consumers (Docker Management, Service Installation) use the parsed config.
+| Package | Platform |
+|---------|----------|
+| `@opencode-cloud/cli-node-darwin-arm64` | macOS Apple Silicon |
+| `@opencode-cloud/cli-node-darwin-x64` | macOS Intel |
+| `@opencode-cloud/cli-node-linux-x64` | Linux x64 glibc |
+| `@opencode-cloud/cli-node-linux-arm64` | Linux ARM64 glibc |
+| `@opencode-cloud/cli-node-linux-x64-musl` | Linux x64 musl (Alpine) |
+| `@opencode-cloud/cli-node-linux-arm64-musl` | Linux ARM64 musl (Alpine) |
 
-#### 5. Docker Assets
-
-Shared Docker configuration consumed by both CLIs.
-
-```
-docker/
-|-- Dockerfile              # Multi-stage build for opencode
-|-- docker-compose.yml      # Base compose configuration
-|-- templates/
-    |-- docker-compose.linux.yml
-    |-- docker-compose.macos.yml
-    |-- docker-compose.windows.yml
-```
-
-**Boundary:** These are static assets. Docker Management reads and processes them; they are not executable components.
+Each has `package.json` with `os`, `cpu`, `libc` (Linux), `files: ["bin"]`, `main: "index.js"`. `index.js` exports `binaryPath` to `bin/occ`. The main package `opencode-cloud` declares them as `optionalDependencies` (workspace:* in dev). npm installs only the matching platform package. `cli-node` resolves binary via `require(platformPackage).binaryPath` or falls back to `packages/cli-node/bin/occ` for development.
 
 ---
 
 ## Data Flow
 
-### Installation Flow
+### First-Run / Setup
 
 ```
-User runs: npx opencode-cloud-service install
+User runs: npx opencode-cloud setup   (or first occ <cmd>)
 
-1. CLI: Parse arguments, detect platform
-        |
-2. CLI: Prompt for configuration (if interactive)
-        |
-3. Config: Write config.json to XDG path
-        |
-4. Docker: Check Docker daemon availability
-        |
-5. Docker: Pull/build opencode image
-        |
-6. Docker: Verify container can start
-        |
-7. Service: Generate platform-specific service file
-        |
-8. Service: Register with OS service manager
-        |
-9. Service: Start service
-        |
-10. CLI: Report success with status
+1. Node: resolve binary (platform pkg or bin/occ)
+2. Node: spawn(occ, ['setup', ...]), stdio inherit
+3. Rust: clap parses, runs setup command
+4. Rust: wizard prompts (auth, port, hostname, image source)
+5. Core: ensure config dir, write config.json
+6. Core: Docker check, optional image pull/build
+7. Core: create container, users; start
+8. Rust: print status, exit 0
 ```
 
-### Runtime Flow (Service Running)
+### Start Flow
 
 ```
-OS Service Manager
-        |
-        v
-Service Definition (systemd/launchd/SCM)
-        |
-        v
-Docker daemon socket/pipe
-        |
-        v
-opencode container
-        |
-        v
-[Exposes port / socket for client connections]
+User runs: occ start [--host <name>]
+
+1. Rust: load config, resolve Docker client (local or --host tunnel)
+2. Core: check image, create container if needed (bind mounts, etc.)
+3. Core: start container
+4. Rust: update state, print URL / status
 ```
 
-### Configuration Update Flow
+### Config Update Flow
 
 ```
-User runs: npx opencode-cloud-service config set port 9090
+User runs: occ config set key value
 
-1. CLI: Parse config subcommand
-        |
-2. Config: Read existing config.json
-        |
-3. Config: Validate new value against schema
-        |
-4. Config: Write updated config.json
-        |
-5. Service: If running, prompt to restart
-        |
-6. Docker: Recreate container with new config (if restart confirmed)
+1. Rust: parse, load config, validate
+2. Core: update config, write config.json
+3. Rust: hint restart if needed
 ```
 
 ---
 
 ## Patterns to Follow
 
-### Pattern 1: Thin CLI, Thick Core
+### Pattern 1: Rust Single Source of Truth, Node Passthrough
 
-**What:** CLIs should be thin wrappers delegating to shared business logic.
+**What:** All CLI behavior lives in the Rust CLI. The Node CLI only finds and spawns the Rust binary.
 
-**Why:** Ensures feature parity between npm and cargo CLIs. Reduces duplication.
-
-**Implementation:**
-
-For TypeScript, core logic lives in shared modules:
-```typescript
-// packages/cli-node/src/commands/install.ts
-import { install } from '@opencode-cloud-service/core';
-
-export async function installCommand(options: InstallOptions) {
-  const spinner = ora('Installing...').start();
-  try {
-    await install(options);
-    spinner.succeed('Installed successfully');
-  } catch (err) {
-    spinner.fail(err.message);
-    process.exit(1);
-  }
-}
-```
-
-For Rust, core logic in a library crate:
-```rust
-// packages/cli-rust/src/main.rs
-use opencode_core::install;
-
-#[tokio::main]
-async fn main() {
-    let args = Args::parse();
-    if let Err(e) = install(args.into()).await {
-        eprintln!("Error: {}", e);
-        std::process::exit(1);
-    }
-}
-```
-
-### Pattern 2: Platform Abstraction Layer
-
-**What:** Abstract platform-specific operations behind a common interface.
-
-**Why:** Clean separation between business logic and OS-specific code.
+**Why:** Guarantees perfect parity. No duplicate logic. Single place to add commands (Rust only).
 
 **Implementation:**
 
-```typescript
-// Shared interface
-interface ServiceManager {
-  install(config: ServiceConfig): Promise<void>;
-  uninstall(name: string): Promise<void>;
-  start(name: string): Promise<void>;
-  stop(name: string): Promise<void>;
-  status(name: string): Promise<ServiceStatus>;
-}
+- `packages/cli-node/src/index.ts`: `getPlatformPackage()` → `resolveBinaryPath()` → `spawn(binaryPath, argv.slice(2), { stdio: 'inherit' })`. No command parsing.
+- New commands: add to `cli-rust` only; Node automatically passes them through.
 
-// Platform implementations
-class SystemdManager implements ServiceManager { /* ... */ }
-class LaunchdManager implements ServiceManager { /* ... */ }
-class WindowsSCMManager implements ServiceManager { /* ... */ }
+### Pattern 2: Platform Abstraction in Core
 
-// Factory
-function getServiceManager(): ServiceManager {
-  switch (process.platform) {
-    case 'linux': return new SystemdManager();
-    case 'darwin': return new LaunchdManager();
-    case 'win32': return new WindowsSCMManager();
-    default: throw new Error(`Unsupported platform: ${process.platform}`);
-  }
-}
-```
+**What:** Platform-specific service and path logic behind a common interface in `core`.
 
-### Pattern 3: Docker Socket Detection
+**Why:** Keeps `cli-rust` agnostic; core handles systemd vs launchd, XDG paths, etc.
 
-**What:** Auto-detect Docker daemon connection method.
+**Implementation:** `platform/mod.rs`, `platform/systemd.rs`, `platform/launchd.rs`; `config/paths.rs` for XDG.
 
-**Why:** Works across all platforms without user configuration.
+### Pattern 3: optionalDependencies for Prebuilt Binaries
 
-**Implementation:**
+**What:** Platform-specific npm packages with `os`/`cpu`/`libc`. Main package `optionalDependencies`; install pulls only the matching one.
 
-```typescript
-function getDockerConnection(): DockerConnectionOptions {
-  if (process.platform === 'win32') {
-    return { socketPath: '//./pipe/docker_engine' };
-  }
+**Why:** Zero-compile install for users. Same pattern as esbuild, swc, Sentry CLI.
 
-  // Check for custom DOCKER_HOST
-  if (process.env.DOCKER_HOST) {
-    return parseDockerHost(process.env.DOCKER_HOST);
-  }
+**Implementation:** `packages/cli-node` optionalDeps → `@opencode-cloud/cli-node-*`. CI: `build-cli-binaries.yml` builds `occ` per target, `publish-npm` publishes platform packages then main.
 
-  // Default Unix socket
-  return { socketPath: '/var/run/docker.sock' };
-}
-```
+### Pattern 4: Justfile for Orchestration
 
-### Pattern 4: Graceful Degradation for SysV
+**What:** `just` for build, test, fmt, lint, run, release, publish.
 
-**What:** Fall back to SysV init scripts on Linux systems without systemd.
+**Why:** Single entrypoint, cross-platform, no Turborepo. Matches Rust-focused workflow.
 
-**Why:** Supports older/minimal Linux distributions.
-
-**Detection:**
-```typescript
-function hasSystemd(): boolean {
-  try {
-    fs.accessSync('/run/systemd/system', fs.constants.R_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-```
+**Implementation:** `just build`, `just test`, `just run -- args`, `just build-node-cli-mac`, etc.
 
 ---
 
@@ -398,48 +247,35 @@ function hasSystemd(): boolean {
 
 ### Anti-Pattern 1: Direct Docker CLI Shelling
 
-**What:** Calling `docker` CLI via subprocess instead of using SDK.
+**What:** Invoking `docker` via subprocess instead of using the Docker API.
 
-**Why Bad:**
-- Parsing CLI output is fragile
-- Requires Docker CLI to be installed (not just daemon)
-- Error handling is inconsistent
-- No type safety
+**Why Bad:** Fragile output parsing, requires Docker CLI, poor error handling.
 
-**Instead:** Use Dockerode (Node) or Bollard (Rust) to communicate with Docker daemon directly.
+**Instead:** Use Bollard (Rust) to talk to the Docker daemon.
 
 ### Anti-Pattern 2: Hardcoded Paths
 
-**What:** Hardcoding config/data paths like `/etc/opencode/` or `C:\Program Files\`.
+**What:** Fixed paths like `/etc/opencode/` or `C:\Program Files\`.
 
-**Why Bad:**
-- Breaks on non-standard installations
-- Ignores XDG specification on Linux
-- Fails for non-admin users
+**Why Bad:** Breaks XDG, non-standard installs, non-admin users.
 
-**Instead:** Use env-paths (Node) or directories (Rust) for platform-appropriate paths.
+**Instead:** `config/paths.rs` using the `directories` crate (XDG-style).
 
-### Anti-Pattern 3: Monolithic Service Wrapper
+### Anti-Pattern 3: Duplicating CLI Logic in Node
 
-**What:** Building a single binary that wraps Docker and runs as the service.
+**What:** Implementing commands or Docker logic in the Node wrapper.
 
-**Why Bad:**
-- Adds unnecessary layer between service manager and Docker
-- Complicates debugging
-- Increases attack surface
+**Why Bad:** Divergence from Rust, two sources of truth.
 
-**Instead:** Service definition should directly invoke Docker daemon. The CLI is for installation/management, not runtime.
+**Instead:** Node only spawns `occ`; all logic in Rust.
 
-### Anti-Pattern 4: Shared State Between CLIs
+### Anti-Pattern 4: Shared Runtime State Between Node and Rust
 
-**What:** Assuming Node and Rust CLIs share runtime state.
+**What:** Assuming Node and Rust CLIs share process state.
 
-**Why Bad:**
-- They are separate processes
-- Race conditions on config files
-- No guaranteed ordering
+**Why Bad:** Separate processes; races on config.
 
-**Instead:** Use file-based configuration with advisory locking. Each CLI reads config fresh.
+**Instead:** File-based config, advisory locking; each process reads afresh.
 
 ---
 
@@ -449,187 +285,93 @@ function hasSystemd(): boolean {
 
 ```
                     +------------------+
-                    |  Docker Assets   |
-                    |  (Dockerfile,    |
-                    |   compose files) |
+                    |  Core (Rust)     |
+                    |  Docker, config, |
+                    |  platform, host  |
                     +--------+---------+
                              |
-                             | (embedded/bundled at build time)
-                             v
-+----------------+   +-------+--------+   +----------------+
-|  shared-types  |   |  Core Logic    |   |  Config Schema |
-|  (TypeScript)  |   |  (per language)|   |  (JSON Schema) |
-+-------+--------+   +-------+--------+   +-------+--------+
-        |                    |                    |
-        +--------------------+--------------------+
-                             |
-              +--------------+--------------+
-              |                             |
-      +-------v-------+             +-------v-------+
-      |   cli-node    |             |   cli-rust    |
-      |  (TypeScript) |             |    (Rust)     |
-      +---------------+             +---------------+
-              |                             |
-              v                             v
-      npm package                   cargo package
-      (+ optional deps              (single binary
-       per platform)                 per platform)
+         +-------------------+-------------------+
+         |                                       |
++--------v--------+                     +--------v--------+
+|  cli-rust       |                     |  cli-node       |
+|  (Rust CLI)     |                     |  (Node wrapper) |
+|  occ binary     |                     |  + optionalDeps |
++-----------------+                     |  cli-node-*     |
+         |                              +-----------------+
+         |                                       |
+         v                                       v
+  cargo install                          npm install
+  (or build-cli-binaries                 (platform binary
+   for npm publish)                       per os/cpu/libc)
 ```
 
 ### Build Order
 
-1. **Shared Types / Config Schema** (no dependencies)
-   - JSON Schema for configuration validation
-   - TypeScript type definitions (for Node CLI)
+1. **Core** – `cargo build -p opencode-cloud-core`; `pnpm -C packages/core build` (NAPI-RS).
+2. **cli-rust** – `cargo build -p opencode-cloud`; produces `occ` / `opencode-cloud` binaries.
+3. **cli-node** – `pnpm -C packages/cli-node build` (tsc). Depends on optionalDependencies for runtime; dev uses `bin/occ`.
+4. **Platform packages** – No build step; CI copies `occ` into each `packages/cli-node-*/bin/`.
 
-2. **Docker Assets** (no dependencies)
-   - Dockerfile
-   - docker-compose templates
-   - These are static; "building" means validation/linting
+### Tooling
 
-3. **Core Logic Libraries** (depends on 1)
-   - Node: Core TypeScript library with Docker/Service logic
-   - Rust: Core library crate with same logic
-
-4. **CLI Packages** (depends on 2, 3)
-   - Node CLI: Wraps core library, adds CLI framework
-   - Rust CLI: Wraps core library, adds CLI framework
-
-5. **Distribution** (depends on 4)
-   - npm: Build and publish npm package
-   - cargo: Build release binaries for each platform
-
-### Monorepo Tooling Recommendation
-
-**Recommended:** pnpm workspaces + Turborepo for TypeScript, Cargo workspaces for Rust.
-
-**Rationale:** Turborepo optimizes TypeScript builds with caching and parallelization but does not directly support Rust. Cargo workspaces handle Rust dependency management natively. The two can coexist in the same repository.
-
-**turbo.json configuration:**
-```json
-{
-  "$schema": "https://turborepo.dev/schema.json",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "test": {
-      "dependsOn": ["build"]
-    },
-    "lint": {}
-  }
-}
-```
-
-**Cargo.toml workspace:**
-```toml
-[workspace]
-members = [
-  "packages/cli-rust",
-  "packages/opencode-core-rust"
-]
-```
-
-### Build Scripts
-
-```bash
-# Full build (both languages)
-pnpm install && pnpm build   # TypeScript
-cargo build --release        # Rust
-
-# CI/CD pipeline order
-1. Lint (parallel): pnpm lint && cargo clippy
-2. Test (parallel): pnpm test && cargo test
-3. Build Node: pnpm build
-4. Build Rust: cargo build --release (per target)
-5. Package npm: npm pack
-6. Package cargo: cargo-dist (generates platform binaries)
-```
+- **Rust:** Cargo workspace (`core`, `cli-rust`). `rust-toolchain.toml` pins version.
+- **Node:** pnpm workspaces. Workspace: `core`, `cli-node`, `cli-rust`, `cli-node-darwin-arm64`, etc.
+- **Orchestration:** `justfile` (build, test, fmt, lint, run, build-node-cli-mac, run-node-cli-mac, publish-*).
+- **CI:** `ci.yml`, `build-cli-binaries.yml`, `publish-npm.yml`, `docker-publish.yml`, `version-bump.yml`.
 
 ---
 
 ## Distribution Architecture
 
-### npm Package Strategy
+### npm
 
-> **Note:** This section describes the prebuilt binary pattern for reference. For opencode-cloud, we chose **compile-on-install** instead (no prebuilt binaries) for improved transparency. Users must have Rust 1.85+ installed.
+- **Main package:** `opencode-cloud`. Bin: `opencode-cloud`, `occ` → `dist/index.js`.
+- **optionalDependencies:** All six `@opencode-cloud/cli-node-*` packages (workspace:* in repo; concrete versions on publish).
+- **Install:** `npm install opencode-cloud` pulls the matching platform package; Node CLI resolves `binaryPath` and spawns `occ`. No Rust required.
+- **Publish:** `publish-npm` workflow runs `build-cli-binaries` (matrix build), downloads artifacts, publishes platform packages, then `@opencode-cloud/core`, then `opencode-cloud`.
 
-The Sentry CLI pattern uses optional dependencies for prebuilt binaries:
+### Crates.io
 
-```
-@opencode-cloud-service/cli          # Base package
-@opencode-cloud-service/cli-darwin-x64
-@opencode-cloud-service/cli-darwin-arm64
-@opencode-cloud-service/cli-linux-x64
-@opencode-cloud-service/cli-linux-arm64
-@opencode-cloud-service/cli-win32-x64
-```
+- **opencode-cloud-core** – Core library (used by cli-rust; also npm via NAPI-RS).
+- **opencode-cloud** – CLI crate, binaries `occ` and `opencode-cloud`.
 
-Base package.json:
-```json
-{
-  "name": "@opencode-cloud-service/cli",
-  "bin": {
-    "opencode-cloud-service": "./bin/cli.js"
-  },
-  "optionalDependencies": {
-    "@opencode-cloud-service/cli-darwin-x64": "1.0.0",
-    "@opencode-cloud-service/cli-darwin-arm64": "1.0.0",
-    "@opencode-cloud-service/cli-linux-x64": "1.0.0"
-  }
-}
-```
+### Docker
 
-### Cargo Distribution
-
-Use [cargo-dist](https://opensource.axo.dev/cargo-dist/book/installers/npm.html) for automated release builds:
-
-```toml
-# Cargo.toml
-[package.metadata.dist]
-installers = ["shell", "npm"]
-targets = [
-  "x86_64-unknown-linux-gnu",
-  "aarch64-unknown-linux-gnu",
-  "x86_64-apple-darwin",
-  "aarch64-apple-darwin",
-  "x86_64-pc-windows-msvc"
-]
-```
+- Image: `ghcr.io/prizz/opencode-cloud-sandbox`. Built via `docker-publish` workflow. Dockerfile lives in `packages/core` and is embedded in the Rust build.
 
 ---
 
 ## Scalability Considerations
 
-| Concern | Single User | Team (10 users) | Enterprise (100+ users) |
-|---------|-------------|-----------------|-------------------------|
-| Config storage | Local JSON file | Local JSON file | Consider centralized config |
-| Service management | Single container | Single container | Container orchestration (K8s) |
-| Logging | Local files | Local files | Centralized logging |
-| Updates | Manual CLI | Manual CLI | Automated updates via service timer |
+| Concern | Single User | Team | Enterprise |
+|---------|-------------|------|------------|
+| Config | Local JSONC | Local JSONC | Centralized config (future) |
+| Service | Single container | Single container | Orchestration (e.g. K8s) |
+| Logs | Local / Docker | Local / Docker | Centralized logging |
+| Updates | `occ update` | `occ update` | Automated (e.g. timer) |
+| Hosts | `occ host` (SSH tunnel) | Multiple hosts | Scale via host management |
 
-**Note:** This architecture is designed for single-node deployment. For enterprise/multi-node scenarios, consider Kubernetes operators instead of native service managers.
+The design targets single-node deployment. Multi-node or enterprise use cases may need orchestration or operators rather than only systemd/launchd.
 
 ---
 
 ## Sources
 
-### Official Documentation
-- [Docker Engine SDK](https://docs.docker.com/reference/api/engine/sdk/) - Official Docker SDK documentation
-- [Turborepo Repository Structure](https://turborepo.dev/docs/crafting-your-repository/structuring-a-repository) - Monorepo best practices
+### Official / Ecosystem
 
-### Libraries (HIGH confidence)
-- [Bollard - Rust Docker API](https://github.com/fussybeaver/bollard) - Async Docker client for Rust
-- [Dockerode - Node.js Docker API](https://github.com/apocas/dockerode) - Docker Remote API for Node.js
-- [env-paths](https://github.com/sindresorhus/env-paths) - Cross-platform config paths for Node.js
-- [cross-xdg](https://crates.io/crates/cross-xdg) - XDG paths for Rust
+- [Bollard](https://github.com/fussybeaver/bollard) – Async Docker client for Rust
+- [NAPI-RS](https://napi.rs/) – Rust ↔ Node bindings
+- [Docker Engine API](https://docs.docker.com/reference/api/engine/sdk/)
+- [just](https://github.com/casey/just) – Command runner
 
-### Architecture References (MEDIUM confidence)
-- [Cloudflared Service Management](https://deepwiki.com/cloudflare/cloudflared/2.3-service-management-commands) - Cross-platform service installation pattern
-- [Sentry CLI npm Distribution](https://sentry.engineering/blog/publishing-binaries-on-npm) - Binary distribution via npm
-- [cargo-dist npm installer](https://opensource.axo.dev/cargo-dist/book/installers/npm.html) - Rust to npm distribution
+### Architecture References
 
-### Background Research (MEDIUM confidence)
-- [Monorepo Architecture Guide](https://feature-sliced.design/blog/frontend-monorepo-explained) - Monorepo best practices 2025
-- [Nhost Turborepo Configuration](https://nhost.io/blog/how-we-configured-pnpm-and-turborepo-for-our-monorepo) - pnpm + Turborepo setup
+- [Cloudflared service management](https://deepwiki.com/cloudflare/cloudflared/2.3-service-management-commands) – systemd/launchd pattern
+- [Sentry CLI npm distribution](https://sentry.engineering/blog/publishing-binaries-on-npm) – optionalDependencies binaries
+- [esbuild / swc platform packages](https://esbuild.github.io/getting-started/#install-esbuild) – os/cpu platform splitting
+
+### Project Docs
+
+- `CLAUDE.md` – Pre-commit, commands, structure
+- `CONTRIBUTING.md` – CLI architecture, adding commands
+- `packages/cli-rust/README.md` – Rust CLI as source of truth
