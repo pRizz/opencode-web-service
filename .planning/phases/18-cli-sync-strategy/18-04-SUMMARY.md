@@ -13,24 +13,24 @@ affects:
   - 18-06 # CI build + publish
 key-files:
   created:
-    - packages/cli-darwin-arm64/package.json
-    - packages/cli-darwin-arm64/index.js
-    - packages/cli-darwin-arm64/bin/.gitkeep
-    - packages/cli-darwin-x64/package.json
-    - packages/cli-darwin-x64/index.js
-    - packages/cli-darwin-x64/bin/.gitkeep
-    - packages/cli-linux-x64/package.json
-    - packages/cli-linux-x64/index.js
-    - packages/cli-linux-x64/bin/.gitkeep
-    - packages/cli-linux-arm64/package.json
-    - packages/cli-linux-arm64/index.js
-    - packages/cli-linux-arm64/bin/.gitkeep
-    - packages/cli-linux-x64-musl/package.json
-    - packages/cli-linux-x64-musl/index.js
-    - packages/cli-linux-x64-musl/bin/.gitkeep
-    - packages/cli-linux-arm64-musl/package.json
-    - packages/cli-linux-arm64-musl/index.js
-    - packages/cli-linux-arm64-musl/bin/.gitkeep
+    - packages/cli-node-darwin-arm64/package.json
+    - packages/cli-node-darwin-arm64/index.js
+    - packages/cli-node-darwin-arm64/bin/.gitkeep
+    - packages/cli-node-darwin-x64/package.json
+    - packages/cli-node-darwin-x64/index.js
+    - packages/cli-node-darwin-x64/bin/.gitkeep
+    - packages/cli-node-linux-x64/package.json
+    - packages/cli-node-linux-x64/index.js
+    - packages/cli-node-linux-x64/bin/.gitkeep
+    - packages/cli-node-linux-arm64/package.json
+    - packages/cli-node-linux-arm64/index.js
+    - packages/cli-node-linux-arm64/bin/.gitkeep
+    - packages/cli-node-linux-x64-musl/package.json
+    - packages/cli-node-linux-x64-musl/index.js
+    - packages/cli-node-linux-x64-musl/bin/.gitkeep
+    - packages/cli-node-linux-arm64-musl/package.json
+    - packages/cli-node-linux-arm64-musl/index.js
+    - packages/cli-node-linux-arm64-musl/bin/.gitkeep
 decisions:
   - name: "optionalDependencies pattern (esbuild/swc)"
     rationale: "npm installs only matching platform package; minimal footprint"
@@ -47,9 +47,9 @@ metrics:
 
 ## What Was Built
 
-- **Darwin:** `cli-darwin-arm64`, `cli-darwin-x64` (os: darwin, cpu: arm64|x64)
-- **Linux glibc:** `cli-linux-x64`, `cli-linux-arm64` (os: linux, libc: glibc)
-- **Linux musl:** `cli-linux-x64-musl`, `cli-linux-arm64-musl` (os: linux, libc: musl)
+- **Darwin:** `cli-node-darwin-arm64`, `cli-node-darwin-x64` (os: darwin, cpu: arm64|x64)
+- **Linux glibc:** `cli-node-linux-x64`, `cli-node-linux-arm64` (os: linux, libc: glibc)
+- **Linux musl:** `cli-node-linux-x64-musl`, `cli-node-linux-arm64-musl` (os: linux, libc: musl)
 
 Each package has `package.json` (name, version 3.0.0, os, cpu, libc, files, main), `index.js` exporting `binaryPath`, and `bin/.gitkeep` as placeholder for the `occ` binary.
 

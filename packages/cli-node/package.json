@@ -29,12 +29,12 @@
   "os": ["darwin", "linux"],
   "cpu": ["x64", "arm64"],
   "optionalDependencies": {
-    "@opencode-cloud/cli-darwin-arm64": "workspace:*",
-    "@opencode-cloud/cli-darwin-x64": "workspace:*",
-    "@opencode-cloud/cli-linux-arm64": "workspace:*",
-    "@opencode-cloud/cli-linux-x64": "workspace:*",
-    "@opencode-cloud/cli-linux-arm64-musl": "workspace:*",
-    "@opencode-cloud/cli-linux-x64-musl": "workspace:*"
+    "@opencode-cloud/cli-node-darwin-arm64": "workspace:*",
+    "@opencode-cloud/cli-node-darwin-x64": "workspace:*",
+    "@opencode-cloud/cli-node-linux-arm64": "workspace:*",
+    "@opencode-cloud/cli-node-linux-x64": "workspace:*",
+    "@opencode-cloud/cli-node-linux-arm64-musl": "workspace:*",
+    "@opencode-cloud/cli-node-linux-x64-musl": "workspace:*"
   },
   "scripts": {
     "build": "tsc || (echo \"Error: TypeScript compiler (tsc) not found. Install dev dependencies or run npm i -D typescript before building.\" && exit 1)",

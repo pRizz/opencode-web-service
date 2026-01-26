@@ -61,70 +61,70 @@ jobs:
       - name: Download darwin-arm64 binary
         uses: actions/download-artifact@v4
         with:
-          name: cli-darwin-arm64
-          path: packages/cli-darwin-arm64/bin
+          name: cli-node-darwin-arm64
+          path: packages/cli-node-darwin-arm64/bin
 
       - name: Download darwin-x64 binary
         uses: actions/download-artifact@v4
         with:
-          name: cli-darwin-x64
-          path: packages/cli-darwin-x64/bin
+          name: cli-node-darwin-x64
+          path: packages/cli-node-darwin-x64/bin
 
       - name: Download linux-x64 binary
         uses: actions/download-artifact@v4
         with:
-          name: cli-linux-x64
-          path: packages/cli-linux-x64/bin
+          name: cli-node-linux-x64
+          path: packages/cli-node-linux-x64/bin
 
       - name: Download linux-arm64 binary
         uses: actions/download-artifact@v4
         with:
-          name: cli-linux-arm64
-          path: packages/cli-linux-arm64/bin
+          name: cli-node-linux-arm64
+          path: packages/cli-node-linux-arm64/bin
 
       - name: Download linux-x64-musl binary
         uses: actions/download-artifact@v4
         with:
-          name: cli-linux-x64-musl
-          path: packages/cli-linux-x64-musl/bin
+          name: cli-node-linux-x64-musl
+          path: packages/cli-node-linux-x64-musl/bin
 
       - name: Download linux-arm64-musl binary
         uses: actions/download-artifact@v4
         with:
-          name: cli-linux-arm64-musl
-          path: packages/cli-linux-arm64-musl/bin
+          name: cli-node-linux-arm64-musl
+          path: packages/cli-node-linux-arm64-musl/bin
 
       - name: Make binaries executable
         run: |
-          chmod +x packages/cli-darwin-arm64/bin/occ
-          chmod +x packages/cli-darwin-x64/bin/occ
-          chmod +x packages/cli-linux-x64/bin/occ
-          chmod +x packages/cli-linux-arm64/bin/occ
-          chmod +x packages/cli-linux-x64-musl/bin/occ
-          chmod +x packages/cli-linux-arm64-musl/bin/occ
+          chmod +x packages/cli-node-darwin-arm64/bin/occ
+          chmod +x packages/cli-node-darwin-x64/bin/occ
+          chmod +x packages/cli-node-linux-x64/bin/occ
+          chmod +x packages/cli-node-linux-arm64/bin/occ
+          chmod +x packages/cli-node-linux-x64-musl/bin/occ
+          chmod +x packages/cli-node-linux-arm64-musl/bin/occ
 
       - name: Build Node packages
         run: |
           pnpm -C packages/core build
           pnpm -C packages/cli-node build
 
-      - name: Publish @opencode-cloud/cli-darwin-arm64
-        run: pnpm --filter @opencode-cloud/cli-darwin-arm64 publish --access public --no-git-checks
+      - name: Publish @opencode-cloud/cli-node-darwin-arm64
+        run: pnpm --filter @opencode-cloud/cli-node-darwin-arm64 publish --access public --no-git-checks
 
-      - name: Publish @opencode-cloud/cli-darwin-x64
-        run: pnpm --filter @opencode-cloud/cli-darwin-x64 publish --access public --no-git-checks
+      - name: Publish @opencode-cloud/cli-node-darwin-x64
+        run: pnpm --filter @opencode-cloud/cli-node-darwin-x64 publish --access public --no-git-checks
 
-      - name: Publish @opencode-cloud/cli-linux-x64
-        run: pnpm --filter @opencode-cloud/cli-linux-x64 publish --access public --no-git-checks
+      - name: Publish @opencode-cloud/cli-node-linux-x64
+        run: pnpm --filter @opencode-cloud/cli-node-linux-x64 publish --access public --no-git-checks
 
-      - name: Publish @opencode-cloud/cli-linux-arm64
-        run: pnpm --filter @opencode-cloud/cli-linux-arm64 publish --access public --no-git-checks
+      - name: Publish @opencode-cloud/cli-node-linux-arm64
+        run: pnpm --filter @opencode-cloud/cli-node-linux-arm64 publish --access public --no-git-checks
 
-      - name: Publish @opencode-cloud/cli-linux-x64-musl
-        run: pnpm --filter @opencode-cloud/cli-linux-x64-musl publish --access public --no-git-checks
+      - name: Publish @opencode-cloud/cli-node-linux-x64-musl
+        run: pnpm --filter @opencode-cloud/cli-node-linux-x64-musl publish --access public --no-git-checks
 
-      - name: Publish @opencode-cloud/cli-linux-arm64-musl
-        run: pnpm --filter @opencode-cloud/cli-linux-arm64-musl publish --access public --no-git-checks
+      - name: Publish @opencode-cloud/cli-node-linux-arm64-musl
+        run: pnpm --filter @opencode-cloud/cli-node-linux-arm64-musl publish --access public --no-git-checks
 
       - name: Wait for npm to index platform packages
         run: sleep 30
@@ -145,12 +145,12 @@ jobs:
           echo "**Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Platform Packages:**" >> $GITHUB_STEP_SUMMARY
-          echo "- [@opencode-cloud/cli-darwin-arm64](https://www.npmjs.com/package/@opencode-cloud/cli-darwin-arm64)" >> $GITHUB_STEP_SUMMARY
-          echo "- [@opencode-cloud/cli-darwin-x64](https://www.npmjs.com/package/@opencode-cloud/cli-darwin-x64)" >> $GITHUB_STEP_SUMMARY
-          echo "- [@opencode-cloud/cli-linux-x64](https://www.npmjs.com/package/@opencode-cloud/cli-linux-x64)" >> $GITHUB_STEP_SUMMARY
-          echo "- [@opencode-cloud/cli-linux-arm64](https://www.npmjs.com/package/@opencode-cloud/cli-linux-arm64)" >> $GITHUB_STEP_SUMMARY
-          echo "- [@opencode-cloud/cli-linux-x64-musl](https://www.npmjs.com/package/@opencode-cloud/cli-linux-x64-musl)" >> $GITHUB_STEP_SUMMARY
-          echo "- [@opencode-cloud/cli-linux-arm64-musl](https://www.npmjs.com/package/@opencode-cloud/cli-linux-arm64-musl)" >> $GITHUB_STEP_SUMMARY
+          echo "- [@opencode-cloud/cli-node-darwin-arm64](https://www.npmjs.com/package/@opencode-cloud/cli-node-darwin-arm64)" >> $GITHUB_STEP_SUMMARY
+          echo "- [@opencode-cloud/cli-node-darwin-x64](https://www.npmjs.com/package/@opencode-cloud/cli-node-darwin-x64)" >> $GITHUB_STEP_SUMMARY
+          echo "- [@opencode-cloud/cli-node-linux-x64](https://www.npmjs.com/package/@opencode-cloud/cli-node-linux-x64)" >> $GITHUB_STEP_SUMMARY
+          echo "- [@opencode-cloud/cli-node-linux-arm64](https://www.npmjs.com/package/@opencode-cloud/cli-node-linux-arm64)" >> $GITHUB_STEP_SUMMARY
+          echo "- [@opencode-cloud/cli-node-linux-x64-musl](https://www.npmjs.com/package/@opencode-cloud/cli-node-linux-x64-musl)" >> $GITHUB_STEP_SUMMARY
+          echo "- [@opencode-cloud/cli-node-linux-arm64-musl](https://www.npmjs.com/package/@opencode-cloud/cli-node-linux-arm64-musl)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Main Packages:**" >> $GITHUB_STEP_SUMMARY
           echo "- [@opencode-cloud/core](https://www.npmjs.com/package/@opencode-cloud/core)" >> $GITHUB_STEP_SUMMARY

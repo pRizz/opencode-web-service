@@ -40,7 +40,7 @@ Establish patterns and processes to keep the Rust CLI (`packages/cli-rust`) and 
 
 ### Package Structure
 - Main package: `@opencode-cloud/cli` (or `opencode-cloud`)
-- Platform packages: `@opencode-cloud/cli-darwin-arm64`, etc.
+- Platform packages: `@opencode-cloud/cli-node-darwin-arm64`, etc.
 - Binary path resolution in index.js finds the installed platform package
 - Uses existing pattern from packages/core/index.js as reference
 

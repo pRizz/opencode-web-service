@@ -16,7 +16,7 @@ on:
 permissions:
   contents: write    # Required for pushing commits and tags
   packages: write    # Required for GHCR push (docker-publish)
-  id-token: write    # Required for npm provenance (publish-npm)
+  id-token: write    # Reserved for future npm provenance (publish-npm uses NPM_TOKEN for now)
 
 jobs:
   bump-version:
@@ -163,14 +163,14 @@ jobs:
     secrets: inherit
 
   # Publish to npm (after checks pass)
-  # DISABLED - npm is deprecated in favor of cargo install
-  # publish-npm:
-    # name: Publish to npm
-    # needs: [bump-version, ci-pre-publish]
-    # uses: ./.github/workflows/publish-npm.yml
-    # with:
-    #   version: ${{ needs.bump-version.outputs.version }}
-    # secrets: inherit
+  publish-npm:
+    name: Publish to npm
+    needs: [bump-version, ci-pre-publish]
+    uses: ./.github/workflows/publish-npm.yml
+    with:
+      version: ${{ needs.bump-version.outputs.version }}
+      ref: ${{ needs.bump-version.outputs.ref }}
+    secrets: inherit
 
   # Publish Docker image (after checks pass)
   docker-publish:

@@ -16,23 +16,23 @@ jobs:
         include:
           - target: aarch64-apple-darwin
             os: macos-latest
-            package: cli-darwin-arm64
+            package: cli-node-darwin-arm64
           - target: x86_64-apple-darwin
             os: macos-latest
-            package: cli-darwin-x64
+            package: cli-node-darwin-x64
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            package: cli-linux-x64
+            package: cli-node-linux-x64
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
-            package: cli-linux-arm64
+            package: cli-node-linux-arm64
             use-cross: true
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            package: cli-linux-x64-musl
+            package: cli-node-linux-x64-musl
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            package: cli-linux-arm64-musl
+            package: cli-node-linux-arm64-musl
             use-cross: true
 
     runs-on: ${{ matrix.os }}

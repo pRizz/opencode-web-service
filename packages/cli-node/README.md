@@ -16,12 +16,12 @@ No Rust toolchain required — npm automatically downloads the correct binary fo
 
 | Platform | Architecture | Package |
 |----------|--------------|---------|
-| macOS | Apple Silicon (arm64) | @opencode-cloud/cli-darwin-arm64 |
-| macOS | Intel (x64) | @opencode-cloud/cli-darwin-x64 |
-| Linux | x64 (glibc) | @opencode-cloud/cli-linux-x64 |
-| Linux | ARM64 (glibc) | @opencode-cloud/cli-linux-arm64 |
-| Linux | x64 (musl/Alpine) | @opencode-cloud/cli-linux-x64-musl |
-| Linux | ARM64 (musl/Alpine) | @opencode-cloud/cli-linux-arm64-musl |
+| macOS | Apple Silicon (arm64) | @opencode-cloud/cli-node-darwin-arm64 |
+| macOS | Intel (x64) | @opencode-cloud/cli-node-darwin-x64 |
+| Linux | x64 (glibc) | @opencode-cloud/cli-node-linux-x64 |
+| Linux | ARM64 (glibc) | @opencode-cloud/cli-node-linux-arm64 |
+| Linux | x64 (musl/Alpine) | @opencode-cloud/cli-node-linux-x64-musl |
+| Linux | ARM64 (musl/Alpine) | @opencode-cloud/cli-node-linux-arm64-musl |
 
 Windows support planned for a future release.
 

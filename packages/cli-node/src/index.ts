@@ -38,21 +38,21 @@ function getPlatformPackage(): string | null {
 
   if (platform === 'darwin') {
     return arch === 'arm64'
-      ? '@opencode-cloud/cli-darwin-arm64'
-      : '@opencode-cloud/cli-darwin-x64';
+      ? '@opencode-cloud/cli-node-darwin-arm64'
+      : '@opencode-cloud/cli-node-darwin-x64';
   }
 
   if (platform === 'linux') {
     const musl = isMusl();
     if (arch === 'x64') {
       return musl
-        ? '@opencode-cloud/cli-linux-x64-musl'
-        : '@opencode-cloud/cli-linux-x64';
+        ? '@opencode-cloud/cli-node-linux-x64-musl'
+        : '@opencode-cloud/cli-node-linux-x64';
     }
     if (arch === 'arm64') {
       return musl
-        ? '@opencode-cloud/cli-linux-arm64-musl'
-        : '@opencode-cloud/cli-linux-arm64';
+        ? '@opencode-cloud/cli-node-linux-arm64-musl'
+        : '@opencode-cloud/cli-node-linux-arm64';
     }
   }
 
