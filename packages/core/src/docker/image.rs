@@ -14,6 +14,7 @@ use flate2::Compression;
 use flate2::write::GzEncoder;
 use futures_util::StreamExt;
 use std::collections::VecDeque;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tar::Builder as TarBuilder;
 use tracing::{debug, warn};
 
@@ -78,10 +79,19 @@ pub async fn build_image(
 
     // Set up build options
     // Explicitly use BuildKit builder to support cache mounts (--mount=type=cache)
+    // BuildKit requires a unique session ID for each build
+    let session_id = format!(
+        "opencode-cloud-build-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    );
     let options = BuildImageOptions {
         t: full_name.clone(),
         dockerfile: "Dockerfile".to_string(),
         version: BuilderVersion::BuilderBuildKit,
+        session: Some(session_id),
         rm: true,
         nocache: no_cache,
         ..Default::default()
