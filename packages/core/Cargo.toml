@@ -40,6 +40,7 @@ napi-derive = { version = "2", optional = true }
 
 # Docker integration
 bollard = { version = "0.18", features = ["chrono", "buildkit"] }
+openssl = { version = "0.10", features = ["vendored"] }
 futures-util = "0.3"
 tar = "0.4"
 flate2 = "1.0"
