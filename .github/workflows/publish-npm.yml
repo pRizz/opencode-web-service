@@ -1,5 +1,10 @@
 name: Publish to npm
 
+# TEMPORARY: Use NPM_TOKEN for auth until platform packages exist and per-package
+# provenance is configured. Then revert this commit and use tokenless provenance
+# (id-token: write + --provenance). Caller must pass secrets: inherit; NPM_TOKEN
+# must be set in repo secrets.
+
 on:
   workflow_call:
     inputs:
@@ -11,6 +16,10 @@ on:
         description: 'Git ref (tag or branch) to checkout'
         required: false
         type: string
+    secrets:
+      NPM_TOKEN:
+        description: 'npm auth token for publishing (required until provenance setup)'
+        required: true
 
 jobs:
   build-binaries:
@@ -23,7 +32,8 @@ jobs:
     needs: [build-binaries]
     permissions:
       contents: read
-      id-token: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -99,34 +109,34 @@ jobs:
           pnpm -C packages/cli-node build
 
       - name: Publish @opencode-cloud/cli-darwin-arm64
-        run: pnpm --filter @opencode-cloud/cli-darwin-arm64 publish --access public --provenance --no-git-checks
+        run: pnpm --filter @opencode-cloud/cli-darwin-arm64 publish --access public --no-git-checks
 
       - name: Publish @opencode-cloud/cli-darwin-x64
-        run: pnpm --filter @opencode-cloud/cli-darwin-x64 publish --access public --provenance --no-git-checks
+        run: pnpm --filter @opencode-cloud/cli-darwin-x64 publish --access public --no-git-checks
 
       - name: Publish @opencode-cloud/cli-linux-x64
-        run: pnpm --filter @opencode-cloud/cli-linux-x64 publish --access public --provenance --no-git-checks
+        run: pnpm --filter @opencode-cloud/cli-linux-x64 publish --access public --no-git-checks
 
       - name: Publish @opencode-cloud/cli-linux-arm64
-        run: pnpm --filter @opencode-cloud/cli-linux-arm64 publish --access public --provenance --no-git-checks
+        run: pnpm --filter @opencode-cloud/cli-linux-arm64 publish --access public --no-git-checks
 
       - name: Publish @opencode-cloud/cli-linux-x64-musl
-        run: pnpm --filter @opencode-cloud/cli-linux-x64-musl publish --access public --provenance --no-git-checks
+        run: pnpm --filter @opencode-cloud/cli-linux-x64-musl publish --access public --no-git-checks
 
       - name: Publish @opencode-cloud/cli-linux-arm64-musl
-        run: pnpm --filter @opencode-cloud/cli-linux-arm64-musl publish --access public --provenance --no-git-checks
+        run: pnpm --filter @opencode-cloud/cli-linux-arm64-musl publish --access public --no-git-checks
 
       - name: Wait for npm to index platform packages
         run: sleep 30
 
       - name: Publish @opencode-cloud/core
-        run: pnpm --filter @opencode-cloud/core publish --access public --provenance --no-git-checks
+        run: pnpm --filter @opencode-cloud/core publish --access public --no-git-checks
 
       - name: Wait for npm to index
         run: sleep 10
 
       - name: Publish opencode-cloud
-        run: pnpm --filter opencode-cloud publish --access public --provenance --no-git-checks
+        run: pnpm --filter opencode-cloud publish --access public --no-git-checks
 
       - name: Summary
         run: |
