@@ -129,6 +129,39 @@ occ uninstall
 occ config show
 ```
 
+## Authentication
+
+opencode-cloud uses **PAM (Pluggable Authentication Modules)** for authentication. Users created via `occ user add` can authenticate to both:
+- **opencode web UI** - Access the coding interface
+- **Cockpit** - System administration interface
+
+### Creating Users
+
+Create a user with a password:
+```bash
+occ user add <username>
+```
+
+Generate a random password:
+```bash
+occ user add <username> --generate
+```
+
+### Managing Users
+
+- List users: `occ user list`
+- Change password: `occ user passwd <username>`
+- Remove user: `occ user remove <username>`
+- Enable/disable account: `occ user enable <username>` / `occ user disable <username>`
+
+### Legacy Authentication Fields
+
+The `auth_username` and `auth_password` config fields are **deprecated** and ignored. They are kept in the config schema for backward compatibility with existing deployments, but new users should be created via `occ user add` instead.
+
+To migrate from legacy fields:
+1. Create a PAM user: `occ user add <username>`
+2. The legacy fields will be automatically cleared on next config save
+
 ### Rebuilding the Docker Image
 
 When developing locally or after updating opencode-cloud, you may need to rebuild the Docker image to pick up changes in the embedded Dockerfile:

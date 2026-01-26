@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 18: CLI Sync Strategy** - Strategy for keeping Rust and Node CLIs in sync + prebuilt binary distribution
 - [~] **Phase 19: CI/CD Automation** - ~~Automated Docker image uploads~~ (MERGED into Phase 14)
 - [ ] **Phase 20: One-Click Cloud Deploy** - Deploy buttons for AWS, GCP, Azure etc. that provision cloud instances with opencode-cloud pre-installed
-- [ ] **Phase 21: Use opencode Fork with PAM Authentication** - Switch to pRizz/opencode fork for proper PAM-based web authentication
+- [x] **Phase 21: Use opencode Fork with PAM Authentication** - Switch to pRizz/opencode fork for proper PAM-based web authentication
 - [~] **Phase 22: Dedupe CLI Logic** - ~~Consolidate CLI so Rust is single source of truth, Node delegates~~ (MERGED into Phase 18)
 - [ ] **Phase 23: Container Shell Access** - `occ shell` command for quick terminal access to running container
 - [ ] **Phase 24: IDE Integration** - VS Code and JetBrains extensions to connect to container
@@ -408,10 +408,11 @@ Plans:
   3. Authentication is consistent between Cockpit and opencode (same PAM users)
   4. Legacy auth_username/auth_password config fields deprecated or removed
   5. Documentation updated to reflect PAM-based authentication flow
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 21-01: TBD (Dockerfile update and PAM integration)
+- [x] 21-01-PLAN.md — Dockerfile update: fork installation, opencode-broker build, PAM config, systemd services
+- [x] 21-02-PLAN.md — Documentation updates: PAM authentication docs, legacy field deprecation
 
 ### Phase 22: Dedupe CLI Logic
 **Goal**: Consolidate CLI logic so the Rust CLI is the single source of truth and the Node CLI delegates to it
@@ -583,7 +584,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 28 -> 29 -> 30
 | 18. CLI Sync Strategy | 6/6 | Complete | 2026-01-25 |
 | 19. CI/CD Automation | - | MERGED | - |
 | 20. One-Click Cloud Deploy | 0/3 | Not started | - |
-| 21. Use opencode Fork with PAM Auth | 0/1 | Not started | - |
+| 21. Use opencode Fork with PAM Auth | 2/2 | Complete | 2026-01-26 |
 | 22. Dedupe CLI Logic | - | MERGED | - |
 | 23. Container Shell Access | 0/1 | Not started | - |
 | 24. IDE Integration | 0/2 | Not started | - |

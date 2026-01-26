@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Developers can access a persistent, secure opencode instance from anywhere without wrestling with Docker, service management, or cloud infrastructure details.
-**Current focus:** Phase 18 complete — CLI Sync Strategy + Prebuilt Binary Distribution
+**Current focus:** Phase 21 complete — Use opencode Fork with PAM Authentication
 
 ## Current Position
 
-Phase: 18 of 21 (CLI Sync Strategy)
-Plan: 6 of 6 in current phase
+Phase: 21 of 21 (Use opencode Fork with PAM Authentication)
+Plan: 2 of 2 in current phase
 Status: Phase complete
-Last activity: 2026-01-25 - Executed 18-04, 18-05, 18-06 (platform packages, optionalDependencies, CI build/publish)
+Last activity: 2026-01-26 - Executed 21-01, 21-02 (Dockerfile fork installation, broker, PAM config, documentation)
 
-Progress: [##############################] 96%
+Progress: [##############################] 100%
 
 Note: Phases 12 (Web Desktop UI) and 13 (Container Security Tools) are DEFERRED. Phase 19 (CI/CD Automation) merged into Phase 14. Phase 22 (Dedupe CLI Logic) merged into Phase 18.
 
@@ -219,8 +219,8 @@ Recent decisions affecting current work:
 - Phase 17: Custom Bind Mounts (mount local directories into container)
 - Phase 18 EXPANDED: CLI Sync Strategy + Prebuilt Binary Distribution (merged Phase 22)
 - Phase 19 MERGED: CI/CD Automation merged into Phase 14
-- Phase 20: One-Click Cloud Deploy (deploy buttons for AWS, GCP, Azure, DigitalOcean)
-- Phase 21: Use opencode Fork with PAM Authentication (switch to pRizz/opencode fork)
+- Phase 20: One-Click Cloud Deploy (deploy buttons for AWS, GCP, Azure, DigitalOcean) — deferred in favor of Phase 21
+- Phase 21: Use opencode Fork with PAM Authentication (switch to pRizz/opencode fork) — RE-PRIORITIZED: next phase to work on
 - Phase 22 MERGED: Dedupe CLI Logic merged into Phase 18
 - Phase 23: Container Shell Access (`occ shell` for quick terminal access)
 - Phase 24: IDE Integration (VS Code and JetBrains extensions)
@@ -237,7 +237,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-25
-Stopped at: Phase 18 complete (18-04, 18-05, 18-06 executed)
+Last session: 2026-01-26
+Stopped at: Phase 21 complete (21-01, 21-02 executed)
 Resume file: None
-Next step: /gsd:discuss-phase 20 or /gsd:plan-phase 20 (One-Click Cloud Deploy); or /gsd:verify-work 18 (UAT) before continuing
+Next step: /gsd:verify-work 21 (UAT) to test PAM authentication; or proceed to Phase 20 (One-Click Cloud Deploy)

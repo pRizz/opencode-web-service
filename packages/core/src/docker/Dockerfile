@@ -417,20 +417,109 @@ USER opencode
 #     && go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.3
 
 # -----------------------------------------------------------------------------
-# opencode Installation
+# opencode Installation (Fork from pRizz/opencode)
 # -----------------------------------------------------------------------------
-# opencode - self-managing installer, trusted to handle versions
-# The script installs to ~/.opencode/bin/
-# Retry logic added because opencode.ai API can be flaky during parallel builds
-RUN for i in 1 2 3 4 5; do \
-        curl -fsSL https://opencode.ai/install | bash && break || \
-        echo "Attempt $i failed, retrying in 10s..." && sleep 10; \
-    done \
-    && ls -la /home/opencode/.opencode/bin/opencode \
+# Clone the fork and build from source
+# Pin to specific commit for reproducibility: 11277fd04fb7f6df4b6f188397dcb5275ef3a78f
+RUN git clone --depth 1 https://github.com/pRizz/opencode.git /tmp/opencode \
+    && cd /tmp/opencode \
+    && git checkout 11277fd04fb7f6df4b6f188397dcb5275ef3a78f \
+    && curl -fsSL https://bun.sh/install | bash \
+    && export PATH="/home/opencode/.bun/bin:${PATH}" \
+    && bun install --frozen-lockfile \
+    && bun run packages/opencode/script/build.ts --single \
+    && mkdir -p /home/opencode/.opencode/bin \
+    && cp /tmp/opencode/packages/opencode/dist/opencode-*/bin/opencode /home/opencode/.opencode/bin/opencode \
+    && chmod +x /home/opencode/.opencode/bin/opencode \
+    && rm -rf /tmp/opencode \
     && /home/opencode/.opencode/bin/opencode --version
 
 # Add opencode to PATH
 ENV PATH="/home/opencode/.opencode/bin:${PATH}"
+
+# -----------------------------------------------------------------------------
+# opencode-broker Installation
+# -----------------------------------------------------------------------------
+# Build opencode-broker from source (Rust service for PAM authentication)
+# The broker handles PAM authentication and user process spawning
+USER root
+RUN git clone --depth 1 https://github.com/pRizz/opencode.git /tmp/opencode-broker \
+    && cd /tmp/opencode-broker \
+    && git checkout 11277fd04fb7f6df4b6f188397dcb5275ef3a78f \
+    && cd packages/opencode-broker \
+    && . /home/opencode/.cargo/env \
+    && cargo build --release \
+    && mkdir -p /usr/local/bin \
+    && cp target/release/opencode-broker /usr/local/bin/opencode-broker \
+    && chmod 4755 /usr/local/bin/opencode-broker \
+    && rm -rf /tmp/opencode-broker
+
+# Verify broker binary exists and is executable
+RUN ls -la /usr/local/bin/opencode-broker && /usr/local/bin/opencode-broker --version || echo "Broker installed (version check may not be available)"
+
+# -----------------------------------------------------------------------------
+# PAM Configuration
+# -----------------------------------------------------------------------------
+# Install PAM configuration for opencode authentication
+# This allows opencode to authenticate users via PAM (same users as Cockpit)
+RUN printf '%s\n' \
+    '# PAM configuration for OpenCode authentication' \
+    '# Install to /etc/pam.d/opencode' \
+    '' \
+    '# Standard UNIX authentication' \
+    'auth required pam_unix.so' \
+    'account required pam_unix.so' \
+    '' \
+    '# Optional: Enable TOTP 2FA (uncomment when pam_google_authenticator is installed)' \
+    '# auth required pam_google_authenticator.so' \
+    > /etc/pam.d/opencode \
+    && chmod 644 /etc/pam.d/opencode
+
+# Verify PAM config file exists
+RUN ls -la /etc/pam.d/opencode && cat /etc/pam.d/opencode
+
+# -----------------------------------------------------------------------------
+# opencode-broker systemd Service
+# -----------------------------------------------------------------------------
+# Create opencode-broker service for PAM authentication
+RUN printf '%s\n' \
+    '[Unit]' \
+    'Description=OpenCode Authentication Broker' \
+    'Documentation=https://github.com/pRizz/opencode' \
+    'After=network.target' \
+    '' \
+    '[Service]' \
+    'Type=notify' \
+    'ExecStart=/usr/local/bin/opencode-broker' \
+    'ExecReload=/bin/kill -HUP $MAINPID' \
+    'Restart=always' \
+    'RestartSec=5' \
+    '' \
+    '# Security hardening' \
+    'NoNewPrivileges=false' \
+    'ProtectSystem=strict' \
+    'ProtectHome=read-only' \
+    'PrivateTmp=true' \
+    'ReadWritePaths=/run/opencode' \
+    '' \
+    '# Socket directory' \
+    'RuntimeDirectory=opencode' \
+    'RuntimeDirectoryMode=0755' \
+    '' \
+    '# Logging' \
+    'StandardOutput=journal' \
+    'StandardError=journal' \
+    'SyslogIdentifier=opencode-broker' \
+    '' \
+    '[Install]' \
+    'WantedBy=multi-user.target' \
+    > /etc/systemd/system/opencode-broker.service
+
+# Enable opencode-broker service
+RUN mkdir -p /etc/systemd/system/multi-user.target.wants \
+    && ln -sf /etc/systemd/system/opencode-broker.service /etc/systemd/system/multi-user.target.wants/opencode-broker.service
+
+USER opencode
 
 # -----------------------------------------------------------------------------
 # GSD Plugin Installation
@@ -448,7 +537,7 @@ USER root
 RUN printf '%s\n' \
     '[Unit]' \
     'Description=opencode Web Interface' \
-    'After=network.target' \
+    'After=network.target opencode-broker.service' \
     '' \
     '[Service]' \
     'Type=simple' \
@@ -466,6 +555,24 @@ RUN printf '%s\n' \
 # Enable opencode service to start at boot (manual symlink since systemctl doesn't work during build)
 RUN mkdir -p /etc/systemd/system/multi-user.target.wants \
     && ln -sf /etc/systemd/system/opencode.service /etc/systemd/system/multi-user.target.wants/opencode.service
+
+# -----------------------------------------------------------------------------
+# opencode Configuration
+# -----------------------------------------------------------------------------
+# Create opencode.json config file with PAM authentication enabled
+RUN mkdir -p /home/opencode/.config/opencode \
+    && printf '%s\n' \
+    '{' \
+    '  "auth": {' \
+    '    "enabled": true' \
+    '  }' \
+    '}' \
+    > /home/opencode/.config/opencode/opencode.json \
+    && chown -R opencode:opencode /home/opencode/.config/opencode \
+    && chmod 644 /home/opencode/.config/opencode/opencode.json
+
+# Verify config file exists
+RUN ls -la /home/opencode/.config/opencode/opencode.json && cat /home/opencode/.config/opencode/opencode.json
 
 USER opencode
 

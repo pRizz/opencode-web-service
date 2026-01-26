@@ -42,11 +42,18 @@ pub struct Config {
     #[serde(default = "default_restart_delay")]
     pub restart_delay: u32,
 
-    /// Username for opencode basic auth (default: None, triggers wizard)
+    /// Username for opencode basic auth (DEPRECATED - use PAM users via `occ user add` instead)
+    ///
+    /// This field is kept for backward compatibility but is ignored.
+    /// New deployments should create users via `occ user add` which uses PAM authentication.
+    /// Legacy deployments can migrate by running `occ user add <username>`.
     #[serde(default)]
     pub auth_username: Option<String>,
 
-    /// Password for opencode basic auth (default: None, triggers wizard)
+    /// Password for opencode basic auth (DEPRECATED - use PAM users via `occ user add` instead)
+    ///
+    /// This field is kept for backward compatibility but is ignored.
+    /// Passwords are stored in the container's /etc/shadow via PAM, not in config files.
     #[serde(default)]
     pub auth_password: Option<String>,
 
@@ -233,8 +240,11 @@ impl Config {
     /// Check if required auth credentials are configured
     ///
     /// Returns true if:
-    /// - Both auth_username and auth_password are Some and non-empty (legacy), OR
-    /// - The users array is non-empty (PAM-based auth)
+    /// - The users array is non-empty (PAM-based auth - preferred), OR
+    /// - Both auth_username and auth_password are Some and non-empty (legacy - deprecated)
+    ///
+    /// **Note:** Legacy auth_username/auth_password fields are deprecated and ignored in favor of PAM users.
+    /// This method still checks them for backward compatibility, but new deployments should use `occ user add`.
     ///
     /// This is used to determine if the setup wizard needs to run.
     pub fn has_required_auth(&self) -> bool {
