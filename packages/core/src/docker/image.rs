@@ -7,7 +7,7 @@ use super::progress::ProgressReporter;
 use super::{
     DOCKERFILE, DockerClient, DockerError, IMAGE_NAME_DOCKERHUB, IMAGE_NAME_GHCR, IMAGE_TAG_DEFAULT,
 };
-use bollard::image::{BuildImageOptions, CreateImageOptions};
+use bollard::image::{BuildImageOptions, BuilderVersion, CreateImageOptions};
 use bollard::models::BuildInfoAux;
 use bytes::Bytes;
 use flate2::Compression;
@@ -77,9 +77,11 @@ pub async fn build_image(
         .map_err(|e| DockerError::Build(format!("Failed to create build context: {e}")))?;
 
     // Set up build options
+    // Explicitly use BuildKit builder to support cache mounts (--mount=type=cache)
     let options = BuildImageOptions {
         t: full_name.clone(),
         dockerfile: "Dockerfile".to_string(),
+        version: BuilderVersion::BuilderBuildKit,
         rm: true,
         nocache: no_cache,
         ..Default::default()
@@ -152,8 +154,25 @@ pub async fn build_image(
             }
             Err(e) => {
                 progress.abandon_all("Build failed");
-                let context =
-                    format_build_error_with_context(&e.to_string(), &recent_logs, &error_logs);
+                let error_str = e.to_string();
+                
+                // Check if this might be a BuildKit-related error
+                let buildkit_hint = if error_str.contains("mount") 
+                    || error_str.contains("--mount") 
+                    || recent_logs.iter().any(|log| log.contains("--mount") && log.contains("cache"))
+                {
+                    "\n\nNote: This Dockerfile uses BuildKit cache mounts (--mount=type=cache).\n\
+                     The build is configured to use BuildKit, but the Docker daemon may not support it.\n\
+                     Ensure BuildKit is enabled in Docker Desktop settings and the daemon is restarted."
+                } else {
+                    ""
+                };
+                
+                let context = format!(
+                    "{}{}",
+                    format_build_error_with_context(&error_str, &recent_logs, &error_logs),
+                    buildkit_hint
+                );
                 return Err(DockerError::Build(context));
             }
         }
