@@ -172,9 +172,9 @@ jobs:
       ref: ${{ needs.bump-version.outputs.ref }}
     secrets: inherit
 
-  # Publish Docker image (after checks pass)
+  # Publish sandbox Docker image (after checks pass)
   docker-publish:
-    name: Publish Docker image
+    name: Publish sandbox Docker image
     needs: [bump-version, ci-pre-publish]
     uses: ./.github/workflows/docker-publish.yml
     with:

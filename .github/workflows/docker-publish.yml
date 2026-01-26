@@ -23,7 +23,7 @@ env:
 
 jobs:
   build-and-push:
-    name: Build and Push Docker Image
+    name: Build and Push Sandbox Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -172,7 +172,7 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## 🐳 Docker Images Published" >> $GITHUB_STEP_SUMMARY
+          echo "## 🐳 Sandbox Docker Images Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
