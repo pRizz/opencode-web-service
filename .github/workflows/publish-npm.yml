@@ -121,14 +121,8 @@ jobs:
       - name: Publish @opencode-cloud/cli-node-linux-arm64-musl
         run: pnpm --filter @opencode-cloud/cli-node-linux-arm64-musl publish --access public --no-git-checks
 
-      - name: Wait for npm to index platform packages
-        run: sleep 30
-
       - name: Publish @opencode-cloud/core
         run: pnpm --filter @opencode-cloud/core publish --access public --no-git-checks
-
-      - name: Wait for npm to index
-        run: sleep 10
 
       - name: Publish opencode-cloud
         run: pnpm --filter opencode-cloud publish --access public --no-git-checks
