@@ -350,41 +350,41 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
 USER opencode
 
 # -----------------------------------------------------------------------------
-# Cockpit Web Console (2026-01-22)
+# Cockpit Web Console (2026-01-22) - temporarily disabled
 # -----------------------------------------------------------------------------
 # Cockpit provides web-based administration for the container
 # Ubuntu noble has cockpit 316 in main repos
 # Use BuildKit cache mount for APT package lists and cache
-USER root
-RUN --mount=type=cache,target=/var/lib/apt/lists \
-    --mount=type=cache,target=/var/cache/apt \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    cockpit-ws \
-    cockpit-system \
-    cockpit-bridge \
-    && rm -rf /var/lib/apt/lists/*
-
+# USER root
+# RUN --mount=type=cache,target=/var/lib/apt/lists \
+#     --mount=type=cache,target=/var/cache/apt \
+#     apt-get update && \
+#     apt-get install -y --no-install-recommends \
+#     cockpit-ws \
+#     cockpit-system \
+#     cockpit-bridge \
+#     && rm -rf /var/lib/apt/lists/*
+#
 # Enable Cockpit socket activation (manual symlink since systemctl doesn't work during build)
-RUN mkdir -p /etc/systemd/system/sockets.target.wants \
-    && ln -sf /lib/systemd/system/cockpit.socket /etc/systemd/system/sockets.target.wants/cockpit.socket
-
+# RUN mkdir -p /etc/systemd/system/sockets.target.wants \
+#     && ln -sf /lib/systemd/system/cockpit.socket /etc/systemd/system/sockets.target.wants/cockpit.socket
+#
 # Configure Cockpit for HTTP (TLS terminated externally) and proxy headers
-RUN mkdir -p /etc/cockpit && \
-    printf '%s\n' \
-    '[WebService]' \
-    '# Allow HTTP connections (TLS terminated externally like opencode)' \
-    'AllowUnencrypted = true' \
-    '' \
-    '# Trust proxy headers for X-Forwarded-For, X-Forwarded-Proto' \
-    'ProtocolHeader = X-Forwarded-Proto' \
-    'ForwardedForHeader = X-Forwarded-For' \
-    '' \
-    '# Limit concurrent login attempts' \
-    'MaxStartups = 10' \
-    > /etc/cockpit/cockpit.conf
-
-USER opencode
+# RUN mkdir -p /etc/cockpit && \
+#     printf '%s\n' \
+#     '[WebService]' \
+#     '# Allow HTTP connections (TLS terminated externally like opencode)' \
+#     'AllowUnencrypted = true' \
+#     '' \
+#     '# Trust proxy headers for X-Forwarded-For, X-Forwarded-Proto' \
+#     'ProtocolHeader = X-Forwarded-Proto' \
+#     'ForwardedForHeader = X-Forwarded-For' \
+#     '' \
+#     '# Limit concurrent login attempts' \
+#     'MaxStartups = 10' \
+#     > /etc/cockpit/cockpit.conf
+#
+# USER opencode
 
 # -----------------------------------------------------------------------------
 # CI/CD + tooling (disabled)
