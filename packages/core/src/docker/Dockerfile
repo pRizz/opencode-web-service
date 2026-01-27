@@ -588,6 +588,8 @@ RUN ls -la /usr/local/bin/opencode-broker \
 # Nginx Reverse Proxy for UI + API
 # -----------------------------------------------------------------------------
 # Serve the built UI from /var/www/opencode and proxy API/WebSocket
+# TODO: Explore a sustainable routing strategy (e.g., backend-driven base URL or
+# TODO: content-type aware proxying without hardcoded path lists).
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf 2>/dev/null || true \
     && printf '%s\n' \
     'server {' \
@@ -597,11 +599,19 @@ RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf 2>/dev
     '  root /var/www/opencode;' \
     '  index index.html;' \
     '' \
-    '  location /health {' \
+    '  location = /health {' \
     '    proxy_pass http://127.0.0.1:3001;' \
     '  }' \
     '' \
-    '  location ~ ^/(auth|session|pty|event|api|ws) {' \
+    '  location /assets/ {' \
+    '    try_files $uri =404;' \
+    '  }' \
+    '' \
+    '  location ~* \.(?:js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|map)$ {' \
+    '    try_files $uri =404;' \
+    '  }' \
+    '' \
+    '  location ~ ^/(auth|session|sessions|pty|event|events|api|ws|v1|rpc|config|global|path|project|provider) {' \
     '    proxy_pass http://127.0.0.1:3001;' \
     '    proxy_http_version 1.1;' \
     '    proxy_set_header Upgrade $http_upgrade;' \
@@ -613,7 +623,19 @@ RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf 2>/dev
     '  }' \
     '' \
     '  location / {' \
-    '    try_files $uri $uri/ /index.html;' \
+    '    try_files $uri $uri/ @opencode_fallback;' \
+    '  }' \
+    '' \
+    '  location @opencode_fallback {' \
+    '    if ($http_accept ~* "text/html") { rewrite ^ /index.html break; }' \
+    '    proxy_pass http://127.0.0.1:3001;' \
+    '    proxy_http_version 1.1;' \
+    '    proxy_set_header Upgrade $http_upgrade;' \
+    '    proxy_set_header Connection "upgrade";' \
+    '    proxy_set_header Host $host;' \
+    '    proxy_set_header X-Real-IP $remote_addr;' \
+    '    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;' \
+    '    proxy_set_header X-Forwarded-Proto $scheme;' \
     '  }' \
     '}' \
     > /etc/nginx/conf.d/opencode.conf
