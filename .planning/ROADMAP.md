@@ -42,6 +42,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 28: Remote Host Setup Wizard** - Run setup wizard for remote hosts via --host flag
 - [ ] **Phase 29: DockerHub README Elaboration** - Elaborate README.dockerhub.md for better discoverability
 - [ ] **Phase 30: Deep Nesting Refactor** - Replace deep nesting with early returns, guard clauses, let-else, and helper functions
+- [ ] **Phase 31: Update rust and node cli READMEs with latest project features** - TBD
 
 ## Phase Details
 
@@ -557,10 +558,22 @@ Plans:
 Plans:
 - [ ] 30-01: TBD (audit and refactor)
 
+### Phase 31: Update rust and node cli READMEs with latest project features
+
+**Goal:** [To be planned]
+**Depends on:** Phase 30
+**Plans:** 1 plan
+
+Plans:
+- [ ] 31-01-PLAN.md — Update CLI READMEs with current features and install model
+
+**Details:**
+[To be added during planning]
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 28 -> 29 -> 30
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 28 -> 29 -> 30 -> 31
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -594,6 +607,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 28 -> 29 -> 30
 | 28. Remote Host Setup Wizard | 0/1 | Not started | - |
 | 29. DockerHub README Elaboration | 0/1 | Not started | - |
 | 30. Deep Nesting Refactor | 0/1 | Not started | - |
+| 31. Update rust and node cli READMEs with latest project features | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-18*
