@@ -163,6 +163,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
     libreadline-dev=8.2-* \
     libsqlite3-dev=3.45.* \
     libncurses-dev=6.4+* \
+    libpam0g-dev=1.5.* \
     liblzma-dev=5.6.* \
     && rm -rf /var/lib/apt/lists/*
 
@@ -185,31 +186,6 @@ RUN mkdir -p \
     /home/opencode/.local/share \
     /home/opencode/.cache \
     /home/opencode/workspace
-
-# Create cache mount directories with correct permissions
-# BuildKit cache mounts preserve permissions of existing directories
-# NOTE: Requires root to set ownership, then switch back to opencode
-USER root
-RUN mkdir -p \
-    /home/opencode/.cache/pip \
-    /home/opencode/.local/share/pnpm/store \
-    /home/opencode/.cargo/registry \
-    /home/opencode/.cargo/git \
-    /home/opencode/.bun/install/cache \
-    /home/opencode/.npm \
-    && chown -R opencode:opencode \
-    /home/opencode/.cache \
-    /home/opencode/.local/share \
-    /home/opencode/.cargo \
-    /home/opencode/.bun \
-    /home/opencode/.npm \
-    && chmod -R 755 \
-    /home/opencode/.cache \
-    /home/opencode/.local/share \
-    /home/opencode/.cargo \
-    /home/opencode/.bun \
-    /home/opencode/.npm
-USER opencode
 
 # Add local bin to PATH
 ENV PATH="/home/opencode/.local/bin:${PATH}"
@@ -258,6 +234,7 @@ ENV PATH="/home/opencode/.local/share/mise/shims:${PATH}"
 # Uses stable toolchain (rustup manages toolchain versioning)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
     && . /home/opencode/.cargo/env \
+    && rustup default stable \
     && rustup component add rust-analyzer rustfmt clippy
 
 ENV PATH="/home/opencode/.cargo/bin:${PATH}"
@@ -284,16 +261,15 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install pipx for isolated Python application installs
 # Use BuildKit cache mount for pip cache
-RUN --mount=type=cache,target=/home/opencode/.cache/pip \
-    eval "$(/home/opencode/.local/bin/mise activate bash)" \
+RUN --mount=type=cache,target=/home/opencode/.cache/pip,uid=1000,gid=1000,mode=0755 \
+    mkdir -p /home/opencode/.cache/pip \
+    && eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && pip install --user pipx \
     && pipx ensurepath
 
 # Install global TypeScript compiler
-# Use BuildKit cache mount for pnpm store
-# Note: Cache mount inherits permissions from the existing directory
-RUN --mount=type=cache,target=/home/opencode/.local/share/pnpm/store \
-    eval "$(/home/opencode/.local/bin/mise activate bash)" \
+# NOTE: Avoid cache mount here to prevent pnpm store permission issues
+RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
     && pnpm add -g typescript
 
 # -----------------------------------------------------------------------------
@@ -301,10 +277,9 @@ RUN --mount=type=cache,target=/home/opencode/.local/share/pnpm/store \
 # -----------------------------------------------------------------------------
 # ripgrep 15.1.0 - fast regex search
 # eza 0.23.4 - modern ls replacement
-# Use BuildKit cache mount for Cargo registry and git cache
-RUN --mount=type=cache,target=/home/opencode/.cargo/registry \
-    --mount=type=cache,target=/home/opencode/.cargo/git \
-    . /home/opencode/.cargo/env \
+# NOTE: Avoid cache mounts here due to permission issues with non-root Cargo cache
+RUN mkdir -p /home/opencode/.cargo/registry /home/opencode/.cargo/git \
+    && . /home/opencode/.cargo/env \
     && cargo install --locked ripgrep@15.1.0 eza@0.23.4
 
 # lazygit v0.58.1 (2026-01-12) - terminal UI for git
@@ -476,12 +451,11 @@ USER opencode
 # -----------------------------------------------------------------------------
 # Clone the fork and build opencode from source (as non-root user)
 # Pin to specific commit for reproducibility: 11277fd04fb7f6df4b6f188397dcb5275ef3a78f
-# Use BuildKit cache mounts to speed up rebuilds by caching bun packages and node_modules
-RUN --mount=type=cache,target=/home/opencode/.bun/install/cache \
-    --mount=type=cache,target=/tmp/opencode-repo/node_modules \
-    git clone --depth 1 https://github.com/pRizz/opencode.git /tmp/opencode-repo \
+# Build opencode from source (BuildKit cache mounts disabled for now)
+RUN rm -rf /tmp/opencode-repo \
+    && git clone --depth 1 https://github.com/pRizz/opencode.git /tmp/opencode-repo \
     && cd /tmp/opencode-repo \
-    && git checkout 11277fd04fb7f6df4b6f188397dcb5275ef3a78f \
+    && git checkout 280a4538181f094f4faa0f3560d9764be084b76f \
     && curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.5" \
     && export PATH="/home/opencode/.bun/bin:${PATH}" \
     && bun install --frozen-lockfile \
@@ -503,19 +477,17 @@ ENV PATH="/home/opencode/.opencode/bin:${PATH}"
 # to run with elevated privileges for PAM authentication
 # Use BuildKit cache mounts for Cargo registry, git cache, and build target
 USER root
-RUN --mount=type=cache,target=/home/opencode/.cargo/registry \
-    --mount=type=cache,target=/home/opencode/.cargo/git \
-    --mount=type=cache,target=/tmp/opencode-repo/packages/opencode-broker/target \
-    cd /tmp/opencode-repo/packages/opencode-broker \
-    && . /home/opencode/.cargo/env \
-    && cargo build --release \
+RUN cd /tmp/opencode-repo/packages/opencode-broker \
+    && runuser -u opencode -- bash -c '. /home/opencode/.cargo/env && cargo build --release' \
     && mkdir -p /usr/local/bin \
     && cp target/release/opencode-broker /usr/local/bin/opencode-broker \
     && chmod 4755 /usr/local/bin/opencode-broker \
     && rm -rf /tmp/opencode-repo
 
 # Verify broker binary exists and is executable
-RUN ls -la /usr/local/bin/opencode-broker && /usr/local/bin/opencode-broker --version || echo "Broker installed (version check may not be available)"
+RUN ls -la /usr/local/bin/opencode-broker \
+    && test -x /usr/local/bin/opencode-broker \
+    && echo "Broker installed"
 
 # -----------------------------------------------------------------------------
 # PAM Configuration
@@ -590,8 +562,8 @@ USER opencode
 # Note: If this fails in container builds due to "~" path resolution, retry with
 # OPENCODE_CONFIG_DIR=/home/opencode/.config/opencode set explicitly.
 # Use BuildKit cache mount for npm cache
-RUN --mount=type=cache,target=/home/opencode/.npm \
-    npx --yes get-shit-done-cc --opencode --global
+RUN mkdir -p /home/opencode/.npm \
+    && npx --yes get-shit-done-cc --opencode --global
 
 # -----------------------------------------------------------------------------
 # opencode systemd Service (2026-01-22)

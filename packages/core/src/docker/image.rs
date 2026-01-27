@@ -14,15 +14,27 @@ use flate2::Compression;
 use flate2::write::GzEncoder;
 use futures_util::StreamExt;
 use std::collections::VecDeque;
+use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tar::Builder as TarBuilder;
 use tracing::{debug, warn};
 
-/// Maximum number of recent build log lines to capture for error context
-const BUILD_LOG_BUFFER_SIZE: usize = 20;
+/// Default number of recent build log lines to capture for error context
+const DEFAULT_BUILD_LOG_BUFFER_SIZE: usize = 20;
 
-/// Maximum number of error lines to capture separately
-const ERROR_LOG_BUFFER_SIZE: usize = 10;
+/// Default number of error lines to capture separately
+const DEFAULT_ERROR_LOG_BUFFER_SIZE: usize = 10;
+
+/// Read a log buffer size from env with bounds
+fn read_log_buffer_size(var_name: &str, default: usize) -> usize {
+    let Ok(value) = env::var(var_name) else {
+        return default;
+    };
+    let Ok(parsed) = value.trim().parse::<usize>() else {
+        return default;
+    };
+    parsed.clamp(5, 500)
+}
 
 /// Check if a line looks like an error message
 fn is_error_line(line: &str) -> bool {
@@ -107,8 +119,16 @@ pub async fn build_image(
     progress.add_spinner("build", "Initializing...");
 
     let mut maybe_image_id = None;
-    let mut recent_logs: VecDeque<String> = VecDeque::with_capacity(BUILD_LOG_BUFFER_SIZE);
-    let mut error_logs: VecDeque<String> = VecDeque::with_capacity(ERROR_LOG_BUFFER_SIZE);
+    let build_log_buffer_size = read_log_buffer_size(
+        "OPENCODE_DOCKER_BUILD_LOG_TAIL",
+        DEFAULT_BUILD_LOG_BUFFER_SIZE,
+    );
+    let error_log_buffer_size = read_log_buffer_size(
+        "OPENCODE_DOCKER_BUILD_ERROR_TAIL",
+        DEFAULT_ERROR_LOG_BUFFER_SIZE,
+    );
+    let mut recent_logs: VecDeque<String> = VecDeque::with_capacity(build_log_buffer_size);
+    let mut error_logs: VecDeque<String> = VecDeque::with_capacity(error_log_buffer_size);
 
     while let Some(result) = stream.next().await {
         match result {
@@ -120,14 +140,14 @@ pub async fn build_image(
                         progress.update_spinner("build", msg);
 
                         // Capture recent log lines for error context
-                        if recent_logs.len() >= BUILD_LOG_BUFFER_SIZE {
+                        if recent_logs.len() >= build_log_buffer_size {
                             recent_logs.pop_front();
                         }
                         recent_logs.push_back(msg.to_string());
 
                         // Also capture error-like lines separately (they might scroll off)
                         if is_error_line(msg) {
-                            if error_logs.len() >= ERROR_LOG_BUFFER_SIZE {
+                            if error_logs.len() >= error_log_buffer_size {
                                 error_logs.pop_front();
                             }
                             error_logs.push_back(msg.to_string());
@@ -165,11 +185,13 @@ pub async fn build_image(
             Err(e) => {
                 progress.abandon_all("Build failed");
                 let error_str = e.to_string();
-                
+
                 // Check if this might be a BuildKit-related error
-                let buildkit_hint = if error_str.contains("mount") 
-                    || error_str.contains("--mount") 
-                    || recent_logs.iter().any(|log| log.contains("--mount") && log.contains("cache"))
+                let buildkit_hint = if error_str.contains("mount")
+                    || error_str.contains("--mount")
+                    || recent_logs
+                        .iter()
+                        .any(|log| log.contains("--mount") && log.contains("cache"))
                 {
                     "\n\nNote: This Dockerfile uses BuildKit cache mounts (--mount=type=cache).\n\
                      The build is configured to use BuildKit, but the Docker daemon may not support it.\n\
@@ -177,7 +199,7 @@ pub async fn build_image(
                 } else {
                     ""
                 };
-                
+
                 let context = format!(
                     "{}{}",
                     format_build_error_with_context(&error_str, &recent_logs, &error_logs),
@@ -387,6 +409,9 @@ fn format_build_error_with_context(
             message.push_str("\n  ");
             message.push_str(line);
         }
+    } else {
+        message.push_str("\n\nNo build output was received from the Docker daemon.");
+        message.push_str("\nThis usually means the build failed before any logs were streamed.");
     }
 
     // Add actionable suggestions based on common error patterns
