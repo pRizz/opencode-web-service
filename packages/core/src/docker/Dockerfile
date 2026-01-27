@@ -136,6 +136,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
 RUN --mount=type=cache,target=/var/lib/apt/lists \
     --mount=type=cache,target=/var/cache/apt \
     apt-get update && apt-get install -y --no-install-recommends \
+    # libssl-dev depends on libssl3t64 with exact version match
+    libssl3t64=3.0.* \
     libssl-dev=3.0.* \
     libffi-dev=3.4.* \
     zlib1g-dev=1:1.3.* \
