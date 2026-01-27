@@ -593,7 +593,7 @@ RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf 2>/dev
     '    try_files $uri =404;' \
     '  }' \
     '' \
-    '  location ~ ^/(auth|session|sessions|pty|event|events|api|ws|v1|rpc|config|global|path|project|provider) {' \
+    '  location ~ ^/(agent|auth|command|config|event|events|global|lsp|mcp|path|permission|project|provider|pty|question|rpc|session|sessions|status|v1|vcs|ws|api) {' \
     '    proxy_pass http://127.0.0.1:3001;' \
     '    proxy_http_version 1.1;' \
     '    proxy_set_header Upgrade $http_upgrade;' \
