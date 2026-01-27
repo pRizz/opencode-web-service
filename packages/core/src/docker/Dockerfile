@@ -534,12 +534,12 @@ RUN echo 'export PATH="/home/opencode/.local/bin:$PATH"' >> /home/opencode/.zshr
 # opencode Installation (Fork from pRizz/opencode)
 # -----------------------------------------------------------------------------
 # Clone the fork and build opencode from source (as non-root user)
-# Pin to specific commit for reproducibility: 280a4538181f094f4faa0f3560d9764be084b76f
+# Pin to specific commit for reproducibility: 50fd5d1a6a17dc1b378a0e60b464a75dd876d6e2
 # Build opencode from source (BuildKit cache mounts disabled for now)
 RUN rm -rf /tmp/opencode-repo \
     && git clone --depth 1 https://github.com/pRizz/opencode.git /tmp/opencode-repo \
     && cd /tmp/opencode-repo \
-    && git checkout 280a4538181f094f4faa0f3560d9764be084b76f \
+    && git checkout 50fd5d1a6a17dc1b378a0e60b464a75dd876d6e2 \
     && curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.5" \
     && export PATH="/home/opencode/.bun/bin:${PATH}" \
     && bun install --frozen-lockfile \
