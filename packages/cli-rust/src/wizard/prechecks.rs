@@ -16,19 +16,28 @@ pub async fn verify_docker_available() -> Result<()> {
         Err(_) => {
             bail!(
                 "Docker is not available.\n\n\
-                Please start Docker Desktop or the Docker daemon before running setup.\n\n\
-                On Linux:   sudo systemctl start docker\n\
-                On macOS:   Open Docker Desktop application"
+                Make sure Docker is installed and the daemon is running.\n\n\
+                Linux:  sudo systemctl start docker\n\
+                macOS:  Open Docker Desktop\n\
+                Check:  docker ps\n\
+                Check:  ls -l /var/run/docker.sock (Linux default)\n\
+                Check:  your user has access to the Docker socket\n\
+                Fix:    Linux: sudo usermod -aG docker $USER"
             );
         }
     };
 
     if client.verify_connection().await.is_err() {
         bail!(
-            "Docker is not running.\n\n\
-            Please start Docker Desktop or the Docker daemon before running setup.\n\n\
-            On Linux:   sudo systemctl start docker\n\
-            On macOS:   Open Docker Desktop application"
+            "Docker is not responding.\n\n\
+            Start or restart the Docker daemon, then try again.\n\n\
+            Linux:  sudo systemctl start docker\n\
+            Linux:  sudo systemctl restart docker\n\
+            macOS:  Open Docker Desktop\n\
+            Check:  docker ps\n\
+            Check:  ls -l /var/run/docker.sock (Linux default)\n\
+            Check:  your user has access to the Docker socket\n\
+            Fix:    Linux: sudo usermod -aG docker $USER"
         );
     }
 
