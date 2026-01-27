@@ -180,6 +180,8 @@ cargo test -p opencode-cloud -- --nocapture
 cargo install --path packages/cli-rust
 ```
 
+This installs the Rust CLI directly from a local checkout.
+
 ### From crates.io (Users)
 
 ```bash

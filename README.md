@@ -80,7 +80,15 @@ cargo install opencode-cloud
 occ --version
 ```
 
-### From source
+### From source (install locally)
+
+```bash
+git clone https://github.com/pRizz/opencode-cloud.git
+cd opencode-cloud
+cargo install --path packages/cli-rust
+```
+
+### From source (development run)
 
 ```bash
 git clone https://github.com/pRizz/opencode-cloud.git
