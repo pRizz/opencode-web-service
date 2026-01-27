@@ -30,29 +30,7 @@
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# Stage 1: Builder
-# -----------------------------------------------------------------------------
-# Install build dependencies and tools that require compilation
-FROM ubuntu:24.04 AS builder
-
-# Avoid interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
-
-# Install build essentials (2026-01-22)
-# Use BuildKit cache mount for APT package lists and cache
-RUN --mount=type=cache,target=/var/lib/apt/lists \
-    --mount=type=cache,target=/var/cache/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
-    build-essential=12.* \
-    # UNPINNED: ca-certificates - security-critical root certs, needs auto-updates
-    ca-certificates \
-    curl=8.5.* \
-    git=1:2.43.* \
-    && rm -rf /var/lib/apt/lists/*
-
-# -----------------------------------------------------------------------------
-# Stage 2: Runtime
+# Stage 1: Runtime
 # -----------------------------------------------------------------------------
 FROM ubuntu:24.04 AS runtime
 
@@ -282,7 +260,8 @@ RUN eval "$(/home/opencode/.local/bin/mise activate bash)" \
 # NOTE: Avoid cache mounts here due to permission issues with non-root Cargo cache
 RUN mkdir -p /home/opencode/.cargo/registry /home/opencode/.cargo/git \
     && . /home/opencode/.cargo/env \
-    && cargo install --locked ripgrep@15.1.0 eza@0.23.4
+    && cargo install --locked ripgrep@15.1.0 eza@0.23.4 \
+    && rm -rf /home/opencode/.cargo/registry /home/opencode/.cargo/git
 
 # lazygit v0.58.1 (2026-01-12) - terminal UI for git
 # Disabled temporarily to reduce Docker build time.
@@ -546,6 +525,7 @@ RUN rm -rf /tmp/opencode-repo \
     && bun run packages/opencode/script/build.ts --single \
     && cd packages/app \
     && bun run build \
+    && rm -rf /home/opencode/.bun/install/cache /home/opencode/.bun/cache /home/opencode/.cache/bun \
     && cd /tmp/opencode-repo \
     && mkdir -p /home/opencode/.local/share/opencode/bin \
     && cp /tmp/opencode-repo/packages/opencode/dist/opencode-*/bin/opencode /home/opencode/.local/share/opencode/bin/opencode \
@@ -713,7 +693,8 @@ USER opencode
 # Note: If this fails in container builds due to "~" path resolution, retry with
 # OPENCODE_CONFIG_DIR=/home/opencode/.config/opencode set explicitly.
 RUN mkdir -p /home/opencode/.npm \
-    && npx --yes get-shit-done-cc --opencode --global
+    && npx --yes get-shit-done-cc --opencode --global \
+    && rm -rf /home/opencode/.npm/_cacache /home/opencode/.npm/_npx
 
 # -----------------------------------------------------------------------------
 # opencode systemd Service (2026-01-22)
