@@ -213,8 +213,8 @@ ENV PATH="/home/opencode/.local/share/mise/shims:${PATH}"
 # Rust Installation
 # -----------------------------------------------------------------------------
 # rustup - self-managing installer, trusted to handle versions
-# Uses stable toolchain (rustup manages toolchain versioning)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
+# Uses stable toolchain with minimal profile (skip docs and extras)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal \
     && . /home/opencode/.cargo/env \
     && rustup default stable \
     && rustup component add rust-analyzer rustfmt clippy
