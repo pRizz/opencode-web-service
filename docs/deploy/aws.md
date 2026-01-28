@@ -54,6 +54,18 @@ sudo cat /var/lib/opencode-cloud/deploy-status.json
 The file includes the username, password, and URLs. The same details are also
 present in `/etc/motd`.
 
+## opencode-cloud CLI on the host
+
+The quick deploy installs the `opencode-cloud` CLI via `cargo install` during
+provisioning. This pulls the latest published version at deploy time (Rust
+1.85+ required) and can add several minutes to first boot.
+
+You can check the installed version on the instance:
+
+```bash
+opencode-cloud --version
+```
+
 ## Advanced Parameters
 
 ### Instance

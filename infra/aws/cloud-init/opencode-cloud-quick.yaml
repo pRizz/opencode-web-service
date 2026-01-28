@@ -16,6 +16,9 @@ packages:
   - docker.io
   - curl
   - jq
+  - build-essential
+  - pkg-config
+  - libssl-dev
 
 write_files:
   - path: /etc/opencode-cloud/stack.env
@@ -59,6 +62,19 @@ write_files:
       : "${OPENCODE_ALB_URL:=}"
       : "${COCKPIT_DOMAIN_URL:=}"
       : "${COCKPIT_ALB_URL:=}"
+
+      if ! command -v cargo >/dev/null 2>&1; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+          bash -s -- -y --profile minimal --default-toolchain 1.85.0
+      fi
+
+      export PATH="$HOME/.cargo/bin:${PATH}"
+
+      if ! command -v opencode-cloud >/dev/null 2>&1; then
+        cargo install opencode-cloud
+      fi
+
+      OPENCODE_CLI_VERSION="$(opencode-cloud --version 2>/dev/null || true)"
 
       systemctl enable --now docker
 
@@ -107,7 +123,8 @@ write_files:
         "username": "${OPENCODE_USERNAME}",
         "password": "${OPENCODE_PASSWORD}",
         "container": "${OPENCODE_CONTAINER_NAME}",
-        "image": "${OPENCODE_IMAGE}"
+        "image": "${OPENCODE_IMAGE}",
+        "cli_version": "${OPENCODE_CLI_VERSION}"
       }
       EOF
       chmod 600 "${STATUS_FILE}"
