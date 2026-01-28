@@ -573,31 +573,14 @@ RUN ls -la /usr/local/bin/opencode-broker \
 # -----------------------------------------------------------------------------
 # Nginx Reverse Proxy for UI + API
 # -----------------------------------------------------------------------------
-# Serve the built UI from /var/www/opencode and proxy API/WebSocket
-# TODO: Explore a sustainable routing strategy (e.g., backend-driven base URL or
-# TODO: content-type aware proxying without hardcoded path lists).
+# Serve the built UI from /var/www/opencode and proxy all 3000 traffic to backend.
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf 2>/dev/null || true \
     && printf '%s\n' \
     'server {' \
     '  listen 3000;' \
     '  server_name _;' \
     '' \
-    '  root /var/www/opencode;' \
-    '  index index.html;' \
-    '' \
-    '  location = /health {' \
-    '    proxy_pass http://127.0.0.1:3001;' \
-    '  }' \
-    '' \
-    '  location /assets/ {' \
-    '    try_files $uri =404;' \
-    '  }' \
-    '' \
-    '  location ~* \.(?:js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|map)$ {' \
-    '    try_files $uri =404;' \
-    '  }' \
-    '' \
-    '  location ~ ^/(agent|auth|command|config|event|events|global|lsp|mcp|path|permission|project|provider|pty|question|rpc|session|sessions|status|v1|vcs|ws|api) {' \
+    '  location / {' \
     '    proxy_pass http://127.0.0.1:3001;' \
     '    proxy_http_version 1.1;' \
     '    proxy_set_header Upgrade $http_upgrade;' \
@@ -606,6 +589,22 @@ RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf 2>/dev
     '    proxy_set_header X-Real-IP $remote_addr;' \
     '    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;' \
     '    proxy_set_header X-Forwarded-Proto $scheme;' \
+    '  }' \
+    '}' \
+    '' \
+    'server {' \
+    '  listen 3002;' \
+    '  server_name _;' \
+    '' \
+    '  root /var/www/opencode;' \
+    '  index index.html;' \
+    '' \
+    '  location /assets/ {' \
+    '    try_files $uri =404;' \
+    '  }' \
+    '' \
+    '  location ~* \.(?:js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|map)$ {' \
+    '    try_files $uri =404;' \
     '  }' \
     '' \
     '  location / {' \
@@ -746,20 +745,24 @@ RUN rm -f /etc/systemd/system/multi-user.target.wants/nginx.service \
 # -----------------------------------------------------------------------------
 # opencode Configuration
 # -----------------------------------------------------------------------------
-# Create opencode.json config file with PAM authentication enabled
+# Create opencode.jsonc config file with PAM authentication enabled and UI URL
 RUN mkdir -p /home/opencode/.config/opencode \
     && printf '%s\n' \
     '{' \
+    '  // Container UI served via nginx on 3002' \
     '  "auth": {' \
     '    "enabled": true' \
+    '  },' \
+    '  "server": {' \
+    '    "uiUrl": "http://localhost:3002"' \
     '  }' \
     '}' \
-    > /home/opencode/.config/opencode/opencode.json \
+    > /home/opencode/.config/opencode/opencode.jsonc \
     && chown -R opencode:opencode /home/opencode/.config/opencode \
-    && chmod 644 /home/opencode/.config/opencode/opencode.json
+    && chmod 644 /home/opencode/.config/opencode/opencode.jsonc
 
 # Verify config file exists
-RUN ls -la /home/opencode/.config/opencode/opencode.json && cat /home/opencode/.config/opencode/opencode.json
+RUN ls -la /home/opencode/.config/opencode/opencode.jsonc && cat /home/opencode/.config/opencode/opencode.jsonc
 
 USER opencode
 
@@ -811,8 +814,8 @@ RUN echo "${OPENCODE_CLOUD_VERSION}" > /etc/opencode-cloud-version
 # -----------------------------------------------------------------------------
 WORKDIR /home/opencode/workspace
 
-# Expose opencode web port (3000) and Cockpit port (9090)
-EXPOSE 3000 9090
+# Expose opencode ports (3000/3001/3002) and Cockpit (9090)
+EXPOSE 3000 3001 3002 9090
 
 # Hybrid init: entrypoint script chooses tini or systemd based on USE_SYSTEMD env
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

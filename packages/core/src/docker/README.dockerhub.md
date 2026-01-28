@@ -28,10 +28,10 @@ docker pull ghcr.io/prizz/opencode-cloud-sandbox:latest
 Run the container:
 
 ```
-docker run --rm -it -p 3000:3000 -p 9090:9090 ghcr.io/prizz/opencode-cloud-sandbox:latest
+docker run --rm -it -p 3000:3000 -p 3001:3001 -p 3002:3002 -p 9090:9090 ghcr.io/prizz/opencode-cloud-sandbox:latest
 ```
 
-The opencode web UI is available at `http://localhost:3000`. Cockpit runs on `http://localhost:9090`.
+The opencode web UI is available at `http://localhost:3000`. The backend is reachable at `http://localhost:3001`, and the static UI is served at `http://localhost:3002`. Cockpit runs on `http://localhost:9090`.
 
 ## Source
 
