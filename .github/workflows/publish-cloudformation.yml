@@ -1,4 +1,4 @@
-name: Publish CloudFormation Templates
+name: Publish CloudFormation Templates to S3
 
 on:
   push:
