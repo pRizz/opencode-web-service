@@ -66,7 +66,8 @@ Parameters:
     Description: "Root EBS volume size in GiB."
   KeyPairName:
     Type: String
-    Description: "EC2 key pair name required for SSH access to retrieve credentials. Example: ssh -i /path/key.pem ubuntu@<alb-dns> then sudo cat /var/lib/opencode-cloud/deploy-status.json. See https://github.com/pRizz/opencode-cloud/blob/main/docs/deploy/aws.md"
+    Default: ""
+    Description: "Optional EC2 key pair name for SSH access (credentials are available in Secrets Manager)."
   OpencodeUsername:
     Type: String
     Default: opencode
@@ -116,6 +117,7 @@ Parameters:
 Conditions:
   UseExistingVpcCondition: !Equals [!Ref UseExistingVpc, "true"]
   CreateVpc: !Equals [!Ref UseExistingVpc, "false"]
+  UseKeyPair: !Not [!Equals [!Ref KeyPairName, ""]]
   AllowSshCondition: !Equals [!Ref AllowSsh, "true"]
 
 Rules:
@@ -133,11 +135,6 @@ Rules:
     Assertions:
       - Assert: !Not [!Equals [!Ref SshIngressCidr, ""]]
         AssertDescription: "SshIngressCidr is required when AllowSsh=true."
-  KeyPairRequired:
-    Assertions:
-      - Assert: !Not [!Equals [!Ref KeyPairName, ""]]
-        AssertDescription: "KeyPairName is required to enable SSH access to retrieve credentials. See https://github.com/pRizz/opencode-cloud/blob/main/docs/deploy/aws.md"
-
 Resources:
   CredentialsSecret:
     Type: AWS::SecretsManager::Secret
@@ -479,7 +476,7 @@ Resources:
       ImageId: !Ref UbuntuAmiId
       InstanceType: !Ref InstanceType
       IamInstanceProfile: !Ref InstanceProfile
-      KeyName: !Ref KeyPairName
+      KeyName: !If [UseKeyPair, !Ref KeyPairName, !Ref "AWS::NoValue"]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:

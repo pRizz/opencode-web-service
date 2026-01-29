@@ -127,11 +127,8 @@ opencode-cloud --version
 - **InstanceType**: Override the default `t3.medium`. Smaller sizes (t3/t3a
   micro or small) may be unstable under load.
 - **RootVolumeSize**: Root EBS volume size in GiB (default: 30).
-- **KeyPairName**: Required. Use SSH to retrieve credentials if needed:
-  `ssh -i /path/key.pem ubuntu@<alb-dns>` then
-  `sudo cat /var/lib/opencode-cloud/deploy-status.json`.
-  More details in the GitHub docs:
-  https://github.com/pRizz/opencode-cloud/blob/main/docs/deploy/aws.md
+- **KeyPairName**: Optional. Provide an EC2 key pair to enable SSH if you still
+  want shell access (credentials are available in Secrets Manager).
 - **OpencodeUsername**: Customize the initial username.
 
 ### Networking
