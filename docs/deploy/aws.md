@@ -89,25 +89,24 @@ https://YOUR_BUCKET.s3.<region>.amazonaws.com/cloudformation/opencode-cloud-quic
 - **CertificateArn**: ACM certificate ARN.
 - **InstanceId**: EC2 instance ID.
 - **VpcId**, **PublicSubnets**, **PrivateSubnet**: Networking details.
-- **CredentialsFile**: Location of generated credentials on the instance.
+- **CredentialsSecretArn**: Secrets Manager ARN containing generated credentials.
 
 ## Retrieving Credentials
 
-Credentials are generated during provisioning and saved on the instance at:
+Credentials are generated during provisioning and stored in AWS Secrets
+Manager. The stack outputs `CredentialsSecretArn`.
 
-```
-/var/lib/opencode-cloud/deploy-status.json
-```
-
-Use AWS Systems Manager Session Manager to access the instance:
+Fetch the secret:
 
 ```bash
-aws ssm start-session --target <instance-id>
-sudo cat /var/lib/opencode-cloud/deploy-status.json
+aws secretsmanager get-secret-value \
+  --secret-id <credentials-secret-arn> \
+  --query SecretString \
+  --output text
 ```
 
-The file includes the username, password, and URLs. The same details are also
-present in `/etc/motd`.
+The secret includes the username, password, and URLs. `/etc/motd` shows the
+username and secret ARN, but not the password.
 
 ## opencode-cloud CLI on the host
 
